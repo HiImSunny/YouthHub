@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% block title %}THỐNG KÊ — YOUTHHUB{% endblock %}
+
+{% block breadcrumb %}
+<span class="font-black uppercase text-sm">📊 Thống kê & Báo cáo</span>
+{% endblock %}
+
+{% block content %}
+<div>
+    <!-- Hero -->
+    <div class="mb-8">
+        <h1 class="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-2">📊 THỐNG KÊ</h1>
+        <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">BÁO CÁO TOÀN HỆ THỐNG</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-10">
+        <div class="bg-white border-3 border-black p-5 shadow-brutal col-span-1">
+            <p class="text-xs font-black uppercase text-slate-500 mb-1">TỔNG HĐ</p>
+            <p class="text-4xl font-black">{{ total_activities }}</p>
+        </div>
+        <div class="bg-primary text-white border-3 border-black p-5 shadow-brutal col-span-1">
+            <p class="text-xs font-black uppercase mb-1 opacity-80">CHỜ DUYỆT</p>
+            <p class="text-4xl font-black">{{ pending_count }}</p>
+        </div>
+        <div class="bg-accent-teal text-white border-3 border-black p-5 shadow-brutal col-span-1">
+            <p class="text-xs font-black uppercase mb-1 opacity-80">TỔ CHỨC</p>
+            <p class="text-4xl font-black">{{ total_organizations }}</p>
+        </div>
+        <div class="bg-accent-yellow border-3 border-black p-5 shadow-brutal col-span-1">
+            <p class="text-xs font-black uppercase mb-1">ĐIỂM DANH ✓</p>
+            <p class="text-4xl font-black">{{ total_checkins }}</p>
+        </div>
+        <div class="bg-zinc-900 text-white border-3 border-black p-5 shadow-brutal col-span-2 lg:col-span-1">
+            <p class="text-xs font-black uppercase mb-1 opacity-80">NGÂN SÁCH</p>
+            <p class="text-2xl font-black">{{ budget_total|floatformat:0 }}<span class="text-sm">đ</span></p>
+        </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+
+        <!-- Chart 1: Hoạt động theo Trạng thái (Doughnut) -->
+        <div class="bg-white border-3 border-black shadow-brutal">
+            <div class="p-5 border-b-3 border-black bg-bg-light">
+                <h2 class="font-black uppercase text-lg">HOẠT ĐỘNG THEO TRẠNG THÁI</h2>
+            </div>
+            <div class="p-6 flex justify-center">
+                <div style="max-width:280px; width:100%;">
+                    <canvas id="chartStatus"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart 2: Hoạt động theo Loại (Bar) -->
+        <div class="bg-white border-3 border-black shadow-brutal">
+            <div class="p-5 border-b-3 border-black bg-bg-light">
+                <h2 class="font-black uppercase text-lg">HOẠT ĐỘNG THEO LOẠI</h2>
+            </div>
+            <div class="p-6">
+                <canvas id="chartType" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 3: Hoạt động theo Tháng (Line) -->
+        <div class="bg-white border-3 border-black shadow-brutal">
+            <div class="p-5 border-b-3 border-black bg-bg-light">
+                <h2 class="font-black uppercase text-lg">HOẠT ĐỘNG THEO THÁNG (6 THÁNG GẦN ĐÂY)</h2>
+            </div>
+            <div class="p-6">
+                <canvas id="chartMonthly" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Chart 4: Tổ chức theo Loại (Doughnut) -->
+        <div class="bg-white border-3 border-black shadow-brutal">
+            <div class="p-5 border-b-3 border-black bg-bg-light">
+                <h2 class="font-black uppercase text-lg">CƠ CẤU TỔ CHỨC</h2>
+            </div>
+            <div class="p-6 flex justify-center">
+                <div style="max-width:280px; width:100%;">
+                    <canvas id="chartOrg"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /Charts Grid -->
+
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // ── Data from Django ────────────────────────────────────────────────────────
+    const statusLabels = {{ status_labels| safe }};
+    const statusData = {{ status_data| safe }};
+    const typeLabels = {{ type_labels| safe }};
+    const typeData = {{ type_data| safe }};
+    const monthlyLabels = {{ monthly_labels| safe }};
+    const monthlyData = {{ monthly_data| safe }};
+    const orgLabels = {{ org_labels| safe }};
+    const orgData = {{ org_data| safe }};
+
+    // ── Neobrutalism Color Palette ──────────────────────────────────────────────
+    const COLORS = ['#ff6a00', '#fbef2e', '#008080', '#ff4d4d', '#3b82f6', '#8b5cf6'];
+
+    Chart.defaults.font.family = "'Space Grotesk', sans-serif";
+    Chart.defaults.font.weight = '700';
+
+    // ── Chart 1: Status — Doughnut ──────────────────────────────────────────────
+    new Chart(document.getElementById('chartStatus'), {
+        type: 'doughnut',
+        data: {
+            labels: statusLabels,
+            datasets: [{
+                data: statusData,
+                backgroundColor: COLORS,
+                borderColor: '#000',
+                borderWidth: 3,
+                hoverOffset: 8,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { padding: 14 } }
+            }
+        }
+    });
+
+    // ── Chart 2: Type — Horizontal Bar ─────────────────────────────────────────
+    new Chart(document.getElementById('chartType'), {
+        type: 'bar',
+        data: {
+            labels: typeLabels,
+            datasets: [{
+                label: 'Số hoạt động',
+                data: typeData,
+                backgroundColor: '#ff6a00',
+                borderColor: '#000',
+                borderWidth: 3,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { color: '#e5e7eb' }, ticks: { precision: 0 } },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+
+    // ── Chart 3: Monthly — Line ─────────────────────────────────────────────────
+    new Chart(document.getElementById('chartMonthly'), {
+        type: 'line',
+        data: {
+            labels: monthlyLabels,
+            datasets: [{
+                label: 'Hoạt động mới',
+                data: monthlyData,
+                backgroundColor: 'rgba(255,106,0,0.15)',
+                borderColor: '#ff6a00',
+                borderWidth: 3,
+                pointBackgroundColor: '#ff6a00',
+                pointBorderColor: '#000',
+                pointBorderWidth: 2,
+                pointRadius: 6,
+                tension: 0.3,
+                fill: true,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#e5e7eb' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // ── Chart 4: Org Type — Doughnut ────────────────────────────────────────────
+    new Chart(document.getElementById('chartOrg'), {
+        type: 'doughnut',
+        data: {
+            labels: orgLabels,
+            datasets: [{
+                data: orgData,
+                backgroundColor: ['#fbef2e', '#ff6a00', '#008080', '#ff4d4d'],
+                borderColor: '#000',
+                borderWidth: 3,
+                hoverOffset: 8,
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom', labels: { padding: 14 } }
+            }
+        }
+    });
+</script>
+{% endblock %}

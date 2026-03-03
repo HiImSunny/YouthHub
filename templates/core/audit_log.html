@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% block title %}AUDIT LOG — YOUTHHUB{% endblock %}
+
+{% block breadcrumb %}
+<span class="font-black uppercase text-sm">🔍 Audit Log</span>
+{% endblock %}
+
+{% block content %}
+<div>
+    <!-- Hero -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-end gap-4 justify-between">
+        <div>
+            <h1 class="text-5xl font-black uppercase tracking-tighter leading-none mb-2">🔍 AUDIT LOG</h1>
+            <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">LỊCH SỬ THAO TÁC HỆ THỐNG</p>
+        </div>
+        <span
+            class="bg-accent-red text-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm">
+            🔒 ADMIN ONLY
+        </span>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="bg-white border-3 border-black shadow-brutal p-5 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <!-- Action filter -->
+            <div>
+                <label class="block text-xs font-black uppercase mb-1">LOẠI THAO TÁC</label>
+                <select name="action"
+                    class="w-full border-3 border-black bg-bg-light px-3 py-2 font-bold text-sm focus:outline-none focus:border-primary">
+                    <option value="">Tất cả</option>
+                    {% for val, label in action_choices %}
+                    <option value="{{ val }}" {% if val==current_action %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <!-- Type filter -->
+            <div>
+                <label class="block text-xs font-black uppercase mb-1">LOẠI ĐỐI TƯỢNG</label>
+                <input type="text" name="type" value="{{ current_type }}" placeholder="VD: Activity"
+                    class="w-full border-3 border-black bg-bg-light px-3 py-2 font-bold text-sm focus:outline-none focus:border-primary">
+            </div>
+            <!-- User filter -->
+            <div>
+                <label class="block text-xs font-black uppercase mb-1">NGƯỜI THỰC HIỆN</label>
+                <input type="text" name="user" value="{{ current_user }}" placeholder="Tên người dùng"
+                    class="w-full border-3 border-black bg-bg-light px-3 py-2 font-bold text-sm focus:outline-none focus:border-primary">
+            </div>
+            <!-- Submit -->
+            <div class="flex items-end gap-2">
+                <button type="submit"
+                    class="flex-1 bg-zinc-900 text-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn">
+                    LỌC
+                </button>
+                <a href="{% url 'core:audit_log' %}"
+                    class="flex-1 text-center bg-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn">
+                    ĐẶT LẠI
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Audit Table -->
+    <div class="bg-white border-3 border-black shadow-brutal">
+        <div class="p-5 border-b-3 border-black bg-bg-light flex justify-between items-center">
+            <h2 class="font-black uppercase text-lg">KẾT QUẢ — {{ logs|length }} BẢN GHI</h2>
+        </div>
+        {% if logs %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                    <tr class="border-b-3 border-black bg-slate-100">
+                        <th class="p-4 font-black uppercase border-r-2 border-black whitespace-nowrap">THỜI GIAN</th>
+                        <th class="p-4 font-black uppercase border-r-2 border-black">NGƯỜI DÙNG</th>
+                        <th class="p-4 font-black uppercase border-r-2 border-black">THAO TÁC</th>
+                        <th class="p-4 font-black uppercase border-r-2 border-black">ĐỐI TƯỢNG</th>
+                        <th class="p-4 font-black uppercase border-r-2 border-black">MÔ TẢ</th>
+                        <th class="p-4 font-black uppercase">IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr class="border-b-2 border-black hover:bg-primary/5 transition-all">
+                        <!-- Time -->
+                        <td class="p-4 border-r-2 border-black font-mono text-xs whitespace-nowrap">
+                            {{ log.timestamp|date:"d/m/Y H:i:s" }}
+                        </td>
+                        <!-- User -->
+                        <td class="p-4 border-r-2 border-black">
+                            {% if log.user %}
+                            <span class="font-black">{{ log.user.full_name }}</span>
+                            <span class="block text-xs text-slate-400">{{ log.user.role }}</span>
+                            {% else %}
+                            <span class="text-slate-400 italic">Hệ thống</span>
+                            {% endif %}
+                        </td>
+                        <!-- Action Badge -->
+                        <td class="p-4 border-r-2 border-black">
+                            <span class="px-2 py-1 border-2 border-black text-xs font-black uppercase
+                {% if log.action == 'CREATE' %}bg-accent-teal/20 text-accent-teal
+                {% elif log.action == 'UPDATE' %}bg-primary/20 text-primary
+                {% elif log.action == 'DELETE' %}bg-accent-red/20 text-accent-red
+                {% elif log.action == 'APPROVE' %}bg-accent-yellow text-black
+                {% elif log.action == 'LOGIN' %}bg-blue-100 text-blue-700
+                {% elif log.action == 'LOGOUT' %}bg-slate-100 text-slate-600
+                {% else %}bg-white{% endif %}">
+                                {{ log.get_action_display }}
+                            </span>
+                        </td>
+                        <!-- Object Type -->
+                        <td class="p-4 border-r-2 border-black">
+                            <span class="font-black text-xs uppercase bg-zinc-100 border-2 border-black px-2 py-1">
+                                {{ log.object_type }}
+                            </span>
+                        </td>
+                        <!-- Object Repr -->
+                        <td class="p-4 border-r-2 border-black text-xs">
+                            <span class="font-bold truncate block max-w-[200px]" title="{{ log.object_repr }}">
+                                {{ log.object_repr|truncatechars:60 }}
+                            </span>
+                        </td>
+                        <!-- IP -->
+                        <td class="p-4 font-mono text-xs text-slate-500">
+                            {{ log.ip_address|default:"—" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-16 text-center">
+            <span class="material-symbols-outlined text-6xl text-slate-300 block mb-4">manage_search</span>
+            <p class="font-black uppercase text-slate-400">CHƯA CÓ BẢN GHI NÀO</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

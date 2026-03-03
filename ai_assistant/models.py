@@ -63,11 +63,12 @@ class AiDocument(models.Model):
         return self.title or f"AI Doc #{self.pk}"
 
 
+
 class AuditLog(models.Model):
     """
-    System audit trail for important operations.
-    Maps to table: audit_logs
-    user is nullable for system-triggered actions.
+    DEPRECATED: AuditLog has been moved to core.AuditLog.
+    This stub remains to allow migration squashing.
+    Do NOT use this model — import from core.models instead.
     """
 
     user = models.ForeignKey(
@@ -75,7 +76,7 @@ class AuditLog(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='audit_logs',
+        related_name='ai_audit_logs',  # renamed to avoid clash with core.AuditLog
     )
     action = models.CharField(max_length=100)
     object_type = models.CharField(max_length=100)
@@ -84,10 +85,11 @@ class AuditLog(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'audit_logs'
-        verbose_name = 'Nhật ký hệ thống'
-        verbose_name_plural = 'Nhật ký hệ thống'
+        db_table = 'ai_audit_logs'  # renamed table to avoid conflict
+        verbose_name = 'AI Audit Log (Deprecated)'
+        verbose_name_plural = 'AI Audit Logs (Deprecated)'
         ordering = ['-created_at']
 
     def __str__(self):
         return f"{self.action} on {self.object_type}#{self.object_id}"
+

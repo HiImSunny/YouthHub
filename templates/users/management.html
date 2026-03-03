@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% block title %}QUẢN LÝ NGƯỜI DÙNG — YOUTHHUB{% endblock %}
+
+{% block breadcrumb %}
+<span class="font-black uppercase text-sm">👥 Quản lý Người dùng</span>
+{% endblock %}
+
+{% block content %}
+<div>
+    <!-- Hero -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+            <h1 class="text-5xl font-black uppercase tracking-tighter leading-none mb-2">👥 USERS</h1>
+            <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">QUẢN LÝ TÀI KHOẢN HỆ THỐNG</p>
+        </div>
+        <span
+            class="bg-accent-red text-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm">
+            🔒 ADMIN ONLY
+        </span>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white border-3 border-black p-5 shadow-brutal">
+            <p class="text-xs font-black uppercase text-slate-500 mb-1">TỔNG</p>
+            <p class="text-4xl font-black">{{ total_users }}</p>
+        </div>
+        <div class="bg-zinc-900 text-white border-3 border-black p-5 shadow-brutal">
+            <p class="text-xs font-black uppercase mb-1 opacity-70">ADMIN</p>
+            <p class="text-4xl font-black">{{ total_admin }}</p>
+        </div>
+        <div class="bg-primary text-white border-3 border-black p-5 shadow-brutal">
+            <p class="text-xs font-black uppercase mb-1 opacity-80">CÁN BỘ</p>
+            <p class="text-4xl font-black">{{ total_staff }}</p>
+        </div>
+        <div class="bg-accent-yellow border-3 border-black p-5 shadow-brutal">
+            <p class="text-xs font-black uppercase mb-1">SINH VIÊN</p>
+            <p class="text-4xl font-black">{{ total_student }}</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="bg-white border-3 border-black shadow-brutal p-5 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+            <div>
+                <label class="block text-xs font-black uppercase mb-1">ROLE</label>
+                <select name="role"
+                    class="w-full border-3 border-black bg-bg-light px-3 py-2 font-bold text-sm focus:outline-none focus:border-primary">
+                    <option value="">Tất cả</option>
+                    {% for val, label in role_choices %}
+                    <option value="{{ val }}" {% if val==current_role %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-black uppercase mb-1">TRẠNG THÁI</label>
+                <select name="status"
+                    class="w-full border-3 border-black bg-bg-light px-3 py-2 font-bold text-sm focus:outline-none focus:border-primary">
+                    <option value="">Tất cả</option>
+                    {% for val, label in status_choices %}
+                    <option value="{{ val }}" {% if val==current_status %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-black uppercase mb-1">TÌM KIẾM</label>
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Tên, username..."
+                    class="w-full border-3 border-black bg-bg-light px-3 py-2 font-bold text-sm focus:outline-none focus:border-primary">
+            </div>
+            <div class="flex items-end gap-2">
+                <button type="submit"
+                    class="flex-1 bg-zinc-900 text-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn">
+                    LỌC
+                </button>
+                <a href="{% url 'users:management' %}"
+                    class="flex-1 text-center bg-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn">
+                    ĐẶT LẠI
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Users Table -->
+    <div class="bg-white border-3 border-black shadow-brutal">
+        <div class="p-5 border-b-3 border-black bg-bg-light">
+            <h2 class="font-black uppercase text-lg">{{ users|length }} NGƯỜI DÙNG</h2>
+        </div>
+        {% if users %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b-3 border-black bg-slate-100">
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">#</th>
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">HỌ TÊN</th>
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">EMAIL</th>
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">ROLE</th>
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">TRẠNG THÁI</th>
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">NGÀY TẠO</th>
+                        <th class="p-4 font-black uppercase text-sm">THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr
+                        class="border-b-2 border-black hover:bg-primary/5 transition-all {% if u == request.user %}bg-accent-yellow/10{% endif %}">
+                        <!-- Avatar -->
+                        <td class="p-4 border-r-2 border-black">
+                            <div
+                                class="w-9 h-9 border-3 border-black flex items-center justify-center font-black text-white
+                {% if u.role == 'ADMIN' %}bg-zinc-900{% elif u.role == 'STAFF' %}bg-primary{% else %}bg-accent-teal{% endif %}">
+                                {{ u.full_name|first|upper }}
+                            </div>
+                        </td>
+                        <!-- Name -->
+                        <td class="p-4 border-r-2 border-black">
+                            <p class="font-black uppercase text-sm">{{ u.full_name }}</p>
+                            <p class="text-xs text-slate-500">@{{ u.username }}</p>
+                        </td>
+                        <!-- Email -->
+                        <td class="p-4 border-r-2 border-black text-sm font-bold text-slate-600">{{ u.email }}</td>
+                        <!-- Role Badge -->
+                        <td class="p-4 border-r-2 border-black">
+                            <span class="px-2 py-1 border-2 border-black text-xs font-black uppercase
+                {% if u.role == 'ADMIN' %}bg-zinc-900 text-white
+                {% elif u.role == 'STAFF' %}bg-primary text-white
+                {% else %}bg-accent-yellow text-black{% endif %}">
+                                {{ u.get_role_display }}
+                            </span>
+                        </td>
+                        <!-- Status Badge -->
+                        <td class="p-4 border-r-2 border-black">
+                            <span
+                                class="px-2 py-1 border-2 border-black text-xs font-black uppercase
+                {% if u.status == 'ACTIVE' %}bg-accent-teal/20 text-accent-teal{% else %}bg-accent-red/20 text-accent-red{% endif %}">
+                                {{ u.get_status_display }}
+                            </span>
+                        </td>
+                        <!-- Date -->
+                        <td class="p-4 border-r-2 border-black text-sm font-bold">{{ u.created_at|date:"d/m/Y" }}</td>
+                        <!-- Actions -->
+                        <td class="p-4">
+                            {% if u != request.user %}
+                            <div class="flex gap-2 flex-wrap">
+                                <!-- Toggle Status -->
+                                <form method="post" action="{% url 'users:toggle_status' pk=u.pk %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                        onclick="return confirm('Xác nhận thay đổi trạng thái tài khoản \" {{
+                                        u.full_name }}\"?')"
+                                        class="text-xs font-black uppercase border-2 border-black px-3 py-1 shadow-brutal-sm brutal-btn
+                    {% if u.status == 'ACTIVE' %}bg-accent-red text-white{% else %}bg-accent-teal text-white{% endif %}">
+                                        {% if u.status == 'ACTIVE' %}KHÓA{% else %}MỞ KHÓA{% endif %}
+                                    </button>
+                                </form>
+                                <!-- Change Role -->
+                                <form method="post" action="{% url 'users:change_role' pk=u.pk %}"
+                                    class="inline flex gap-1">
+                                    {% csrf_token %}
+                                    <select name="role"
+                                        class="border-2 border-black text-xs font-black px-2 py-1 bg-white focus:outline-none">
+                                        {% for val, label in role_choices %}
+                                        <option value="{{ val }}" {% if val==u.role %}selected{% endif %}>{{ label }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit"
+                                        class="text-xs font-black uppercase border-2 border-black bg-zinc-900 text-white px-2 py-1 shadow-brutal-sm brutal-btn">
+                                        ĐỔI
+                                    </button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <span class="text-xs text-slate-400 italic">(Tài khoản của bạn)</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-16 text-center">
+            <span class="material-symbols-outlined text-6xl text-slate-300 block mb-4">person_off</span>
+            <p class="font-black uppercase text-slate-400">KHÔNG TÌM THẤY NGƯỜI DÙNG NÀO</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

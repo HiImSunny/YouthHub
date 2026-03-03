@@ -76,33 +76,73 @@
       </div>
 
       <!-- Navigation -->
-      <nav class="flex-1 p-4 space-y-2">
+      <nav class="flex-1 p-4 space-y-1">
         {% with request.resolver_match.url_name as url_name %}
+
+        <!-- Dashboard — all roles -->
         <a href="{% url 'core:dashboard' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
           {% if url_name == 'dashboard' %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
           <span class="material-symbols-outlined text-xl">dashboard</span> DASHBOARD
         </a>
+
+        <!-- Hoạt động — all roles -->
         <a href="{% url 'activities:list' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
           {% if 'activit' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
           <span class="material-symbols-outlined text-xl">event</span> HOẠT ĐỘNG
         </a>
+
+        <!-- Điểm danh — all roles -->
         <a href="{% url 'attendance:sessions' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
           {% if 'attendance' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
           <span class="material-symbols-outlined text-xl">qr_code_scanner</span> ĐIỂM DANH
         </a>
+
+        <!-- Tổ chức — all roles -->
         <a href="{% url 'core:organizations' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
           {% if 'organizations' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
           <span class="material-symbols-outlined text-xl">apartment</span> TỔ CHỨC
         </a>
+
+        <!-- AI Assistant — all roles -->
         <a href="{% url 'ai_assistant:chat' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
           {% if 'ai' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
           <span class="material-symbols-outlined text-xl">smart_toy</span> TRỢ LÝ AI
         </a>
+
+        {% if user.role == 'ADMIN' or user.role == 'STAFF' %}
+        <!-- Separator -->
+        <div class="border-t border-zinc-700 my-2"></div>
+        <p class="text-[10px] uppercase tracking-[0.25em] text-zinc-500 px-4 py-1 font-bold">QUẢN TRỊ</p>
+
+        <!-- Thống kê — ADMIN + STAFF -->
+        <a href="{% url 'core:statistics' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'statistics' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">bar_chart</span> THỐNG KÊ
+        </a>
+        {% endif %}
+
+        {% if user.role == 'ADMIN' %}
+        <!-- Audit Log — ADMIN only -->
+        <a href="{% url 'core:audit_log' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'audit' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">manage_search</span> AUDIT LOG
+        </a>
+
+        <!-- User Management — ADMIN only -->
+        <a href="{% url 'users:management' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'management' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">manage_accounts</span> USERS
+        </a>
+        {% endif %}
+
         {% endwith %}
       </nav>
 
@@ -125,6 +165,7 @@
         </div>
       </div>
     </aside>
+
 
     <!-- MAIN CONTENT AREA -->
     <div class="flex-1 flex flex-col overflow-hidden">

@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+import json
 
 
 class Organization(models.Model):
@@ -102,3 +103,57 @@ class Semester(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.academic_year})"
+
+
+class AuditLog(models.Model):
+    """
+    System audit log for important CRUD operations.
+    Maps to table: audit_logs
+    Populated via Django Signals.
+    """
+
+    class Action(models.TextChoices):
+        CREATE = 'CREATE', 'Tạo mới'
+        UPDATE = 'UPDATE', 'Cập nhật'
+        DELETE = 'DELETE', 'Xóa'
+        APPROVE = 'APPROVE', 'Phê duyệt'
+        REJECT = 'REJECT', 'Từ chối'
+        LOGIN = 'LOGIN', 'Đăng nhập'
+        LOGOUT = 'LOGOUT', 'Đăng xuất'
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='audit_logs',
+    )
+    action = models.CharField(max_length=20, choices=Action.choices)
+    # Target object info
+    object_type = models.CharField(max_length=100)   # e.g. 'Activity'
+    object_id = models.CharField(max_length=50, blank=True, null=True)
+    object_repr = models.CharField(max_length=255, blank=True, null=True)
+    # Detail diff (JSON)
+    changes = models.TextField(blank=True, null=True)
+    # Request metadata
+    ip_address = models.GenericIPAddressField(blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'audit_logs'
+        verbose_name = 'Audit Log'
+        verbose_name_plural = 'Audit Logs'
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"[{self.timestamp:%d/%m/%Y %H:%M}] {self.user} {self.action} {self.object_type}"
+
+    def set_changes(self, data: dict):
+        """Serialize changes dict to JSON string."""
+        self.changes = json.dumps(data, ensure_ascii=False, default=str)
+
+    def get_changes(self):
+        """Deserialize JSON changes to dict."""
+        if self.changes:
+            return json.loads(self.changes)
+        return {}
