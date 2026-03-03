@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Điểm rèn luyện - YouthHub{% endblock %}
+
+{% block breadcrumb %}
+<nav class="flex items-center gap-2 text-sm text-gray-500">
+    <a href="{% url 'core:dashboard' %}" class="hover:text-primary-600">Dashboard</a>
+    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    <a href="{% url 'attendance:sessions' %}" class="hover:text-primary-600">Điểm danh</a>
+    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    <span class="text-gray-900 font-medium">Điểm rèn luyện</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <div class="flex items-start gap-6 flex-col md:flex-row mb-6">
+        <!-- Total Points Card -->
+        <div class="w-full md:w-64 flex-shrink-0 bg-white rounded-xl border border-gray-200 p-6 text-center">
+            <div class="w-16 h-16 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="star" class="w-8 h-8 text-white"></i>
+            </div>
+            <p class="text-4xl font-extrabold text-gray-900">{{ total_points }}</p>
+            <p class="text-sm text-gray-500 mt-1">
+                {% if user.role == 'STUDENT' %}Điểm rèn luyện của bạn{% else %}Tổng điểm hệ thống{% endif %}
+            </p>
+        </div>
+
+        <!-- Info -->
+        <div class="flex-1 bg-primary-50 rounded-xl border border-primary-100 p-5 text-sm text-primary-800">
+            <div class="flex items-center gap-2 font-semibold mb-2">
+                <i data-lucide="info" class="w-4 h-4"></i> Thông tin điểm rèn luyện
+            </div>
+            <ul class="space-y-1.5 text-primary-700">
+                <li>• Mỗi lần điểm danh được xác nhận = +5 điểm</li>
+                <li>• Điểm được ghi nhận ngay sau khi cán bộ phê duyệt</li>
+                <li>• Mỗi hoạt động chỉ được tính 1 lần điểm danh</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Points Table -->
+    <div class="bg-white rounded-xl border border-gray-200">
+        <div class="p-5 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-900">Lịch sử điểm rèn luyện</h2>
+        </div>
+
+        {% if points %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr class="text-left text-gray-500">
+                        {% if user.role != 'STUDENT' %}<th class="py-3 px-4 font-medium">Sinh viên</th>{% endif %}
+                        <th class="py-3 px-4 font-medium">Hoạt động</th>
+                        <th class="py-3 px-4 font-medium">Lý do</th>
+                        <th class="py-3 px-4 font-medium text-right">Điểm</th>
+                        <th class="py-3 px-4 font-medium">Thời gian</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pt in points %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        {% if user.role != 'STUDENT' %}
+                        <td class="py-3 px-4 font-medium text-gray-900">{{ pt.student.full_name }}</td>
+                        {% endif %}
+                        <td class="py-3 px-4 text-gray-700">{{ pt.activity.title }}</td>
+                        <td class="py-3 px-4 text-gray-500 text-xs">{{ pt.reason }}</td>
+                        <td class="py-3 px-4 text-right">
+                            <span class="inline-flex items-center gap-1 font-bold text-green-600">
+                                +{{ pt.points }}
+                                <i data-lucide="star" class="w-3.5 h-3.5 text-yellow-400"></i>
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-gray-500">{{ pt.created_at|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-16">
+            <i data-lucide="star" class="w-12 h-12 text-gray-300 mx-auto mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-500">Chưa có điểm rèn luyện nào</h3>
+            <p class="text-sm text-gray-400 mt-1">Tham gia hoạt động và điểm danh để tích điểm!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Điểm danh - {{ session.name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #c026d3 100%);
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(1);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: scale(1.15);
+                opacity: 0;
+            }
+        }
+
+        .pulse-ring {
+            animation: pulse-ring 2s ease-out infinite;
+        }
+    </style>
+</head>
+
+<body class="gradient-bg min-h-screen flex flex-col items-center justify-center p-6">
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <div class="flex items-center justify-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                <span class="text-white font-bold text-xl">Y</span>
+            </div>
+            <h1 class="text-2xl font-bold text-white">YouthHub</h1>
+        </div>
+        <h2 class="text-3xl font-extrabold text-white mb-1">{{ session.name }}</h2>
+        <p class="text-white/70">{{ session.activity.title }}</p>
+    </div>
+
+    <!-- QR Code Card -->
+    <div class="bg-white rounded-3xl shadow-2xl p-8 text-center max-w-sm w-full">
+        <div class="relative flex items-center justify-center mb-4">
+            <!-- Animated rings -->
+            <div class="absolute w-72 h-72 rounded-full border-2 border-primary-300/30 pulse-ring"></div>
+            <div class="absolute w-64 h-64 rounded-full border-2 border-primary-300/20 pulse-ring"
+                style="animation-delay:0.5s"></div>
+            <img src="{{ qr_data }}" alt="QR Code check-in"
+                class="w-56 h-56 rounded-2xl border-4 border-primary-100 relative z-10">
+        </div>
+
+        <div
+            class="flex items-center justify-center gap-2 text-sm font-medium text-green-600 bg-green-50 rounded-xl px-4 py-2.5 mb-4">
+            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            Phiên đang mở – Quét để điểm danh
+        </div>
+
+        <div class="text-xs text-gray-400 break-all bg-gray-50 rounded-xl p-3 font-mono">
+            {{ checkin_url }}
+        </div>
+
+        {% if session.requires_photo %}
+        <div class="mt-4 flex items-center justify-center gap-2 text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
+            <i data-lucide="camera" class="w-4 h-4"></i>
+            Yêu cầu ảnh selfie minh chứng
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Time display -->
+    <div class="mt-8 text-center">
+        <p class="text-white/60 text-sm mb-1">Thời gian điểm danh</p>
+        <p class="text-white font-semibold">{{ session.start_time|date:"H:i" }} – {{ session.end_time|date:"H:i d/m/Y"
+            }}</p>
+    </div>
+
+    <!-- Close button (for staff) -->
+    <div class="mt-6">
+        <button onclick="window.close()"
+            class="text-white/50 hover:text-white text-sm transition flex items-center gap-2">
+            <i data-lucide="x" class="w-4 h-4"></i> Đóng hiển thị
+        </button>
+    </div>
+
+    <script>lucide.createIcons();</script>
+</body>
+
+</html>

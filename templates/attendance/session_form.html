@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Tạo phiên điểm danh - YouthHub{% endblock %}
+
+{% block content %}
+<div class="fade-in max-w-xl">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">Tạo phiên điểm danh</h1>
+
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <form method="post" class="space-y-5">
+            {% csrf_token %}
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Tên phiên <span
+                        class="text-red-500">*</span></label>
+                <input type="text" name="name" required
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 text-sm"
+                    placeholder="VD: Điểm danh khai mạc">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Hoạt động <span
+                        class="text-red-500">*</span></label>
+                <select name="activity" required
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 text-sm">
+                    <option value="">-- Chọn hoạt động --</option>
+                    {% for act in activities %}
+                    <option value="{{ act.pk }}">{{ act.title }} ({{ act.start_time|date:"d/m/Y" }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Giờ bắt đầu <span
+                            class="text-red-500">*</span></label>
+                    <input type="datetime-local" name="start_time" required
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Giờ kết thúc <span
+                            class="text-red-500">*</span></label>
+                    <input type="datetime-local" name="end_time" required
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 text-sm">
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 p-4 bg-blue-50 rounded-xl">
+                <input type="checkbox" name="requires_photo" id="requires_photo"
+                    class="w-4 h-4 text-primary-600 rounded">
+                <label for="requires_photo" class="text-sm text-gray-700">
+                    <span class="font-medium">Yêu cầu ảnh selfie minh chứng</span>
+                    <span class="block text-xs text-gray-500 mt-0.5">Sinh viên phải upload ảnh khi điểm danh, cán bộ sẽ
+                        xét duyệt thủ công</span>
+                </label>
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+                <button type="submit"
+                    class="px-6 py-2.5 rounded-xl text-white font-semibold gradient-bg hover:opacity-90 transition text-sm">
+                    Tạo phiên & lấy mã QR
+                </button>
+                <a href="{% url 'attendance:sessions' %}"
+                    class="px-6 py-2.5 rounded-xl text-gray-700 font-medium bg-gray-100 hover:bg-gray-200 transition text-sm">Hủy</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

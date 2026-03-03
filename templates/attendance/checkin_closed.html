@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phiên đã đóng - YouthHub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+    <div class="text-center max-w-sm bg-white rounded-2xl border border-gray-200 p-8">
+        <div class="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+            <i data-lucide="lock" class="w-8 h-8 text-gray-400"></i>
+        </div>
+        <h2 class="text-xl font-bold text-gray-900 mb-2">Phiên điểm danh đã đóng</h2>
+        <p class="text-sm text-gray-500 mb-1">Phiên <strong>{{ session.name }}</strong> đã kết thúc.</p>
+        <p class="text-sm text-gray-400">Vui lòng liên hệ cán bộ phụ trách nếu bạn cần hỗ trợ.</p>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+
+</html>

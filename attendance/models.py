@@ -57,6 +57,13 @@ class AttendanceRecord(models.Model):
         on_delete=models.CASCADE,
         related_name='records',
     )
+    activity = models.ForeignKey(
+        'activities.Activity',
+        on_delete=models.CASCADE,
+        related_name='attendance_records',
+        null=True,
+        blank=True,
+    )
     student = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -79,6 +86,7 @@ class AttendanceRecord(models.Model):
         choices=RecordStatus.choices,
         default=RecordStatus.PENDING,
     )
+    approved_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = 'attendance_records'
