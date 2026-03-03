@@ -1,160 +1,198 @@
 <!DOCTYPE html>
-<html lang="vi" class="h-full">
+<html lang="vi">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}YouthHub{% endblock %}</title>
-  <meta name="description" content="{% block meta_description %}Hệ thống quản lý hoạt động Đoàn - Hội sinh viên tích hợp AI{% endblock %}">
-  
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="description" content="YouthHub - Nền tảng quản lý hoạt động Đoàn - Hội Sinh viên">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            primary: { 50:'#eff6ff', 100:'#dbeafe', 200:'#bfdbfe', 300:'#93c5fd', 400:'#60a5fa', 500:'#3b82f6', 600:'#2563eb', 700:'#1d4ed8', 800:'#1e40af', 900:'#1e3a8a' },
-            accent:  { 50:'#fdf4ff', 100:'#fae8ff', 200:'#f5d0fe', 300:'#f0abfc', 400:'#e879f9', 500:'#d946ef', 600:'#c026d3', 700:'#a21caf', 800:'#86198f', 900:'#701a75' },
-            youth:   { 50:'#f0fdf4', 100:'#dcfce7', 200:'#bbf7d0', 300:'#86efac', 400:'#4ade80', 500:'#22c55e', 600:'#16a34a', 700:'#15803d', 800:'#166534', 900:'#14532d' },
-          }
-        }
-      }
+            "primary": "#ff6a00",
+            "accent-yellow": "#fbef2e",
+            "accent-teal": "#008080",
+            "accent-red": "#ff4d4d",
+            "bg-light": "#f0f0eb",
+          },
+          fontFamily: {
+            "display": ["Space Grotesk", "sans-serif"],
+          },
+          borderWidth: { '3': '3px' },
+          boxShadow: {
+            'brutal': '4px 4px 0px 0px rgba(0,0,0,1)',
+            'brutal-lg': '8px 8px 0px 0px rgba(0,0,0,1)',
+            'brutal-sm': '2px 2px 0px 0px rgba(0,0,0,1)',
+          },
+        },
+      },
     }
   </script>
-
-  <!-- Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
-
   <style>
-    body { font-family: 'Inter', sans-serif; }
-    .glass { backdrop-filter: blur(12px); background: rgba(255,255,255,0.7); }
-    .gradient-bg { background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #c026d3 100%); }
-    .card-hover { transition: all 0.3s ease; }
-    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
-    .fade-in { animation: fadeIn 0.4s ease-out; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-    .sidebar-link { transition: all 0.2s ease; }
-    .sidebar-link:hover, .sidebar-link.active { background: rgba(59,130,246,0.1); color: #2563eb; }
+    * {
+      border-radius: 0 !important;
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .grid-bg {
+      background-image: radial-gradient(circle, #d1d1ca 1px, transparent 1px);
+      background-size: 20px 20px;
+      background-color: #f0f0eb;
+    }
+
+    .brutal-btn:active,
+    .brutal-btn:hover {
+      transform: translate(2px, 2px);
+      box-shadow: none !important;
+    }
   </style>
-  {% block extra_css %}{% endblock %}
 </head>
 
-<body class="h-full bg-gray-50">
+<body class="grid-bg min-h-screen font-display text-slate-900">
+
   {% if user.is_authenticated %}
-  <!-- AUTHENTICATED LAYOUT -->
-  <div class="flex h-screen overflow-hidden">
-    
+  <!-- ═══════════ AUTHENTICATED LAYOUT ═══════════ -->
+  <div class="flex h-screen">
     <!-- SIDEBAR -->
-    <aside id="sidebar" class="hidden lg:flex lg:flex-shrink-0 lg:w-64 flex-col bg-white border-r border-gray-200">
+    <aside
+      class="w-64 flex-shrink-0 bg-zinc-900 text-white border-r-3 border-black flex flex-col overflow-y-auto hidden lg:flex">
       <!-- Logo -->
-      <div class="flex items-center gap-3 px-6 py-5 border-b border-gray-100">
-        <div class="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center">
-          <span class="text-white font-bold text-lg">Y</span>
-        </div>
+      <div class="px-6 py-5 border-b-3 border-black flex items-center gap-3">
+        <span class="material-symbols-outlined text-3xl text-primary">bolt</span>
         <div>
-          <h1 class="text-lg font-bold text-gray-900">YouthHub</h1>
-          <p class="text-xs text-gray-400">Đoàn - Hội SV</p>
+          <h1 class="text-xl font-black uppercase tracking-tighter leading-none">YOUTH HUB</h1>
+          <p class="text-[10px] uppercase tracking-[0.3em] text-zinc-400 font-bold">STUDENT UNION</p>
         </div>
       </div>
 
       <!-- Navigation -->
-      <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Tổng quan</p>
-        <a href="{% url 'core:dashboard' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-          <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+      <nav class="flex-1 p-4 space-y-2">
+        {% with request.resolver_match.url_name as url_name %}
+        <a href="{% url 'core:dashboard' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if url_name == 'dashboard' %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">dashboard</span> DASHBOARD
         </a>
-
-        <p class="px-3 pt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Quản lý</p>
-        <a href="{% url 'activities:list' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 {% if 'activities' in request.path %}active{% endif %}">
-          <i data-lucide="calendar-check" class="w-5 h-5"></i> Hoạt động
+        <a href="{% url 'activities:list' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'activit' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">event</span> HOẠT ĐỘNG
         </a>
-        
-        {% if user.role == 'ADMIN' or user.role == 'STAFF' %}
-        <a href="{% url 'activities:list' %}?status=PENDING" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700">
-          <i data-lucide="clipboard-check" class="w-5 h-5"></i> Phê duyệt
+        <a href="{% url 'attendance:sessions' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'attendance' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">qr_code_scanner</span> ĐIỂM DANH
         </a>
-        <a href="{% url 'core:organizations' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 {% if 'organizations' in request.path %}active{% endif %}">
-          <i data-lucide="building-2" class="w-5 h-5"></i> Tổ chức
+        <a href="{% url 'core:organizations' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'organizations' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">apartment</span> TỔ CHỨC
         </a>
-        {% endif %}
-
-        <p class="px-3 pt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Công cụ</p>
-        <a href="{% url 'attendance:sessions' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 {% if 'attendance' in request.path %}active{% endif %}">
-          <i data-lucide="scan-line" class="w-5 h-5"></i> Điểm danh
+        <a href="{% url 'ai_assistant:chat' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'ai' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">smart_toy</span> TRỢ LÝ AI
         </a>
-        <a href="{% url 'ai_assistant:chat' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 {% if 'ai' in request.path %}active{% endif %}">
-          <i data-lucide="bot" class="w-5 h-5"></i> Trợ lý AI
-        </a>
+        {% endwith %}
       </nav>
 
-      <!-- User Profile -->
-      <div class="border-t border-gray-100 p-4">
-        <div class="flex items-center gap-3">
-          <div class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center">
-            <span class="text-sm font-semibold text-primary-600">{{ user.full_name|first }}</span>
+      <!-- User Block -->
+      <div class="p-4 border-t-3 border-black">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 bg-primary border-3 border-black flex items-center justify-center">
+            <span class="font-black text-white text-lg">{{ user.full_name|first|upper }}</span>
           </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium text-gray-900 truncate">{{ user.full_name }}</p>
-            <p class="text-xs text-gray-400">{{ user.get_role_display }}</p>
+          <div class="overflow-hidden">
+            <p class="text-sm font-black uppercase truncate">{{ user.full_name }}</p>
+            <p class="text-[10px] uppercase tracking-widest text-zinc-400">{{ user.role }}</p>
           </div>
-          <a href="{% url 'users:logout' %}" class="text-gray-400 hover:text-red-500 transition" title="Đăng xuất">
-            <i data-lucide="log-out" class="w-5 h-5"></i>
-          </a>
+        </div>
+        <div class="flex gap-2">
+          <a href="{% url 'users:profile' %}"
+            class="flex-1 text-center bg-zinc-800 border-3 border-zinc-600 px-3 py-1.5 text-xs font-black uppercase hover:bg-zinc-700 transition-all">PROFILE</a>
+          <a href="{% url 'users:logout' %}"
+            class="flex-1 text-center bg-accent-red text-white border-3 border-black px-3 py-1.5 text-xs font-black uppercase shadow-brutal-sm brutal-btn">LOGOUT</a>
         </div>
       </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
+    <!-- MAIN CONTENT AREA -->
     <div class="flex-1 flex flex-col overflow-hidden">
-      <!-- Topbar -->
-      <header class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-        <button onclick="document.getElementById('sidebar').classList.toggle('hidden')" class="lg:hidden p-2 rounded-lg hover:bg-gray-100">
-          <i data-lucide="menu" class="w-5 h-5"></i>
-        </button>
-        <div class="flex items-center gap-2">
-          {% block breadcrumb %}{% endblock %}
-        </div>
+      <!-- Top Bar -->
+      <header class="flex items-center justify-between border-b-3 border-black bg-white px-6 py-4 flex-shrink-0">
         <div class="flex items-center gap-4">
+          <button id="sidebarToggle" class="lg:hidden p-2 border-3 border-black bg-white shadow-brutal-sm brutal-btn">
+            <span class="material-symbols-outlined">menu</span>
+          </button>
+          <div>{% block breadcrumb %}{% endblock %}</div>
+        </div>
+        <div class="flex items-center gap-3">
           {% block header_actions %}{% endblock %}
+          <div
+            class="hidden md:block border-3 border-black bg-white px-4 py-2 font-black uppercase text-xs shadow-brutal-sm">
+            <span class="text-primary">●</span> {{ user.get_role_display|default:user.role }}
+          </div>
         </div>
       </header>
 
-      <!-- Page Content -->
-      <main class="flex-1 overflow-y-auto p-6">
-        <!-- Flash messages -->
-        {% if messages %}
-        <div class="mb-6 space-y-2 fade-in">
-          {% for message in messages %}
-          <div class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm
-            {% if message.tags == 'success' %}bg-green-50 text-green-700 border border-green-200
-            {% elif message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200
-            {% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-700 border border-yellow-200
-            {% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
-            <span>{{ message }}</span>
-            <button onclick="this.parentElement.remove()" class="ml-auto opacity-50 hover:opacity-100">&times;</button>
-          </div>
-          {% endfor %}
+      <!-- Messages -->
+      {% if messages %}
+      <div class="px-6 pt-4 space-y-2">
+        {% for message in messages %}
+        <div class="border-3 border-black p-4 font-bold uppercase text-sm shadow-brutal-sm
+        {% if message.tags == 'success' %}bg-accent-teal/20 text-accent-teal
+        {% elif message.tags == 'error' %}bg-accent-red/20 text-accent-red
+        {% elif message.tags == 'info' %}bg-primary/20 text-primary
+        {% else %}bg-accent-yellow/20 text-slate-900{% endif %}">
+          {{ message }}
         </div>
-        {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
 
+      <!-- Page Content -->
+      <main class="flex-1 overflow-y-auto p-6 md:p-8">
         {% block content %}{% endblock %}
       </main>
+
+      <!-- Footer -->
+      <footer class="border-t-3 border-black bg-white px-6 py-3 text-center flex-shrink-0">
+        <p class="font-black uppercase tracking-widest text-xs text-slate-400">YOUTHHUB © 2024 — STAY RADICAL</p>
+      </footer>
     </div>
   </div>
 
   {% else %}
-  <!-- PUBLIC / AUTH LAYOUT -->
-  <div class="min-h-screen gradient-bg flex items-center justify-center p-4">
+  <!-- ═══════════ PUBLIC LAYOUT (Login) ═══════════ -->
+  <div class="min-h-screen flex items-center justify-center p-6">
     {% block public_content %}{% endblock %}
   </div>
   {% endif %}
 
-  <script>lucide.createIcons();</script>
-  {% block extra_js %}{% endblock %}
+  <script>
+    // Sidebar toggle for mobile
+    const toggle = document.getElementById('sidebarToggle');
+    if (toggle) {
+      toggle.addEventListener('click', () => {
+        const aside = document.querySelector('aside');
+        aside.classList.toggle('hidden');
+        aside.classList.toggle('fixed');
+        aside.classList.toggle('inset-0');
+        aside.classList.toggle('z-50');
+        aside.classList.toggle('w-64');
+      });
+    }
+  </script>
 </body>
+
 </html>

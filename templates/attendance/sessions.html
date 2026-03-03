@@ -1,86 +1,73 @@
 {% extends 'base.html' %}
-{% block title %}Điểm danh - YouthHub{% endblock %}
-
-{% block breadcrumb %}
-<nav class="flex items-center gap-2 text-sm text-gray-500">
-    <a href="{% url 'core:dashboard' %}" class="hover:text-primary-600">Dashboard</a>
-    <i data-lucide="chevron-right" class="w-4 h-4"></i>
-    <span class="text-gray-900 font-medium">Điểm danh</span>
-</nav>
-{% endblock %}
+{% block title %}≡ ĐIỂM DANH — YOUTHHUB{% endblock %}
 
 {% block header_actions %}
 {% if user.role == 'ADMIN' or user.role == 'STAFF' %}
 <a href="{% url 'attendance:session_create' %}"
-    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white gradient-bg hover:opacity-90 transition shadow-lg shadow-primary-500/25">
-    <i data-lucide="plus" class="w-4 h-4"></i> Tạo phiên
+    class="bg-primary text-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
+    <span class="material-symbols-outlined text-lg">add</span> TẠO PHIÊN
 </a>
 {% endif %}
 <a href="{% url 'attendance:points' %}"
-    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-primary-600 bg-primary-50 hover:bg-primary-100 transition">
-    <i data-lucide="star" class="w-4 h-4"></i> Điểm rèn luyện
+    class="bg-accent-yellow border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
+    <span class="material-symbols-outlined text-lg">star</span> ĐIỂM
 </a>
 {% endblock %}
 
 {% block content %}
-<div class="fade-in">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900">Hệ thống Điểm danh</h1>
-        <p class="text-sm text-gray-500 mt-1">Quản lý phiên điểm danh QR Code</p>
+<div>
+    <div class="mb-8">
+        <h1 class="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-2">≡ ĐIỂM DANH</h1>
+        <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">HỆ THỐNG QUÉT MÃ QR</p>
     </div>
 
     {% if sessions %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for session in sessions %}
-        <div class="bg-white rounded-xl border border-gray-200 p-5 card-hover">
-            <div class="flex items-start justify-between mb-3">
-                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium
-          {% if session.status == 'OPEN' %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
-                    <span
-                        class="w-1.5 h-1.5 rounded-full mr-1.5 {% if session.status == 'OPEN' %}bg-green-500 animate-pulse{% else %}bg-gray-400{% endif %}"></span>
-                    {% if session.status == 'OPEN' %}Đang mở{% else %}Đã đóng{% endif %}
+        <div
+            class="bg-white border-3 border-black shadow-brutal hover:-translate-y-1 hover:shadow-brutal-lg transition-all">
+            <div class="p-6 border-b-3 border-black flex items-center justify-between">
+                <span
+                    class="px-3 py-1 border-3 border-black text-xs font-black uppercase
+          {% if session.status == 'OPEN' %}bg-accent-teal/20 text-accent-teal{% else %}bg-slate-200 text-slate-600{% endif %}">
+                    {{ session.get_status_display }}
                 </span>
                 {% if session.requires_photo %}
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs text-blue-600 bg-blue-50">
-                    <i data-lucide="camera" class="w-3 h-3"></i> Cần ảnh
+                <span class="flex items-center gap-1 text-xs font-black uppercase text-primary">
+                    <span class="material-symbols-outlined text-base">photo_camera</span> ẢNH
                 </span>
                 {% endif %}
             </div>
-
-            <h3 class="font-semibold text-gray-900 mb-1">{{ session.name }}</h3>
-            <p class="text-sm text-gray-500 mb-3">{{ session.activity.title }}</p>
-
-            <div class="text-xs text-gray-400 mb-4">
-                <div class="flex items-center gap-1.5 mb-1">
-                    <i data-lucide="clock" class="w-3.5 h-3.5"></i>
-                    {{ session.start_time|date:"d/m/Y H:i" }} → {{ session.end_time|date:"H:i" }}
+            <div class="p-6">
+                <h3 class="text-xl font-black uppercase mb-1">{{ session.name }}</h3>
+                <p class="text-sm font-bold uppercase text-primary mb-4">{{ session.activity.title }}</p>
+                <div class="text-xs font-bold uppercase text-slate-500 space-y-1 mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">schedule</span>
+                        {{ session.start_time|date:"d/m/Y H:i" }} → {{ session.end_time|date:"H:i" }}
+                    </div>
                 </div>
-            </div>
-
-            <div class="flex items-center gap-2">
-                <a href="{% url 'attendance:session_detail' pk=session.pk %}"
-                    class="flex-1 text-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition">
-                    Chi tiết
-                </a>
-                {% if session.status == 'OPEN' %}
-                <a href="{% url 'attendance:session_qr' pk=session.pk %}" target="_blank"
-                    class="flex-1 text-center px-3 py-2 text-sm font-medium text-white gradient-bg rounded-lg hover:opacity-90 transition">
-                    <i data-lucide="qr-code" class="w-4 h-4 inline mr-1"></i>QR
-                </a>
-                {% endif %}
+                <div class="flex gap-3">
+                    <a href="{% url 'attendance:session_detail' pk=session.pk %}"
+                        class="flex-1 bg-white border-3 border-black py-2 text-center font-black uppercase text-sm shadow-brutal-sm brutal-btn transition-all">CHI
+                        TIẾT</a>
+                    {% if session.status == 'OPEN' %}
+                    <a href="{% url 'attendance:session_qr' pk=session.pk %}" target="_blank"
+                        class="flex-1 bg-primary text-white border-3 border-black py-2 text-center font-black uppercase text-sm shadow-brutal-sm brutal-btn transition-all">QR</a>
+                    {% endif %}
+                </div>
             </div>
         </div>
         {% endfor %}
     </div>
     {% else %}
-    <div class="text-center py-16 bg-white rounded-xl border border-gray-200">
-        <i data-lucide="scan-line" class="w-12 h-12 text-gray-300 mx-auto mb-4"></i>
-        <h3 class="text-lg font-medium text-gray-500">Chưa có phiên điểm danh</h3>
+    <div class="bg-white border-3 border-black p-16 text-center shadow-brutal">
+        <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">qr_code_scanner</span>
+        <h3 class="text-2xl font-black uppercase text-slate-400">CHƯA CÓ PHIÊN ĐIỂM DANH</h3>
         {% if user.role != 'STUDENT' %}
         <a href="{% url 'attendance:session_create' %}"
-            class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-white gradient-bg hover:opacity-90 transition">
-            <i data-lucide="plus" class="w-4 h-4"></i> Tạo phiên đầu tiên
-        </a>
+            class="mt-4 inline-block bg-primary text-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn transition-all">TẠO
+            PHIÊN ĐẦU TIÊN</a>
         {% endif %}
     </div>
     {% endif %}

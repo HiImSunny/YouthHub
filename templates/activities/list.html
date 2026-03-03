@@ -1,106 +1,117 @@
 {% extends 'base.html' %}
-{% block title %}Hoạt động - YouthHub{% endblock %}
-
-{% block breadcrumb %}
-<nav class="flex items-center gap-2 text-sm text-gray-500">
-    <a href="{% url 'core:dashboard' %}" class="hover:text-primary-600">Dashboard</a>
-    <i data-lucide="chevron-right" class="w-4 h-4"></i>
-    <span class="text-gray-900 font-medium">Hoạt động</span>
-</nav>
-{% endblock %}
+{% block title %}⚡ HOẠT ĐỘNG — YOUTHHUB{% endblock %}
 
 {% block header_actions %}
 {% if user.role == 'ADMIN' or user.role == 'STAFF' %}
 <a href="{% url 'activities:create' %}"
-    class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white gradient-bg hover:opacity-90 transition shadow-lg shadow-primary-500/25">
-    <i data-lucide="plus" class="w-4 h-4"></i> Tạo hoạt động
+    class="bg-primary text-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
+    <span class="material-symbols-outlined text-lg">add</span> TẠO MỚI
 </a>
 {% endif %}
 {% endblock %}
 
 {% block content %}
-<div class="fade-in">
-    <!-- Filters -->
-    <div class="bg-white rounded-xl border border-gray-200 p-4 mb-6">
-        <form method="get" class="flex flex-wrap items-center gap-3">
-            <div class="flex-1 min-w-[200px]">
-                <div class="relative">
-                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
-                    <input type="text" name="q" value="{{ search_query }}" placeholder="Tìm kiếm hoạt động..."
-                        class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
-                </div>
+<div>
+    <!-- Hero -->
+    <div class="mb-8">
+        <h1 class="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-2">⚡ HOẠT ĐỘNG</h1>
+        <p
+            class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">
+            QUẢN LÝ VÒNG ĐỜI SỰ KIỆN</p>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="bg-white border-3 border-black p-6 mb-8 shadow-brutal-lg">
+        <form method="get" class="flex flex-col lg:flex-row gap-4 items-stretch">
+            <div class="flex-1 relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined">search</span>
+                <input type="text" name="q" value="{{ request.GET.q }}"
+                    class="w-full pl-12 pr-4 py-4 border-3 border-black bg-white text-sm font-bold uppercase placeholder:text-slate-400 focus:ring-0 focus:outline-none"
+                    placeholder="TÌM KIẾM HOẠT ĐỘNG...">
             </div>
             <select name="status"
-                class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
-                <option value="">Tất cả trạng thái</option>
-                {% for value, label in status_choices %}
-                <option value="{{ value }}" {% if current_status==value %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-            <select name="type"
-                class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
-                <option value="">Tất cả loại</option>
-                {% for value, label in type_choices %}
-                <option value="{{ value }}" {% if current_type==value %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
+                class="border-3 border-black bg-white py-4 px-4 font-bold uppercase text-sm focus:ring-0">
+                <option value="">TẤT CẢ STATUS</option>
+                <option value="DRAFT" {% if request.GET.status=='DRAFT' %}selected{% endif %}>DRAFT</option>
+                <option value="PENDING" {% if request.GET.status=='PENDING' %}selected{% endif %}>PENDING</option>
+                <option value="APPROVED" {% if request.GET.status=='APPROVED' %}selected{% endif %}>APPROVED</option>
+                <option value="ONGOING" {% if request.GET.status=='ONGOING' %}selected{% endif %}>ONGOING</option>
+                <option value="DONE" {% if request.GET.status=='DONE' %}selected{% endif %}>DONE</option>
             </select>
             <button type="submit"
-                class="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition">
-                Lọc
+                class="bg-primary text-white border-3 border-black font-black uppercase py-4 px-8 shadow-brutal brutal-btn transition-all">
+                LỌC
             </button>
         </form>
     </div>
 
-    <!-- Activity Cards -->
+    <!-- Activity Grid -->
     {% if activities %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {% for activity in activities %}
-        <a href="{% url 'activities:detail' pk=activity.pk %}"
-            class="bg-white rounded-xl border border-gray-200 p-5 card-hover block">
-            <div class="flex items-start justify-between mb-3">
-                <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium
-          {% if activity.status == 'DRAFT' %}bg-gray-100 text-gray-600
-          {% elif activity.status == 'PENDING' %}bg-yellow-100 text-yellow-700
-          {% elif activity.status == 'APPROVED' %}bg-green-100 text-green-700
-          {% elif activity.status == 'ONGOING' %}bg-blue-100 text-blue-700
-          {% elif activity.status == 'DONE' %}bg-purple-100 text-purple-700
-          {% else %}bg-red-100 text-red-700{% endif %}">
-                    {{ activity.get_status_display }}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for act in activities %}
+        <div
+            class="bg-white border-3 border-black flex flex-col shadow-brutal-lg hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all">
+            <!-- Status Badge Header -->
+            <div class="border-b-3 border-black p-4 bg-bg-light flex items-center justify-between">
+                <span class="px-3 py-1 border-3 border-black text-xs font-black uppercase
+          {% if act.status == 'APPROVED' %}bg-accent-teal/20 text-accent-teal
+          {% elif act.status == 'PENDING' %}bg-primary/20 text-primary
+          {% elif act.status == 'ONGOING' %}bg-accent-yellow text-black
+          {% elif act.status == 'DONE' %}bg-slate-200 text-slate-600
+          {% else %}bg-white{% endif %}">
+                    {{ act.get_status_display }}
                 </span>
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs text-gray-500 bg-gray-50">
-                    {{ activity.get_activity_type_display }}
-                </span>
+                <span class="text-xs font-bold uppercase text-slate-400">{{ act.get_activity_type_display|default:""
+                    }}</span>
             </div>
 
-            <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">{{ activity.title }}</h3>
+            <!-- Content -->
+            <div class="p-6 flex-1 flex flex-col">
+                <span class="text-primary font-black text-xs uppercase mb-2 tracking-widest">{{
+                    act.organization.name|default:"" }}</span>
+                <h3 class="text-xl font-black uppercase mb-4 leading-tight">{{ act.title }}</h3>
+                <div class="space-y-2 mb-6 text-sm font-bold uppercase text-slate-600">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base">calendar_today</span>
+                        <span>{{ act.start_time|date:"d/m" }} — {{ act.end_time|date:"d/m/Y" }}</span>
+                    </div>
+                    {% if act.location %}
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base">location_on</span>
+                        <span>{{ act.location }}</span>
+                    </div>
+                    {% endif %}
+                </div>
 
-            <div class="space-y-1.5 text-sm text-gray-500">
-                <div class="flex items-center gap-2">
-                    <i data-lucide="building-2" class="w-4 h-4"></i>
-                    <span class="truncate">{{ activity.organization.name }}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <i data-lucide="calendar" class="w-4 h-4"></i>
-                    <span>{{ activity.start_time|date:"d/m/Y H:i" }}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <i data-lucide="map-pin" class="w-4 h-4"></i>
-                    <span class="truncate">{{ activity.location }}</span>
+                <div class="flex gap-3 mt-auto">
+                    <a href="{% url 'activities:detail' pk=act.pk %}"
+                        class="flex-1 bg-white border-3 border-black py-2 text-center font-black uppercase text-sm shadow-brutal-sm brutal-btn transition-all">CHI
+                        TIẾT</a>
+                    {% if act.status == 'DRAFT' and user.role != 'STUDENT' %}
+                    <a href="{% url 'activities:edit' pk=act.pk %}"
+                        class="flex-1 bg-accent-yellow border-3 border-black py-2 text-center font-black uppercase text-sm shadow-brutal-sm brutal-btn transition-all">SỬA</a>
+                    {% endif %}
                 </div>
             </div>
-
-            <div class="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2 text-xs text-gray-400">
-                <i data-lucide="user" class="w-3.5 h-3.5"></i>
-                <span>{{ activity.created_by.full_name }}</span>
-            </div>
-        </a>
+        </div>
         {% endfor %}
+
+        <!-- Create New Card -->
+        {% if user.role != 'STUDENT' %}
+        <a href="{% url 'activities:create' %}"
+            class="bg-bg-light border-3 border-dashed border-black flex flex-col items-center justify-center p-12 hover:bg-white transition-all cursor-pointer group">
+            <div
+                class="w-16 h-16 border-3 border-black bg-white flex items-center justify-center mb-4 shadow-brutal group-hover:bg-primary group-hover:text-white transition-all">
+                <span class="material-symbols-outlined text-4xl">add</span>
+            </div>
+            <h3 class="text-xl font-black uppercase text-center">TẠO HOẠT ĐỘNG MỚI</h3>
+        </a>
+        {% endif %}
     </div>
     {% else %}
-    <div class="text-center py-16 bg-white rounded-xl border border-gray-200">
-        <i data-lucide="calendar-x" class="w-12 h-12 text-gray-300 mx-auto mb-4"></i>
-        <h3 class="text-lg font-medium text-gray-500">Chưa có hoạt động nào</h3>
-        <p class="text-sm text-gray-400 mt-1">Hãy tạo hoạt động đầu tiên của bạn</p>
+    <div class="bg-white border-3 border-black p-16 text-center shadow-brutal">
+        <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">event_busy</span>
+        <h3 class="text-2xl font-black uppercase text-slate-400">KHÔNG TÌM THẤY HOẠT ĐỘNG</h3>
     </div>
     {% endif %}
 </div>

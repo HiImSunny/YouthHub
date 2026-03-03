@@ -1,147 +1,113 @@
 {% extends 'base.html' %}
-{% block title %}{{ session.name }} - Điểm danh{% endblock %}
-
-{% block breadcrumb %}
-<nav class="flex items-center gap-2 text-sm text-gray-500">
-    <a href="{% url 'attendance:sessions' %}" class="hover:text-primary-600">Điểm danh</a>
-    <i data-lucide="chevron-right" class="w-4 h-4"></i>
-    <span class="text-gray-900 font-medium">{{ session.name }}</span>
-</nav>
-{% endblock %}
+{% block title %}{{ session.name|upper }} — ĐIỂM DANH{% endblock %}
 
 {% block content %}
-<div class="fade-in">
-    <div class="flex items-start gap-6 flex-col lg:flex-row">
+<div>
+    <nav class="flex items-center gap-2 text-sm font-bold uppercase mb-6 text-slate-500">
+        <a href="{% url 'attendance:sessions' %}" class="hover:text-primary">ĐIỂM DANH</a>
+        <span class="material-symbols-outlined text-base">chevron_right</span>
+        <span class="text-slate-900">{{ session.name|upper }}</span>
+    </nav>
 
-        <!-- Left: Session Info & QR -->
-        <div class="w-full lg:w-80 flex-shrink-0 space-y-4">
-            <div class="bg-white rounded-xl border border-gray-200 p-5">
-                <div class="flex items-center justify-between mb-3">
-                    <h1 class="text-lg font-bold text-gray-900">{{ session.name }}</h1>
-                    <span
-                        class="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium
-            {% if session.status == 'OPEN' %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-600{% endif %}">
-                        <span
-                            class="w-1.5 h-1.5 rounded-full mr-1 {% if session.status == 'OPEN' %}bg-green-500 animate-pulse{% else %}bg-gray-400{% endif %}"></span>
-                        {{ session.get_status_display }}
-                    </span>
-                </div>
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <!-- Left: QR Section -->
+        <div class="lg:col-span-4 space-y-6">
+            <div class="bg-white border-3 border-black p-6 shadow-brutal flex flex-col items-center text-center">
+                <h2 class="text-2xl font-black mb-4 border-b-4 border-primary pb-2 w-full uppercase">SESSION ACCESS</h2>
 
-                <p class="text-sm text-gray-500 mb-4">{{ session.activity.title }}</p>
-
-                <div class="space-y-2 text-sm text-gray-600">
-                    <div class="flex items-center gap-2">
-                        <i data-lucide="clock" class="w-4 h-4 text-gray-400"></i>
-                        {{ session.start_time|date:"d/m/Y H:i" }} – {{ session.end_time|date:"H:i" }}
-                    </div>
-                    {% if session.requires_photo %}
-                    <div class="flex items-center gap-2 text-blue-600">
-                        <i data-lucide="camera" class="w-4 h-4"></i> Yêu cầu ảnh minh chứng
-                    </div>
-                    {% endif %}
-                </div>
-
-                <!-- Stats -->
-                <div class="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-gray-100 text-center text-sm">
-                    <div>
-                        <p class="font-bold text-green-600 text-lg">{{ approved_count }}</p>
-                        <p class="text-xs text-gray-500">Xác nhận</p>
-                    </div>
-                    <div>
-                        <p class="font-bold text-yellow-600 text-lg">{{ pending_count }}</p>
-                        <p class="text-xs text-gray-500">Chờ duyệt</p>
-                    </div>
-                    <div>
-                        <p class="font-bold text-red-500 text-lg">{{ rejected_count }}</p>
-                        <p class="text-xs text-gray-500">Từ chối</p>
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="mt-4 space-y-2">
-                    {% if session.status == 'OPEN' %}
-                    <a href="{% url 'attendance:session_qr' pk=session.pk %}" target="_blank"
-                        class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-white gradient-bg hover:opacity-90 transition text-sm font-medium">
-                        <i data-lucide="maximize-2" class="w-4 h-4"></i> Hiển thị QR toàn màn hình
-                    </a>
-                    {% if user.role != 'STUDENT' %}
-                    <form method="post" action="{% url 'attendance:session_close' pk=session.pk %}">
-                        {% csrf_token %}
-                        <button type="submit"
-                            onclick="return confirm('Dong phien nay? SV se khong the diem danh them.')"
-                            class="w-full py-2.5 rounded-xl text-red-600 bg-red-50 hover:bg-red-100 transition text-sm font-medium">
-                            Đóng phiên điểm danh
-                        </button>
-                    </form>
-                    {% endif %}
-                    {% endif %}
-
-                    <a href="{% url 'attendance:records_list' session_pk=session.pk %}"
-                        class="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-gray-700 bg-gray-100 hover:bg-gray-200 transition text-sm font-medium">
-                        <i data-lucide="list" class="w-4 h-4"></i> Xem & duyệt danh sách
-                    </a>
-                </div>
-            </div>
-
-            <!-- Mini QR preview -->
-            {% if session.status == 'OPEN' %}
-            <div class="bg-white rounded-xl border border-gray-200 p-5 text-center">
-                <p class="text-xs text-gray-500 mb-3 font-medium uppercase tracking-wide">Mã QR điểm danh</p>
-                <a href="{% url 'attendance:session_qr' pk=session.pk %}" target="_blank">
-                    <img src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='200' height='200' fill='%23f9fafb'/><text x='100' y='100' text-anchor='middle' dominant-baseline='middle' font-size='14' fill='%236b7280'>Click để xem QR</text></svg>"
-                        class="rounded-lg mx-auto border border-gray-200" alt="QR Code">
+                {% if session.status == 'OPEN' %}
+                <a href="{% url 'attendance:session_qr' pk=session.pk %}" target="_blank"
+                    class="w-full aspect-square border-3 border-black bg-white mb-4 p-6 flex items-center justify-center hover:bg-bg-light transition-all">
+                    <span class="material-symbols-outlined text-[80px] text-slate-400">qr_code_2</span>
                 </a>
-                <p class="text-xs text-gray-400 mt-2">Nhấp để hiện toàn màn hình</p>
+                {% endif %}
 
-                <div class="mt-3 p-2 bg-gray-50 rounded-lg">
-                    <p class="text-xs text-gray-500 font-mono break-all">{{ checkin_url }}</p>
+                <p class="text-xl font-black uppercase">{{ session.name }}</p>
+                <p class="text-primary text-lg font-black">{{ session.start_time|date:"H:i" }} — {{
+                    session.end_time|date:"H:i" }}</p>
+                <p class="text-xs bg-black text-white px-3 py-1 mt-3 font-black uppercase">{{ session.activity.title }}
+                </p>
+            </div>
+
+            <!-- Stats -->
+            <div class="bg-primary border-3 border-black p-6 shadow-brutal">
+                <h3 class="text-xl font-black text-white mb-3 uppercase">QUICK STATS</h3>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="bg-white p-3 border-3 border-black text-center">
+                        <p class="text-3xl font-black text-accent-teal">{{ approved_count }}</p>
+                        <p class="text-[10px] font-black uppercase">VERIFIED</p>
+                    </div>
+                    <div class="bg-white p-3 border-3 border-black text-center">
+                        <p class="text-3xl font-black text-primary">{{ pending_count }}</p>
+                        <p class="text-[10px] font-black uppercase">PENDING</p>
+                    </div>
+                    <div class="bg-white p-3 border-3 border-black text-center">
+                        <p class="text-3xl font-black text-accent-red">{{ rejected_count }}</p>
+                        <p class="text-[10px] font-black uppercase">REJECTED</p>
+                    </div>
                 </div>
             </div>
-            {% endif %}
+
+            <!-- Actions -->
+            <div class="space-y-3">
+                {% if session.status == 'OPEN' and user.role != 'STUDENT' %}
+                <a href="{% url 'attendance:session_qr' pk=session.pk %}" target="_blank"
+                    class="w-full block bg-accent-teal text-white border-3 border-black p-4 text-center font-black uppercase shadow-brutal brutal-btn transition-all">
+                    <span class="material-symbols-outlined align-middle mr-1">fullscreen</span> QR TOÀN MÀN HÌNH
+                </a>
+                <form method="post" action="{% url 'attendance:session_close' pk=session.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" onclick="return confirm('ĐÓNG PHIÊN NÀY?')"
+                        class="w-full bg-accent-red text-white border-3 border-black p-4 font-black uppercase shadow-brutal brutal-btn transition-all">ĐÓNG
+                        PHIÊN</button>
+                </form>
+                {% endif %}
+                <a href="{% url 'attendance:records_list' session_pk=session.pk %}"
+                    class="w-full block bg-white border-3 border-black p-4 text-center font-black uppercase shadow-brutal-sm brutal-btn transition-all">XEM
+                    & DUYỆT DANH SÁCH</a>
+            </div>
         </div>
 
-        <!-- Right: Recent Records -->
-        <div class="flex-1">
-            <div class="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 class="text-lg font-semibold text-gray-900 mb-4">
-                    Bản ghi điểm danh gần nhất
-                </h2>
-
+        <!-- Right: Student Log -->
+        <div class="lg:col-span-8">
+            <div class="bg-white border-3 border-black shadow-brutal overflow-hidden">
+                <div class="p-6 border-b-4 border-black bg-bg-light flex justify-between items-center">
+                    <h2 class="text-2xl font-black uppercase">STUDENT LOG</h2>
+                </div>
                 {% if records %}
                 <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
+                    <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="text-left text-gray-500 border-b border-gray-200">
-                                <th class="py-3 pr-4 font-medium">Sinh viên</th>
-                                <th class="py-3 pr-4 font-medium">MSSV</th>
-                                <th class="py-3 pr-4 font-medium">Thời gian</th>
-                                <th class="py-3 pr-4 font-medium">Ảnh</th>
-                                <th class="py-3 font-medium">Trạng thái</th>
+                            <tr class="border-b-4 border-black bg-slate-100">
+                                <th class="p-4 font-black uppercase text-sm border-r-2 border-black">MSSV</th>
+                                <th class="p-4 font-black uppercase text-sm border-r-2 border-black">TÊN</th>
+                                <th class="p-4 font-black uppercase text-sm border-r-2 border-black">CHECK-IN</th>
+                                <th class="p-4 font-black uppercase text-sm border-r-2 border-black">ẢNH</th>
+                                <th class="p-4 font-black uppercase text-sm">STATUS</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for rec in records|slice:":20" %}
-                            <tr class="border-b border-gray-100 hover:bg-gray-50">
-                                <td class="py-3 pr-4 font-medium text-gray-900">
-                                    {{ rec.student.full_name|default:"Khách" }}
+                            <tr class="border-b-2 border-black hover:bg-primary/5">
+                                <td class="p-4 border-r-2 border-black font-mono text-sm">{{ rec.entered_student_code }}
                                 </td>
-                                <td class="py-3 pr-4 text-gray-500 font-mono text-xs">{{ rec.entered_student_code }}
-                                </td>
-                                <td class="py-3 pr-4 text-gray-500">{{ rec.checkin_time|date:"H:i d/m" }}</td>
-                                <td class="py-3 pr-4">
+                                <td class="p-4 border-r-2 border-black font-black uppercase">{{
+                                    rec.student.full_name|default:"—" }}</td>
+                                <td class="p-4 border-r-2 border-black text-sm font-bold">{{ rec.checkin_time|date:"H:i"
+                                    }}</td>
+                                <td class="p-4 border-r-2 border-black">
                                     {% if rec.photo_path %}
-                                    <span class="inline-flex items-center gap-1 text-xs text-blue-600">
-                                        <i data-lucide="image" class="w-3.5 h-3.5"></i> Có
-                                    </span>
-                                    {% else %}
-                                    <span class="text-xs text-gray-400">—</span>
-                                    {% endif %}
+                                    <div class="w-10 h-10 border-3 border-black bg-slate-200">
+                                        <span
+                                            class="material-symbols-outlined text-lg text-accent-teal w-full h-full flex items-center justify-center">image</span>
+                                    </div>
+                                    {% else %}<span class="text-xs font-bold text-slate-400">—</span>{% endif %}
                                 </td>
-                                <td class="py-3">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
-                    {% if rec.status == 'VERIFIED' %}bg-green-100 text-green-700
-                    {% elif rec.status == 'PENDING' %}bg-yellow-100 text-yellow-700
-                    {% else %}bg-red-100 text-red-700{% endif %}">
+                                <td class="p-4">
+                                    <span class="px-2 py-1 border-3 border-black text-xs font-black uppercase
+                    {% if rec.status == 'VERIFIED' %}bg-accent-teal/20 text-accent-teal
+                    {% elif rec.status == 'PENDING' %}bg-primary/20 text-primary
+                    {% else %}bg-accent-red/20 text-accent-red{% endif %}">
                                         {{ rec.get_status_display }}
                                     </span>
                                 </td>
@@ -150,8 +116,14 @@
                         </tbody>
                     </table>
                 </div>
+                <div class="p-4 bg-black text-white flex justify-between items-center">
+                    <p class="font-black text-sm uppercase">SHOWING {{ records|slice:":20"|length }} RECORDS</p>
+                </div>
                 {% else %}
-                <p class="text-sm text-gray-400 text-center py-8">Chưa có ai điểm danh</p>
+                <div class="p-12 text-center">
+                    <span class="material-symbols-outlined text-5xl text-slate-300">inbox</span>
+                    <p class="text-lg font-black uppercase text-slate-400 mt-2">CHƯA CÓ AI ĐIỂM DANH</p>
+                </div>
                 {% endif %}
             </div>
         </div>

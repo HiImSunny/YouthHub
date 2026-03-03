@@ -1,65 +1,55 @@
 {% extends 'base.html' %}
-{% block title %}Đăng nhập - YouthHub{% endblock %}
+{% block title %}ĐĂNG NHẬP — YOUTHHUB{% endblock %}
 
 {% block public_content %}
-<div class="w-full max-w-md fade-in">
-    <div class="glass rounded-2xl shadow-2xl p-8">
+<div class="w-full max-w-md">
+    <div class="bg-white border-3 border-black p-8 shadow-brutal-lg">
         <!-- Logo -->
-        <div class="text-center mb-8">
-            <div class="w-16 h-16 rounded-2xl gradient-bg flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <span class="text-white font-bold text-2xl">Y</span>
+        <div class="text-center mb-8 pb-6 border-b-3 border-black">
+            <div class="flex items-center justify-center gap-3 mb-2">
+                <span class="material-symbols-outlined text-4xl text-primary">bolt</span>
+                <h1 class="text-4xl font-black uppercase tracking-tighter">YOUTH HUB</h1>
             </div>
-            <h2 class="text-2xl font-bold text-gray-900">Chào mừng trở lại</h2>
-            <p class="text-sm text-gray-500 mt-1">Đăng nhập vào hệ thống YouthHub</p>
+            <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">STUDENT UNION PLATFORM</p>
         </div>
 
-        <!-- Flash messages -->
+        <h2 class="text-2xl font-black uppercase mb-6 text-center">ĐĂNG NHẬP HỆ THỐNG</h2>
+
         {% if messages %}
         {% for message in messages %}
-        <div class="mb-4 px-4 py-3 rounded-lg text-sm
-      {% if message.tags == 'error' %}bg-red-50 text-red-600 border border-red-200
-      {% else %}bg-blue-50 text-blue-600 border border-blue-200{% endif %}">
+        <div class="border-3 border-black p-3 mb-4 font-bold uppercase text-sm
+      {% if message.tags == 'error' %}bg-accent-red/20 text-accent-red{% else %}bg-primary/20 text-primary{% endif %}">
             {{ message }}
         </div>
         {% endfor %}
         {% endif %}
 
-        <!-- Login Form -->
         <form method="post" class="space-y-5">
             {% csrf_token %}
             <div>
-                <label for="username" class="block text-sm font-medium text-gray-700 mb-1.5">Tên đăng nhập</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i data-lucide="user" class="w-5 h-5 text-gray-400"></i>
-                    </div>
-                    <input type="text" id="username" name="username" required autofocus
-                        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm"
-                        placeholder="Nhập tên đăng nhập">
-                </div>
+                <label class="block text-sm font-black uppercase mb-2 tracking-wide">TÊN ĐĂNG NHẬP</label>
+                <input type="text" name="username" required autofocus
+                    class="w-full border-3 border-black bg-white p-3 font-bold uppercase placeholder:text-slate-400 focus:ring-0 focus:border-black text-sm"
+                    placeholder="NHẬP USERNAME">
             </div>
 
             <div>
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-1.5">Mật khẩu</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <i data-lucide="lock" class="w-5 h-5 text-gray-400"></i>
-                    </div>
-                    <input type="password" id="password" name="password" required
-                        class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition text-sm"
-                        placeholder="Nhập mật khẩu">
-                </div>
+                <label class="block text-sm font-black uppercase mb-2 tracking-wide">MẬT KHẨU</label>
+                <input type="password" name="password" required
+                    class="w-full border-3 border-black bg-white p-3 font-bold placeholder:text-slate-400 focus:ring-0 focus:border-black text-sm"
+                    placeholder="••••••••">
             </div>
 
             <button type="submit"
-                class="w-full py-3 px-4 rounded-xl text-white font-semibold gradient-bg hover:opacity-90 transition shadow-lg shadow-primary-500/25 text-sm">
-                Đăng nhập
+                class="w-full bg-primary text-white border-3 border-black p-4 text-lg font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">login</span>
+                ĐĂNG NHẬP
             </button>
         </form>
 
-        <p class="text-center text-xs text-gray-400 mt-6">
-            YouthHub &copy; 2026 — Đoàn Hội Sinh viên
-        </p>
+        <div class="mt-6 pt-4 border-t-3 border-black text-center">
+            <p class="text-xs font-bold uppercase tracking-widest text-slate-400">POWERED BY YOUTHHUB v3.0</p>
+        </div>
     </div>
 </div>
 {% endblock %}

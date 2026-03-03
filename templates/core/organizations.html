@@ -1,36 +1,45 @@
 {% extends 'base.html' %}
-{% block title %}Tổ chức - YouthHub{% endblock %}
-
-{% block breadcrumb %}
-<nav class="flex items-center gap-2 text-sm text-gray-500">
-    <a href="{% url 'core:dashboard' %}" class="hover:text-primary-600">Dashboard</a>
-    <i data-lucide="chevron-right" class="w-4 h-4"></i>
-    <span class="text-gray-900 font-medium">Tổ chức</span>
-</nav>
-{% endblock %}
+{% block title %}TỔ CHỨC — YOUTHHUB{% endblock %}
 
 {% block content %}
-<div class="fade-in">
-    <h1 class="text-2xl font-bold text-gray-900 mb-6">Cấu trúc Tổ chức</h1>
+<div>
+    <div class="mb-8">
+        <h1 class="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-2">🏛 TỔ CHỨC</h1>
+        <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">ORGANIZATION MANAGEMENT</p>
+    </div>
 
-    <div class="bg-white rounded-xl border border-gray-200 p-6">
+    {% if organizations %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for org in organizations %}
-        <div class="flex items-center gap-3 py-3 {% if not forloop.last %}border-b border-gray-100{% endif %}"
-            style="padding-left: {% if org.parent %}{% if org.parent.parent %}3rem{% else %}1.5rem{% endif %}{% else %}0{% endif %}">
-            <div class="w-10 h-10 rounded-lg flex items-center justify-center
-        {% if org.type == 'UNION_SCHOOL' %}bg-primary-100
-        {% elif org.type == 'UNION_FACULTY' %}bg-green-100
-        {% elif org.type == 'CLASS' %}bg-yellow-100
-        {% else %}bg-accent-100{% endif %}">
-                <i data-lucide="{% if org.type == 'UNION_SCHOOL' %}landmark{% elif org.type == 'UNION_FACULTY' %}school{% elif org.type == 'CLASS' %}users{% else %}trophy{% endif %}"
-                    class="w-5 h-5 {% if org.type == 'UNION_SCHOOL' %}text-primary-600{% elif org.type == 'UNION_FACULTY' %}text-green-600{% elif org.type == 'CLASS' %}text-yellow-600{% else %}text-accent-600{% endif %}"></i>
+        <div
+            class="bg-white border-3 border-black p-6 shadow-brutal hover:-translate-y-1 hover:shadow-brutal-lg transition-all">
+            <div class="flex items-center gap-3 mb-4">
+                <div
+                    class="w-12 h-12 bg-primary border-3 border-black flex items-center justify-center shadow-brutal-sm">
+                    <span class="material-symbols-outlined text-white text-2xl">apartment</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-black uppercase">{{ org.name }}</h3>
+                    <p class="text-xs font-bold uppercase text-primary tracking-widest">{{ org.get_org_type_display }}
+                    </p>
+                </div>
             </div>
-            <div>
-                <p class="text-sm font-medium text-gray-900">{{ org.name }}</p>
-                <p class="text-xs text-gray-400">{{ org.get_type_display }} · {{ org.code }}</p>
+            {% if org.description %}
+            <p class="text-sm font-bold text-slate-500 mb-4 line-clamp-2">{{ org.description }}</p>
+            {% endif %}
+            <div
+                class="pt-3 border-t-2 border-black text-xs font-black uppercase text-slate-400 flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">group</span>
+                {% if org.parent %}CON CỦA: {{ org.parent.name }}{% else %}TỔ CHỨC GỐC{% endif %}
             </div>
         </div>
         {% endfor %}
     </div>
+    {% else %}
+    <div class="bg-white border-3 border-black p-16 text-center shadow-brutal">
+        <span class="material-symbols-outlined text-6xl text-slate-300">apartment</span>
+        <h3 class="text-2xl font-black uppercase text-slate-400 mt-4">CHƯA CÓ TỔ CHỨC NÀO</h3>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

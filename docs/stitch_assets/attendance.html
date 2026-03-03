@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#ff6a00",
+                        "accent-teal": "#008080",
+                        "background-light": "#f0f0eb",
+                        "background-dark": "#1a1a15",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "0px"
+                    },
+                },
+            },
+        }
+    </script>
+<style>
+        .brutalist-shadow {
+            box-shadow: 4px 4px 0px 0px rgba(0,0,0,1);
+        }
+        .brutalist-shadow-sm {
+            box-shadow: 2px 2px 0px 0px rgba(0,0,0,1);
+        }
+        .brutalist-border {
+            border: 3px solid black;
+        }
+        .grid-bg {
+            background-image: radial-gradient(circle, #d1d1ca 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark grid-bg min-h-screen text-slate-900 dark:text-slate-100">
+<div class="max-w-[1200px] mx-auto p-6">
+<!-- Header -->
+<header class="flex items-center justify-between brutalist-border bg-white dark:bg-zinc-900 p-6 mb-8 brutalist-shadow">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-4xl">menu</span>
+<h1 class="text-4xl font-black tracking-tighter">ATTENDANCE</h1>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden md:block text-right">
+<p class="text-sm opacity-70">YOUTH HUB v3.0</p>
+<p class="text-xl">LIVE SESSION</p>
+</div>
+<div class="h-12 w-12 bg-primary brutalist-border flex items-center justify-center">
+<span class="material-symbols-outlined text-white">person</span>
+</div>
+</div>
+</header>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<!-- QR Section -->
+<div class="lg:col-span-4 flex flex-col gap-6">
+<div class="brutalist-border bg-white dark:bg-zinc-900 p-8 brutalist-shadow flex flex-col items-center text-center">
+<h2 class="text-2xl font-black mb-6 border-b-4 border-primary pb-2 w-full">SESSION ACCESS</h2>
+<div class="w-full aspect-square brutalist-border bg-white mb-6 p-4 flex items-center justify-center">
+<img alt="Black and white QR code for session check-in" class="w-full h-full object-contain" data-alt="Black and white QR code for session check-in" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAgmOvuXPIPOTY3sGEnxmefBw-3TAFAJ13AX_-pQijtvXfqZcGfje039qbUBW3txX7dSM4XXfiv4aCovgfRmDb6C-J0lnMUqyy-puggXDRr2IbGriUFM_BFQrqIRp-GIJlPGxS-1ZzRB5rflF8IDcbcoQfC-4ehPO6aGixQynVV7tSQixfJ3qtDheuPovl8T3e__lDGl2kBQYtLCVOiJgPcyigtka6iqEqcwsXF4zg-RsL0C-b9mJxp3Wz_fnEjvMl-SuHsaPG-vHh1"/>
+</div>
+<div class="space-y-2">
+<p class="text-xl font-black">LEADERSHIP WORKSHOP</p>
+<p class="text-primary text-2xl font-black">10:00 AM — 12:30 PM</p>
+<p class="text-sm bg-black text-white px-3 py-1 mt-4">ROOM 402 - TECH WING</p>
+</div>
+</div>
+<div class="brutalist-border bg-primary p-6 brutalist-shadow">
+<h3 class="text-xl font-black text-white mb-2">QUICK STATS</h3>
+<div class="grid grid-cols-2 gap-4">
+<div class="bg-white p-4 brutalist-border">
+<p class="text-xs">PRESENT</p>
+<p class="text-3xl font-black">42</p>
+</div>
+<div class="bg-white p-4 brutalist-border">
+<p class="text-xs">EXPECTED</p>
+<p class="text-3xl font-black">50</p>
+</div>
+</div>
+</div>
+</div>
+<!-- List Section -->
+<div class="lg:col-span-8">
+<div class="brutalist-border bg-white dark:bg-zinc-900 overflow-hidden brutalist-shadow">
+<div class="p-6 border-b-4 border-black flex flex-col sm:flex-row justify-between items-center gap-4 bg-background-light dark:bg-zinc-800">
+<h2 class="text-2xl font-black">STUDENT LOG</h2>
+<div class="flex gap-4 w-full sm:w-auto">
+<button class="flex-1 sm:flex-none bg-accent-teal text-white brutalist-border px-6 py-3 brutalist-shadow-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-black">
+                                APPROVE ALL
+                            </button>
+<button class="flex-1 sm:flex-none bg-primary text-white brutalist-border px-6 py-3 brutalist-shadow-sm hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-all font-black">
+                                EXPORT
+                            </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b-4 border-black bg-slate-100 dark:bg-zinc-800">
+<th class="p-4 brutalist-border border-t-0 border-l-0">STUDENT ID</th>
+<th class="p-4 brutalist-border border-t-0">NAME</th>
+<th class="p-4 brutalist-border border-t-0">CHECK-IN</th>
+<th class="p-4 brutalist-border border-t-0">SELFIE</th>
+<th class="p-4 brutalist-border border-t-0 border-r-0">STATUS</th>
+</tr>
+</thead>
+<tbody class="text-sm md:text-base">
+<tr class="border-b-2 border-black hover:bg-primary/5">
+<td class="p-4 border-r-2 border-black font-mono">ID-22041</td>
+<td class="p-4 border-r-2 border-black font-black">ALEX JOHNSON</td>
+<td class="p-4 border-r-2 border-black">09:45 AM</td>
+<td class="p-4 border-r-2 border-black">
+<div class="w-10 h-10 brutalist-border bg-slate-200">
+<img alt="Student verification selfie photo" class="w-full h-full object-cover grayscale" data-alt="Student verification selfie photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuANIxZv3Uc4ZMbIiy6syJbVVLTksn5YKMeNOLSviLiF8EYpUuke_9379rM1LVSwwNuo1jU_9Y69MJTc28Wumkbb3bCLLHCe05PuPiCABMSsb1LZFHnLzWvfP8Su8f107qUiwlm5FTKeQ8rvE92KcyacofYtEhA-XwsPbUZebP9JlLHQ6EOFG9Jugrwf9wgujOKjh-qH6sy9l2VzsccaNMH6shgQX0TIvxTw2uRzDMh_uvwInZ-fTkWr1peZWNio4LAUyw-RSdc2xe--"/>
+</div>
+</td>
+<td class="p-4">
+<span class="bg-accent-teal/20 text-accent-teal px-2 py-1 brutalist-border text-xs font-black">VERIFIED</span>
+</td>
+</tr>
+<tr class="border-b-2 border-black hover:bg-primary/5">
+<td class="p-4 border-r-2 border-black font-mono">ID-22045</td>
+<td class="p-4 border-r-2 border-black font-black">SARAH SMITH</td>
+<td class="p-4 border-r-2 border-black">09:47 AM</td>
+<td class="p-4 border-r-2 border-black">
+<div class="w-10 h-10 brutalist-border bg-slate-200">
+<img alt="Student verification selfie photo" class="w-full h-full object-cover grayscale" data-alt="Student verification selfie photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-U1Q-Dpz3UDM776Y-3cZfZw_PWjLSW-zMhyLeVTlhlXrcOThN8pN3DpXTAxK9SxW9NXwhI5F4dS8y3qUHhZe0KxAeUk23QLJ385G1B7vikPArmJMGW2RllTDLNfmEdb5FzjV0Pt8doEUjS0FQ251sikh9Z7YG8nPdcbC31mZU_SoXEoFqzhoUg1nKL6ZwskMRoX6exTEuPxktEF-Vk-fC_tGhz1jCGKG2xg4LzI5Lnm_WJ5xXPMqr3W_V5L8HAcl446uiZKSPFTzy"/>
+</div>
+</td>
+<td class="p-4">
+<span class="bg-primary/20 text-primary px-2 py-1 brutalist-border text-xs font-black">PENDING</span>
+</td>
+</tr>
+<tr class="border-b-2 border-black hover:bg-primary/5">
+<td class="p-4 border-r-2 border-black font-mono">ID-22049</td>
+<td class="p-4 border-r-2 border-black font-black">JORDAN LEE</td>
+<td class="p-4 border-r-2 border-black">09:50 AM</td>
+<td class="p-4 border-r-2 border-black">
+<div class="w-10 h-10 brutalist-border bg-slate-200">
+<img alt="Student verification selfie photo" class="w-full h-full object-cover grayscale" data-alt="Student verification selfie photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAFUsss6WgFWmspoVEvu531n7nE6wdmoKIa3wqyXOk8ASmFCfiyuqkaNliag6ymIB3_--cpuUNqW2QoX90TnEHrjVRkMlFyACSuNpo-OJjoXPsZ_8EGLdNf2PTTuowxaGpwW50sXvXiZlpLPNnObXrQAOxtuKGK0xIxp0zmMsEND3AHZbuCmjtrKPtXXdVYimh-P8SeoajcSdyXktowBSsRb75PUrPsxPWpD0tp3oyW8---ySlENPZnYupOLzZbzPcAkdHbh1h7ZuXe"/>
+</div>
+</td>
+<td class="p-4">
+<span class="bg-primary/20 text-primary px-2 py-1 brutalist-border text-xs font-black">PENDING</span>
+</td>
+</tr>
+<tr class="border-b-2 border-black hover:bg-primary/5">
+<td class="p-4 border-r-2 border-black font-mono">ID-22055</td>
+<td class="p-4 border-r-2 border-black font-black">MARIA GARCIA</td>
+<td class="p-4 border-r-2 border-black">09:55 AM</td>
+<td class="p-4 border-r-2 border-black">
+<div class="w-10 h-10 brutalist-border bg-slate-200">
+<img alt="Student verification selfie photo" class="w-full h-full object-cover grayscale" data-alt="Student verification selfie photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD06KVaoRqYie3Jc3lkWstC8pP8NnJ0tsst_MUdxXTFH_pM9ihRYp4azZ-DW3i8bZiLPdRNvK_vEr8AENzbI30EclXMYkmF7blP4UU6n-0efTR8rDp2uRyvm1b2Eh3J9KBLoD7hh4fttRvstKQ0An9NZXQ6T19WSU4y7itnFKWNpSxxOE12v0aYicGK4pf23yvBVNaHF4YV7Qip4Mc_XYUNFPA_KQ8h67Vntk_5bTxKfsLRf1rOe60Er5T0X16aqWt_JyQhbPEQcz1Z"/>
+</div>
+</td>
+<td class="p-4">
+<span class="bg-accent-teal/20 text-accent-teal px-2 py-1 brutalist-border text-xs font-black">VERIFIED</span>
+</td>
+</tr>
+<tr class="hover:bg-primary/5">
+<td class="p-4 border-r-2 border-black font-mono">ID-22060</td>
+<td class="p-4 border-r-2 border-black font-black">LIAM WILSON</td>
+<td class="p-4 border-r-2 border-black">10:02 AM</td>
+<td class="p-4 border-r-2 border-black">
+<div class="w-10 h-10 brutalist-border bg-slate-200">
+<img alt="Student verification selfie photo" class="w-full h-full object-cover grayscale" data-alt="Student verification selfie photo" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBDEi9MsRkF2J13tkzwIeAwRuxz6QUYpnWQawAdHaD9o-Lbp-5gKCokge5mIWlYzGngeCF0dQwIi97EcQZjrtG9Iyq9wjGqXOhh9u8uLtRMQOgAdPLFDdFmkdq6QfLZ0IFHkhMdKuiAexJRNidBA67TLQ9C_UVQJTXnhb-a2XAiwyo9hKQ6OR1KrxMRKqQkSI6GS-ekN3bvHpoQ2AjDQrCaJSQDlHAT6B3Hm3GYyufadxubhFjCsZt6EZiIUlx5f3cJkBDfHJbdqoKQ"/>
+</div>
+</td>
+<td class="p-4">
+<span class="bg-red-500/20 text-red-600 px-2 py-1 brutalist-border text-xs font-black">LATE</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-6 bg-black text-white flex justify-between items-center">
+<p class="font-black">SHOWING 5 OF 42 STUDENTS</p>
+<div class="flex gap-2">
+<button class="bg-white text-black brutalist-border px-3 py-1 text-sm brutalist-shadow-sm">PREV</button>
+<button class="bg-white text-black brutalist-border px-3 py-1 text-sm brutalist-shadow-sm">NEXT</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<footer class="mt-12 text-center p-8 brutalist-border bg-zinc-900 text-white brutalist-shadow">
+<p class="text-2xl font-black italic tracking-widest">YOUTH HUB — EMPOWERING THE FUTURE</p>
+<p class="text-xs opacity-50 mt-4 tracking-[0.5em]">SYSTEM STABLE // ALL SYSTEMS GO</p>
+</footer>
+</div>
+</body></html>
