@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Tổ chức - YouthHub{% endblock %}
+
+{% block breadcrumb %}
+<nav class="flex items-center gap-2 text-sm text-gray-500">
+    <a href="{% url 'core:dashboard' %}" class="hover:text-primary-600">Dashboard</a>
+    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    <span class="text-gray-900 font-medium">Tổ chức</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <h1 class="text-2xl font-bold text-gray-900 mb-6">Cấu trúc Tổ chức</h1>
+
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        {% for org in organizations %}
+        <div class="flex items-center gap-3 py-3 {% if not forloop.last %}border-b border-gray-100{% endif %}"
+            style="padding-left: {% if org.parent %}{% if org.parent.parent %}3rem{% else %}1.5rem{% endif %}{% else %}0{% endif %}">
+            <div class="w-10 h-10 rounded-lg flex items-center justify-center
+        {% if org.type == 'UNION_SCHOOL' %}bg-primary-100
+        {% elif org.type == 'UNION_FACULTY' %}bg-green-100
+        {% elif org.type == 'CLASS' %}bg-yellow-100
+        {% else %}bg-accent-100{% endif %}">
+                <i data-lucide="{% if org.type == 'UNION_SCHOOL' %}landmark{% elif org.type == 'UNION_FACULTY' %}school{% elif org.type == 'CLASS' %}users{% else %}trophy{% endif %}"
+                    class="w-5 h-5 {% if org.type == 'UNION_SCHOOL' %}text-primary-600{% elif org.type == 'UNION_FACULTY' %}text-green-600{% elif org.type == 'CLASS' %}text-yellow-600{% else %}text-accent-600{% endif %}"></i>
+            </div>
+            <div>
+                <p class="text-sm font-medium text-gray-900">{{ org.name }}</p>
+                <p class="text-xs text-gray-400">{{ org.get_type_display }} · {{ org.code }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% block title %}{% if is_edit %}Sửa{% else %}Tạo{% endif %} hoạt động - YouthHub{% endblock %}
+
+{% block breadcrumb %}
+<nav class="flex items-center gap-2 text-sm text-gray-500">
+    <a href="{% url 'core:dashboard' %}" class="hover:text-primary-600">Dashboard</a>
+    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    <a href="{% url 'activities:list' %}" class="hover:text-primary-600">Hoạt động</a>
+    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    <span class="text-gray-900 font-medium">{% if is_edit %}Chỉnh sửa{% else %}Tạo mới{% endif %}</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in max-w-2xl">
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h1 class="text-xl font-bold text-gray-900 mb-6">
+            {% if is_edit %}Chỉnh sửa hoạt động{% else %}Tạo hoạt động mới{% endif %}
+        </h1>
+
+        <form method="post" class="space-y-5">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Tên hoạt động <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" name="title" required value="{% if is_edit %}{{ activity.title }}{% endif %}"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 text-sm"
+                        placeholder="VD: Chiến dịch Mùa hè xanh 2026">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Mã hoạt động <span
+                            class="text-red-500">*</span></label>
+                    <input type="text" name="code" required value="{% if is_edit %}{{ activity.code }}{% endif %}"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 text-sm"
+                        placeholder="VD: MHX-2026">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Loại hoạt động <span
+                            class="text-red-500">*</span></label>
+                    <select name="activity_type" required
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 text-sm">
+                        {% for value, label in type_choices %}
+                        <option value="{{ value }}" {% if is_edit and activity.activity_type==value %}selected{% endif
+                            %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Đơn vị tổ chức <span
+                            class="text-red-500">*</span></label>
+                    <select name="organization" required
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 text-sm">
+                        {% for org in organizations %}
+                        <option value="{{ org.pk }}" {% if is_edit and activity.organization_id==org.pk %}selected{%
+                            endif %}>{{ org.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Thời gian bắt đầu <span
+                            class="text-red-500">*</span></label>
+                    <input type="datetime-local" name="start_time" required
+                        value="{% if is_edit %}{{ activity.start_time|date:'Y-m-d\TH:i' }}{% endif %}"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1.5">Thời gian kết thúc <span
+                            class="text-red-500">*</span></label>
+                    <input type="datetime-local" name="end_time" required
+                        value="{% if is_edit %}{{ activity.end_time|date:'Y-m-d\TH:i' }}{% endif %}"
+                        class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 text-sm">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Địa điểm <span
+                        class="text-red-500">*</span></label>
+                <input type="text" name="location" required value="{% if is_edit %}{{ activity.location }}{% endif %}"
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 text-sm"
+                    placeholder="VD: Hội trường A - Tầng 3">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Học kỳ</label>
+                <select name="semester"
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 text-sm">
+                    <option value="">-- Không chọn --</option>
+                    {% for sem in semesters %}
+                    <option value="{{ sem.pk }}" {% if is_edit and activity.semester_id==sem.pk %}selected{% endif %}>{{
+                        sem.name }} ({{ sem.academic_year }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Mô tả</label>
+                <textarea name="description" rows="4"
+                    class="w-full px-4 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-primary-500 text-sm resize-none"
+                    placeholder="Mô tả chi tiết về hoạt động...">{% if is_edit %}{{ activity.description }}{% endif %}</textarea>
+            </div>
+
+            <div class="flex items-center gap-3 pt-2">
+                <button type="submit"
+                    class="px-6 py-2.5 rounded-xl text-white font-semibold gradient-bg hover:opacity-90 transition shadow-lg shadow-primary-500/25 text-sm">
+                    {% if is_edit %}Lưu thay đổi{% else %}Tạo hoạt động{% endif %}
+                </button>
+                <a href="{% url 'activities:list' %}"
+                    class="px-6 py-2.5 rounded-xl text-gray-700 font-medium bg-gray-100 hover:bg-gray-200 transition text-sm">
+                    Hủy
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

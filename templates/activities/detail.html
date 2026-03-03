@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% block title %}{{ activity.title }} - YouthHub{% endblock %}
+
+{% block breadcrumb %}
+<nav class="flex items-center gap-2 text-sm text-gray-500">
+    <a href="{% url 'core:dashboard' %}" class="hover:text-primary-600">Dashboard</a>
+    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    <a href="{% url 'activities:list' %}" class="hover:text-primary-600">Hoạt động</a>
+    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+    <span class="text-gray-900 font-medium truncate max-w-[200px]">{{ activity.title }}</span>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in max-w-4xl">
+    <!-- Header -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <div class="flex items-start justify-between mb-4">
+            <div>
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="inline-flex items-center px-3 py-1 rounded-lg text-sm font-medium
+            {% if activity.status == 'DRAFT' %}bg-gray-100 text-gray-600
+            {% elif activity.status == 'PENDING' %}bg-yellow-100 text-yellow-700
+            {% elif activity.status == 'APPROVED' %}bg-green-100 text-green-700
+            {% elif activity.status == 'ONGOING' %}bg-blue-100 text-blue-700
+            {% elif activity.status == 'DONE' %}bg-purple-100 text-purple-700
+            {% else %}bg-red-100 text-red-700{% endif %}">
+                        {{ activity.get_status_display }}
+                    </span>
+                    <span class="text-sm text-gray-400">{{ activity.code }}</span>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900">{{ activity.title }}</h1>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-2">
+                {% if activity.status == 'DRAFT' and user.role != 'STUDENT' %}
+                <a href="{% url 'activities:edit' pk=activity.pk %}"
+                    class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition">
+                    <i data-lucide="pencil" class="w-4 h-4"></i> Sửa
+                </a>
+                <form method="post" action="{% url 'activities:approve' pk=activity.pk %}" class="inline">
+                    {% csrf_token %}
+                    <button
+                        class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-yellow-500 rounded-lg hover:bg-yellow-600 transition">
+                        <i data-lucide="send" class="w-4 h-4"></i> Gửi duyệt
+                    </button>
+                </form>
+                <form method="post" action="{% url 'activities:delete' pk=activity.pk %}" class="inline">
+                    {% csrf_token %}
+                    <button onclick="return confirm('Ban co chac muon xoa hoat dong nay?')"
+                        class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </form>
+                {% endif %}
+
+                {% if activity.status == 'PENDING' and user.role != 'STUDENT' %}
+                <form method="post" action="{% url 'activities:approve' pk=activity.pk %}" class="inline">
+                    {% csrf_token %}
+                    <button
+                        class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition">
+                        <i data-lucide="check" class="w-4 h-4"></i> Phê duyệt
+                    </button>
+                </form>
+                <form method="post" action="{% url 'activities:reject' pk=activity.pk %}" class="inline">
+                    {% csrf_token %}
+                    <button
+                        class="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition">
+                        <i data-lucide="x" class="w-4 h-4"></i> Từ chối
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-gray-400 mb-1">Loại</p>
+                <p class="font-medium text-gray-900">{{ activity.get_activity_type_display }}</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-gray-400 mb-1">Thời gian</p>
+                <p class="font-medium text-gray-900">{{ activity.start_time|date:"d/m/Y H:i" }}</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-gray-400 mb-1">Địa điểm</p>
+                <p class="font-medium text-gray-900">{{ activity.location }}</p>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-3">
+                <p class="text-gray-400 mb-1">Tổ chức</p>
+                <p class="font-medium text-gray-900">{{ activity.organization.name }}</p>
+            </div>
+        </div>
+
+        {% if activity.description %}
+        <div class="mt-4 pt-4 border-t border-gray-100">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">Mô tả</h3>
+            <p class="text-sm text-gray-600 whitespace-pre-line">{{ activity.description }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Registration Section -->
+    {% if activity.status == 'APPROVED' %}
+    <div class="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-semibold text-gray-900">Đăng ký tham gia</h2>
+            <span class="text-sm text-gray-500">{{ registration_count }} người đã đăng ký</span>
+        </div>
+
+        {% if user.role == 'STUDENT' %}
+        {% if not user_registration %}
+        <form method="post" action="{% url 'activities:register' pk=activity.pk %}">
+            {% csrf_token %}
+            <button
+                class="w-full py-3 px-4 rounded-xl text-white font-semibold gradient-bg hover:opacity-90 transition shadow-lg shadow-primary-500/25 text-sm">
+                Đăng ký tham gia
+            </button>
+        </form>
+        {% elif user_registration.status == 'REGISTERED' %}
+        <div class="flex items-center justify-between bg-green-50 rounded-lg p-4">
+            <div class="flex items-center gap-2 text-green-700">
+                <i data-lucide="check-circle" class="w-5 h-5"></i>
+                <span class="font-medium">Bạn đã đăng ký tham gia</span>
+            </div>
+            <form method="post" action="{% url 'activities:cancel_registration' pk=activity.pk %}">
+                {% csrf_token %}
+                <button class="text-sm text-red-500 hover:text-red-700 font-medium">Hủy đăng ký</button>
+            </form>
+        </div>
+        {% else %}
+        <div class="bg-gray-50 rounded-lg p-4 text-gray-500 text-sm">
+            Đăng ký của bạn đã bị hủy.
+        </div>
+        {% endif %}
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Registrations Table -->
+    {% if user.role != 'STUDENT' and registrations %}
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Danh sách đăng ký ({{ registration_count }})</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="text-left text-gray-500 border-b border-gray-200">
+                        <th class="py-3 pr-4 font-medium">#</th>
+                        <th class="py-3 pr-4 font-medium">Họ tên</th>
+                        <th class="py-3 pr-4 font-medium">Email</th>
+                        <th class="py-3 pr-4 font-medium">Trạng thái</th>
+                        <th class="py-3 font-medium">Thời gian</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reg in registrations %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-3 pr-4 text-gray-400">{{ forloop.counter }}</td>
+                        <td class="py-3 pr-4 font-medium text-gray-900">{{ reg.student.full_name }}</td>
+                        <td class="py-3 pr-4 text-gray-500">{{ reg.student.email }}</td>
+                        <td class="py-3 pr-4">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
+                {% if reg.status == 'REGISTERED' %}bg-green-100 text-green-700
+                {% else %}bg-red-100 text-red-700{% endif %}">
+                                {{ reg.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="py-3 text-gray-500">{{ reg.registered_at|date:"d/m/Y H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

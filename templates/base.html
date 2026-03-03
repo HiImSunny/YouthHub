@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}YouthHub{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}Hệ thống quản lý hoạt động Đoàn - Hội sinh viên tích hợp AI{% endblock %}">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: { 50:'#eff6ff', 100:'#dbeafe', 200:'#bfdbfe', 300:'#93c5fd', 400:'#60a5fa', 500:'#3b82f6', 600:'#2563eb', 700:'#1d4ed8', 800:'#1e40af', 900:'#1e3a8a' },
+            accent:  { 50:'#fdf4ff', 100:'#fae8ff', 200:'#f5d0fe', 300:'#f0abfc', 400:'#e879f9', 500:'#d946ef', 600:'#c026d3', 700:'#a21caf', 800:'#86198f', 900:'#701a75' },
+            youth:   { 50:'#f0fdf4', 100:'#dcfce7', 200:'#bbf7d0', 300:'#86efac', 400:'#4ade80', 500:'#22c55e', 600:'#16a34a', 700:'#15803d', 800:'#166534', 900:'#14532d' },
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .glass { backdrop-filter: blur(12px); background: rgba(255,255,255,0.7); }
+    .gradient-bg { background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #c026d3 100%); }
+    .card-hover { transition: all 0.3s ease; }
+    .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+    .fade-in { animation: fadeIn 0.4s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .sidebar-link { transition: all 0.2s ease; }
+    .sidebar-link:hover, .sidebar-link.active { background: rgba(59,130,246,0.1); color: #2563eb; }
+  </style>
+  {% block extra_css %}{% endblock %}
+</head>
+
+<body class="h-full bg-gray-50">
+  {% if user.is_authenticated %}
+  <!-- AUTHENTICATED LAYOUT -->
+  <div class="flex h-screen overflow-hidden">
+    
+    <!-- SIDEBAR -->
+    <aside id="sidebar" class="hidden lg:flex lg:flex-shrink-0 lg:w-64 flex-col bg-white border-r border-gray-200">
+      <!-- Logo -->
+      <div class="flex items-center gap-3 px-6 py-5 border-b border-gray-100">
+        <div class="w-10 h-10 rounded-xl gradient-bg flex items-center justify-center">
+          <span class="text-white font-bold text-lg">Y</span>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-gray-900">YouthHub</h1>
+          <p class="text-xs text-gray-400">Đoàn - Hội SV</p>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <p class="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Tổng quan</p>
+        <a href="{% url 'core:dashboard' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+          <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+        </a>
+
+        <p class="px-3 pt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Quản lý</p>
+        <a href="{% url 'activities:list' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 {% if 'activities' in request.path %}active{% endif %}">
+          <i data-lucide="calendar-check" class="w-5 h-5"></i> Hoạt động
+        </a>
+        
+        {% if user.role == 'ADMIN' or user.role == 'STAFF' %}
+        <a href="{% url 'activities:list' %}?status=PENDING" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700">
+          <i data-lucide="clipboard-check" class="w-5 h-5"></i> Phê duyệt
+        </a>
+        <a href="{% url 'core:organizations' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 {% if 'organizations' in request.path %}active{% endif %}">
+          <i data-lucide="building-2" class="w-5 h-5"></i> Tổ chức
+        </a>
+        {% endif %}
+
+        <p class="px-3 pt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Công cụ</p>
+        <a href="{% url 'attendance:sessions' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 {% if 'attendance' in request.path %}active{% endif %}">
+          <i data-lucide="scan-line" class="w-5 h-5"></i> Điểm danh
+        </a>
+        <a href="{% url 'ai_assistant:chat' %}" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-700 {% if 'ai' in request.path %}active{% endif %}">
+          <i data-lucide="bot" class="w-5 h-5"></i> Trợ lý AI
+        </a>
+      </nav>
+
+      <!-- User Profile -->
+      <div class="border-t border-gray-100 p-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-full bg-primary-100 flex items-center justify-center">
+            <span class="text-sm font-semibold text-primary-600">{{ user.full_name|first }}</span>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-900 truncate">{{ user.full_name }}</p>
+            <p class="text-xs text-gray-400">{{ user.get_role_display }}</p>
+          </div>
+          <a href="{% url 'users:logout' %}" class="text-gray-400 hover:text-red-500 transition" title="Đăng xuất">
+            <i data-lucide="log-out" class="w-5 h-5"></i>
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+      <!-- Topbar -->
+      <header class="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+        <button onclick="document.getElementById('sidebar').classList.toggle('hidden')" class="lg:hidden p-2 rounded-lg hover:bg-gray-100">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+        <div class="flex items-center gap-2">
+          {% block breadcrumb %}{% endblock %}
+        </div>
+        <div class="flex items-center gap-4">
+          {% block header_actions %}{% endblock %}
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="flex-1 overflow-y-auto p-6">
+        <!-- Flash messages -->
+        {% if messages %}
+        <div class="mb-6 space-y-2 fade-in">
+          {% for message in messages %}
+          <div class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm
+            {% if message.tags == 'success' %}bg-green-50 text-green-700 border border-green-200
+            {% elif message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200
+            {% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-700 border border-yellow-200
+            {% else %}bg-blue-50 text-blue-700 border border-blue-200{% endif %}">
+            <span>{{ message }}</span>
+            <button onclick="this.parentElement.remove()" class="ml-auto opacity-50 hover:opacity-100">&times;</button>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  {% else %}
+  <!-- PUBLIC / AUTH LAYOUT -->
+  <div class="min-h-screen gradient-bg flex items-center justify-center p-4">
+    {% block public_content %}{% endblock %}
+  </div>
+  {% endif %}
+
+  <script>lucide.createIcons();</script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
