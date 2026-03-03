@@ -1,0 +1,60 @@
+[
+    {
+        "model": "core.semester",
+        "pk": 1,
+        "fields": {
+            "name": "Học kỳ 1",
+            "academic_year": "2025-2026",
+            "start_date": "2025-09-01",
+            "end_date": "2026-01-15",
+            "is_current": false
+        }
+    },
+    {
+        "model": "core.semester",
+        "pk": 2,
+        "fields": {
+            "name": "Học kỳ 2",
+            "academic_year": "2025-2026",
+            "start_date": "2026-02-01",
+            "end_date": "2026-06-30",
+            "is_current": true
+        }
+    },
+    {
+        "model": "core.organization",
+        "pk": 1,
+        "fields": {
+            "parent": null,
+            "type": "UNION_SCHOOL",
+            "name": "Đoàn trường Đại học Nam Cần Thơ",
+            "code": "DT-NCT",
+            "description": "Đoàn Thanh niên Cộng sản Hồ Chí Minh - Trường Đại học Nam Cần Thơ",
+            "status": true
+        }
+    },
+    {
+        "model": "core.organization",
+        "pk": 2,
+        "fields": {
+            "parent": 1,
+            "type": "UNION_FACULTY",
+            "name": "Đoàn khoa Công nghệ Thông tin",
+            "code": "DK-CNTT",
+            "description": "Liên chi Đoàn khoa Công nghệ Thông tin",
+            "status": true
+        }
+    },
+    {
+        "model": "core.organization",
+        "pk": 3,
+        "fields": {
+            "parent": 2,
+            "type": "CLUB",
+            "name": "CLB Công nghệ Thông tin",
+            "code": "CLB-CNTT",
+            "description": "Câu lạc bộ Công nghệ Thông tin thuộc Đoàn khoa CNTT",
+            "status": true
+        }
+    }
+]

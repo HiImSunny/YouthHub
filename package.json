@@ -1,0 +1,21 @@
+{
+  "name": "youth-hub",
+  "version": "1.0.0",
+  "description": "Nền tảng kết nối thanh niên – quản lý hoạt động, sự kiện và cộng đồng",
+  "private": true,
+  "scripts": {
+    "dev": "node server.js",
+    "build": "npm run lint && npm run test",
+    "lint": "eslint .",
+    "test": "jest --passWithNoTests",
+    "start": "node server.js"
+  },
+  "keywords": [
+    "youth",
+    "community",
+    "social-platform",
+    "event-management"
+  ],
+  "author": "YouthHub Team",
+  "license": "MIT"
+}
