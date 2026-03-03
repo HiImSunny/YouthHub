@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 
-from .models import Activity, ActivityRegistration
+from .models import Activity, ActivityRegistration, PointCategory
 from core.models import Organization, Semester
 
 
@@ -79,6 +79,7 @@ def activity_create(request):
             location=request.POST.get('location'),
             organization_id=request.POST.get('organization'),
             semester_id=request.POST.get('semester') or None,
+            point_category_id=request.POST.get('point_category') or None,
             created_by=request.user,
             status=Activity.ActivityStatus.DRAFT,
         )
@@ -89,6 +90,7 @@ def activity_create(request):
     context = {
         'organizations': Organization.objects.filter(status=True),
         'semesters': Semester.objects.all().order_by('-start_date'),
+        'point_categories': PointCategory.objects.filter(is_active=True).order_by('code'),
         'type_choices': Activity.ActivityType.choices,
     }
     return render(request, 'activities/form.html', context)
@@ -117,6 +119,7 @@ def activity_edit(request, pk):
         activity.location = request.POST.get('location')
         activity.organization_id = request.POST.get('organization')
         activity.semester_id = request.POST.get('semester') or None
+        activity.point_category_id = request.POST.get('point_category') or None
         activity.save()
         messages.success(request, 'Da cap nhat hoat dong thanh cong!')
         return redirect('activities:detail', pk=pk)
@@ -125,6 +128,7 @@ def activity_edit(request, pk):
         'activity': activity,
         'organizations': Organization.objects.filter(status=True),
         'semesters': Semester.objects.all().order_by('-start_date'),
+        'point_categories': PointCategory.objects.filter(is_active=True).order_by('code'),
         'type_choices': Activity.ActivityType.choices,
         'is_edit': True,
     }

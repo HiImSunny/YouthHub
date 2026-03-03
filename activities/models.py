@@ -2,6 +2,29 @@ from django.conf import settings
 from django.db import models
 
 
+class PointCategory(models.Model):
+    """
+    Categories for training/activity points.
+    Maps to table: point_categories
+    """
+    name = models.CharField(max_length=255)
+    code = models.CharField(max_length=50, unique=True)
+    description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'point_categories'
+        verbose_name = 'Mục điểm rèn luyện'
+        verbose_name_plural = 'Mục điểm rèn luyện'
+        ordering = ['code']
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
+
+
 class Activity(models.Model):
     """
     Full lifecycle of a Doan-Hoi activity/event.
@@ -30,6 +53,13 @@ class Activity(models.Model):
     )
     semester = models.ForeignKey(
         'core.Semester',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='activities',
+    )
+    point_category = models.ForeignKey(
+        'PointCategory',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

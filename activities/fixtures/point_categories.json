@@ -1,0 +1,62 @@
+[
+    {
+        "model": "activities.pointcategory",
+        "pk": 1,
+        "fields": {
+            "name": "Y thuc va ket qua hoc tap",
+            "code": "MUC_1",
+            "description": "Muc I - Danh gia y thuc hoc tap, thi cu, nghien cuu khoa hoc",
+            "is_active": true,
+            "created_at": "2025-09-01T00:00:00Z",
+            "updated_at": "2025-09-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "activities.pointcategory",
+        "pk": 2,
+        "fields": {
+            "name": "Y thuc chap hanh noi quy, quy che",
+            "code": "MUC_2",
+            "description": "Muc II - Chap hanh phap luat Nha nuoc, quy dinh, noi quy cua truong, lop",
+            "is_active": true,
+            "created_at": "2025-09-01T00:00:00Z",
+            "updated_at": "2025-09-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "activities.pointcategory",
+        "pk": 3,
+        "fields": {
+            "name": "Y thuc va ket qua tham gia hoat dong chinh tri - xa hoi",
+            "code": "MUC_3",
+            "description": "Muc III - Tham gia cac phong trao, hoat dong Doan - Hoi, tinh nguyen, van hoa, the thao",
+            "is_active": true,
+            "created_at": "2025-09-01T00:00:00Z",
+            "updated_at": "2025-09-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "activities.pointcategory",
+        "pk": 4,
+        "fields": {
+            "name": "Y thuc cong dan trong quan he cong dong",
+            "code": "MUC_4",
+            "description": "Muc IV - Quan he voi cong dong, gia dinh, xa hoi; tham gia hoat dong tu thien, cong ich",
+            "is_active": true,
+            "created_at": "2025-09-01T00:00:00Z",
+            "updated_at": "2025-09-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "activities.pointcategory",
+        "pk": 5,
+        "fields": {
+            "name": "Y thuc va ket qua tham gia cong tac can bo lop, Doan - Hoi",
+            "code": "MUC_5",
+            "description": "Muc V - Tham gia cong tac can bo, dong gop cho to chuc Doan - Hoi sinh vien",
+            "is_active": true,
+            "created_at": "2025-09-01T00:00:00Z",
+            "updated_at": "2025-09-01T00:00:00Z"
+        }
+    }
+]

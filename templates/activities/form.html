@@ -10,12 +10,21 @@
         <form method="post" class="space-y-5">
             {% csrf_token %}
 
-            <div>
-                <label class="block text-sm font-black uppercase mb-2">TÊN HOẠT ĐỘNG <span
-                        class="text-accent-red">*</span></label>
-                <input type="text" name="title" required value="{{ activity.title|default:'' }}"
-                    class="w-full border-3 border-black bg-white p-3 font-bold uppercase placeholder:text-slate-400 focus:ring-0 focus:border-black text-sm"
-                    placeholder="NHẬP TÊN HOẠT ĐỘNG">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-black uppercase mb-2">TÊN HOẠT ĐỘNG <span
+                            class="text-accent-red">*</span></label>
+                    <input type="text" name="title" required value="{{ activity.title|default:'' }}"
+                        class="w-full border-3 border-black bg-white p-3 font-bold uppercase placeholder:text-slate-400 focus:ring-0 focus:border-black text-sm"
+                        placeholder="NHẬP TÊN HOẠT ĐỘNG">
+                </div>
+                <div>
+                    <label class="block text-sm font-black uppercase mb-2">MÃ HOẠT ĐỘNG <span
+                            class="text-accent-red">*</span></label>
+                    <input type="text" name="code" required value="{{ activity.code|default:'' }}"
+                        class="w-full border-3 border-black bg-white p-3 font-bold uppercase placeholder:text-slate-400 focus:ring-0 focus:border-black text-sm"
+                        placeholder="VD: HD-001">
+                </div>
             </div>
 
             <div>
@@ -33,7 +42,7 @@
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- CHỌN --</option>
                         {% for org in organizations %}
-                        <option value="{{ org.pk }}" {% if activity.organization_id == org.pk %}selected{% endif %}>{{
+                        <option value="{{ org.pk }}" {% if activity.organization_id==org.pk %}selected{% endif %}>{{
                             org.name }}</option>
                         {% endfor %}
                     </select>
@@ -42,10 +51,36 @@
                     <label class="block text-sm font-black uppercase mb-2">HỌC KỲ</label>
                     <select name="semester"
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
-                        <option value="">-- CHỌN --</option>
+                        <option value="">-- KHÔNG XÁC ĐỊNH --</option>
                         {% for sem in semesters %}
-                        <option value="{{ sem.pk }}" {% if activity.semester_id == sem.pk %}selected{% endif %}>{{
-                            sem.name }}</option>
+                        <option value="{{ sem.pk }}" {% if activity.semester_id==sem.pk %}selected{% endif %}>{{
+                            sem.name }} ({{ sem.academic_year }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-black uppercase mb-2">LOẠI HOẠT ĐỘNG <span
+                            class="text-accent-red">*</span></label>
+                    <select name="activity_type" required
+                        class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
+                        <option value="">-- CHỌN --</option>
+                        {% for val, label in type_choices %}
+                        <option value="{{ val }}" {% if activity.activity_type==val %}selected{% endif %}>{{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-black uppercase mb-2">MỤC ĐIỂM RÈN LUYỆN</label>
+                    <select name="point_category"
+                        class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
+                        <option value="">-- KHÔNG XÁC ĐỊNH --</option>
+                        {% for pc in point_categories %}
+                        <option value="{{ pc.pk }}" {% if activity.point_category_id==pc.pk %}selected{% endif %}>{{
+                            pc.code }} - {{ pc.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -74,12 +109,6 @@
                     <input type="text" name="location" value="{{ activity.location|default:'' }}"
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase placeholder:text-slate-400 focus:ring-0 focus:border-black text-sm"
                         placeholder="VD: HỘI TRƯỜNG A">
-                </div>
-                <div>
-                    <label class="block text-sm font-black uppercase mb-2">SỐ NGƯỜI TỐI ĐA</label>
-                    <input type="number" name="max_participants" value="{{ activity.max_participants|default:'' }}"
-                        class="w-full border-3 border-black bg-white p-3 font-bold focus:ring-0 focus:border-black text-sm"
-                        placeholder="0 = KHÔNG GIỚI HẠN">
                 </div>
             </div>
 
