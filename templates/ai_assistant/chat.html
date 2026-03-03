@@ -1,6 +1,13 @@
 {% extends 'base.html' %}
 {% block title %}✦ AI ASSISTANT — YOUTHHUB{% endblock %}
 
+{% block header_actions %}
+<a href="{% url 'ai_assistant:documents' %}"
+    class="bg-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
+    <span class="material-symbols-outlined text-lg">folder</span> VĂN BẢN ĐÃ TẠO
+</a>
+{% endblock %}
+
 {% block content %}
 <div>
     <div class="flex items-center justify-between mb-8">
@@ -11,7 +18,11 @@
         </div>
         <div
             class="hidden md:block border-3 border-black bg-white px-4 py-2 font-black uppercase text-sm shadow-brutal-sm">
-            SESSION: ACTIVE
+            {% if ollama_status.online %}
+            <span class="text-accent-teal">●</span> OLLAMA ONLINE
+            {% else %}
+            <span class="text-accent-red">●</span> OLLAMA OFFLINE
+            {% endif %}
         </div>
     </div>
 
@@ -20,33 +31,34 @@
         <aside class="w-full lg:w-1/3 space-y-6">
             <div class="bg-white border-3 border-black p-6 shadow-brutal">
                 <h3 class="text-xl font-black uppercase mb-6 border-b-2 border-black pb-2">DOCUMENT PARAMETERS</h3>
-                <form method="post" class="space-y-4" id="aiForm">
+                <form method="post" action="{% url 'ai_assistant:generate' %}" class="space-y-4">
                     {% csrf_token %}
                     <div>
                         <label class="text-sm font-black uppercase">DOCUMENT TYPE</label>
                         <select name="doc_type"
                             class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0 mt-1">
-                            <option>KẾ HOẠCH / BÁO CÁO</option>
-                            <option>BIÊN BẢN HỌP</option>
-                            <option>TỜ TRÌNH</option>
-                            <option>CÔNG VĂN</option>
+                            <option {% if form_doc_type=='KẾ HOẠCH / BÁO CÁO' %}selected{% endif %}>KẾ HOẠCH / BÁO CÁO
+                            </option>
+                            <option {% if form_doc_type=='BIÊN BẢN HỌP' %}selected{% endif %}>BIÊN BẢN HỌP</option>
+                            <option {% if form_doc_type=='TỜ TRÌNH' %}selected{% endif %}>TỜ TRÌNH</option>
+                            <option {% if form_doc_type=='CÔNG VĂN' %}selected{% endif %}>CÔNG VĂN</option>
                         </select>
                     </div>
                     <div>
                         <label class="text-sm font-black uppercase">EVENT NAME</label>
-                        <input type="text" name="event_name"
+                        <input type="text" name="event_name" value="{{ form_event_name|default:'' }}"
                             class="w-full border-3 border-black bg-white p-3 font-bold uppercase placeholder:text-slate-400 focus:ring-0 text-sm mt-1"
                             placeholder="NHẬP TÊN SỰ KIỆN">
                     </div>
                     <div>
                         <label class="text-sm font-black uppercase">ORGANIZATION</label>
-                        <input type="text" name="organization"
+                        <input type="text" name="organization" value="{{ form_organization|default:'' }}"
                             class="w-full border-3 border-black bg-white p-3 font-bold uppercase placeholder:text-slate-400 focus:ring-0 text-sm mt-1"
                             placeholder="TÊN TỔ CHỨC">
                     </div>
                     <div>
                         <label class="text-sm font-black uppercase">DATE</label>
-                        <input type="date" name="date"
+                        <input type="date" name="date" value="{{ form_date|default:'' }}"
                             class="w-full border-3 border-black bg-white p-3 font-bold uppercase focus:ring-0 text-sm mt-1">
                     </div>
                     <button type="submit"
@@ -56,14 +68,22 @@
                 </form>
             </div>
 
-            <!-- Nav -->
-            <nav class="space-y-2">
-                <a href="{% url 'core:dashboard' %}"
-                    class="flex items-center gap-3 border-3 border-black bg-white p-3 shadow-brutal-sm brutal-btn transition-all">
-                    <span class="material-symbols-outlined font-black">dashboard</span>
-                    <span class="font-black uppercase text-sm">DASHBOARD</span>
+            <!-- Recent Docs -->
+            {% if recent_docs %}
+            <div class="bg-white border-3 border-black shadow-brutal-sm">
+                <div class="p-4 border-b-2 border-black">
+                    <h3 class="text-sm font-black uppercase">PREVIOUS DRAFTS</h3>
+                </div>
+                {% for doc in recent_docs %}
+                <a href="{% url 'ai_assistant:document_detail' pk=doc.pk %}"
+                    class="block p-3 border-b border-black/10 hover:bg-primary/5 transition-all">
+                    <p class="text-xs font-black uppercase truncate">{{ doc.title }}</p>
+                    <p class="text-[10px] font-bold text-slate-400 mt-0.5">{{ doc.created_at|date:"d/m H:i" }} · {{
+                        doc.get_status_display }}</p>
                 </a>
-            </nav>
+                {% endfor %}
+            </div>
+            {% endif %}
         </aside>
 
         <!-- Right: Output -->
@@ -82,10 +102,16 @@
                     placeholder="VĂN BẢN ĐƯỢC TẠO SẼ XUẤT HIỆN TẠI ĐÂY...">{{ output|default:"" }}</textarea>
 
                 <div class="flex flex-wrap gap-4">
-                    <button onclick="saveAsDraft()"
-                        class="flex-1 min-w-[150px] bg-accent-yellow border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined">save</span> SAVE DRAFT
-                    </button>
+                    {% if current_doc %}
+                    <form method="post" action="{% url 'ai_assistant:document_save' pk=current_doc.pk %}"
+                        class="flex-1 min-w-[150px]">
+                        {% csrf_token %}
+                        <button type="submit"
+                            class="w-full bg-accent-yellow border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">save</span> SAVE DRAFT
+                        </button>
+                    </form>
+                    {% endif %}
                     <button onclick="copyText()"
                         class="flex-1 min-w-[150px] bg-accent-teal text-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2">
                         <span class="material-symbols-outlined">content_copy</span> COPY TEXT
@@ -96,13 +122,23 @@
             <!-- Status Bar -->
             <div class="border-3 border-black bg-white px-4 py-2 flex justify-between items-center shadow-brutal-sm">
                 <div class="flex items-center gap-2">
+                    {% if ollama_status.online %}
                     <span class="relative flex h-3 w-3">
                         <span class="animate-ping absolute inline-flex h-full w-full bg-green-400 opacity-75"></span>
                         <span class="relative inline-flex h-3 w-3 bg-green-500"></span>
                     </span>
-                    <span class="text-xs font-black uppercase">LLM READY: QWEN_2.5_7B</span>
+                    <span class="text-xs font-black uppercase">LLM READY: {{ ollama_model|upper }}</span>
+                    {% else %}
+                    <span class="relative flex h-3 w-3">
+                        <span class="relative inline-flex h-3 w-3 bg-red-500"></span>
+                    </span>
+                    <span class="text-xs font-black uppercase text-accent-red">LLM OFFLINE — CHẠY: OLLAMA SERVE</span>
+                    {% endif %}
                 </div>
-                <span class="text-xs font-black uppercase text-slate-400">OLLAMA LOCAL</span>
+                <div class="text-xs font-black uppercase text-slate-400">
+                    {% if word_count %}WORDS: {{ word_count }} | IN: {{ tokens_in }} | OUT: {{ tokens_out }}{% else
+                    %}OLLAMA LOCAL{% endif %}
+                </div>
             </div>
         </section>
     </div>
@@ -112,11 +148,9 @@
     function copyText() {
         const area = document.getElementById('aiOutput');
         area.select();
-        document.execCommand('copy');
-        alert('ĐÃ COPY!');
-    }
-    function saveAsDraft() {
-        alert('TÍNH NĂNG LƯU NHÁP SẼ SỚM CÓ!');
+        navigator.clipboard.writeText(area.value).then(() => {
+            alert('ĐÃ COPY VĂN BẢN!');
+        });
     }
 </script>
 {% endblock %}
