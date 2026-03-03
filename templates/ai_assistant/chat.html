@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% block title %}✦ AI ASSISTANT — YOUTHHUB{% endblock %}
 
 {% block header_actions %}
@@ -16,13 +16,11 @@
                 ASSISTANT</h1>
             <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">POWERED BY QWEN 2.5 / OLLAMA</p>
         </div>
-        <div
-            class="hidden md:block border-3 border-black bg-white px-4 py-2 font-black uppercase text-sm shadow-brutal-sm">
-            {% if ollama_status.online %}
-            <span class="text-accent-teal">●</span> OLLAMA ONLINE
-            {% else %}
-            <span class="text-accent-red">●</span> OLLAMA OFFLINE
-            {% endif %}
+        <!-- Ollama connection badge: starts as "checking", updated by JS -->
+        <div id="ollama-badge"
+            class="hidden md:block border-3 border-black bg-white px-4 py-2 font-black uppercase text-sm shadow-brutal-sm transition-all">
+            <span id="ollama-dot" class="text-slate-400">●</span>
+            <span id="ollama-label">ĐANG KIỂM TRA...</span>
         </div>
     </div>
 
@@ -37,11 +35,11 @@
                         <label class="text-sm font-black uppercase">DOCUMENT TYPE</label>
                         <select name="doc_type"
                             class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0 mt-1">
-                            <option {% if form_doc_type=='KẾ HOẠCH / BÁO CÁO' %}selected{% endif %}>KẾ HOẠCH / BÁO CÁO
+                            <option {% if form_doc_type == 'KẾ HOẠCH / BÁO CÁO' %}selected{% endif %}>KẾ HOẠCH / BÁO CÁO
                             </option>
-                            <option {% if form_doc_type=='BIÊN BẢN HỌP' %}selected{% endif %}>BIÊN BẢN HỌP</option>
-                            <option {% if form_doc_type=='TỜ TRÌNH' %}selected{% endif %}>TỜ TRÌNH</option>
-                            <option {% if form_doc_type=='CÔNG VĂN' %}selected{% endif %}>CÔNG VĂN</option>
+                            <option {% if form_doc_type == 'BIÊN BẢN HỌP' %}selected{% endif %}>BIÊN BẢN HỌP</option>
+                            <option {% if form_doc_type == 'TỜ TRÌNH' %}selected{% endif %}>TỜ TRÌNH</option>
+                            <option {% if form_doc_type == 'CÔNG VĂN' %}selected{% endif %}>CÔNG VĂN</option>
                         </select>
                     </div>
                     <div>
@@ -119,21 +117,16 @@
                 </div>
             </div>
 
-            <!-- Status Bar -->
+            <!-- Status Bar: starts as "checking", updated by JS -->
             <div class="border-3 border-black bg-white px-4 py-2 flex justify-between items-center shadow-brutal-sm">
                 <div class="flex items-center gap-2">
-                    {% if ollama_status.online %}
-                    <span class="relative flex h-3 w-3">
-                        <span class="animate-ping absolute inline-flex h-full w-full bg-green-400 opacity-75"></span>
-                        <span class="relative inline-flex h-3 w-3 bg-green-500"></span>
+                    <!-- Skeleton pulse while checking -->
+                    <span id="status-indicator" class="relative flex h-3 w-3">
+                        <span class="animate-ping absolute inline-flex h-full w-full bg-slate-300 opacity-75"></span>
+                        <span class="relative inline-flex h-3 w-3 bg-slate-400"></span>
                     </span>
-                    <span class="text-xs font-black uppercase">LLM READY: {{ ollama_model|upper }}</span>
-                    {% else %}
-                    <span class="relative flex h-3 w-3">
-                        <span class="relative inline-flex h-3 w-3 bg-red-500"></span>
-                    </span>
-                    <span class="text-xs font-black uppercase text-accent-red">LLM OFFLINE — CHẠY: OLLAMA SERVE</span>
-                    {% endif %}
+                    <span id="status-text" class="text-xs font-black uppercase text-slate-400">ĐANG KẾT NỐI
+                        OLLAMA...</span>
                 </div>
                 <div class="text-xs font-black uppercase text-slate-400">
                     {% if word_count %}WORDS: {{ word_count }} | IN: {{ tokens_in }} | OUT: {{ tokens_out }}{% else
@@ -145,6 +138,7 @@
 </div>
 
 <script>
+    // Copy text helper
     function copyText() {
         const area = document.getElementById('aiOutput');
         area.select();
@@ -152,5 +146,71 @@
             alert('ĐÃ COPY VĂN BẢN!');
         });
     }
+
+    // ────────────────────────────────────────────────────────
+    // Async Ollama status check — runs AFTER page is visible
+    // ────────────────────────────────────────────────────────
+    const STATUS_URL = '{% url "ai_assistant:status" %}';
+    const MODEL_NAME = '{{ ollama_model|upper }}';
+
+    function updateStatusUI(online) {
+        // Top badge
+        const dot = document.getElementById('ollama-dot');
+        const label = document.getElementById('ollama-label');
+        if (dot && label) {
+            if (online) {
+                dot.className = 'text-accent-teal';
+                label.textContent = 'OLLAMA ONLINE';
+            } else {
+                dot.className = 'text-accent-red';
+                label.textContent = 'OLLAMA OFFLINE';
+            }
+        }
+
+        // Status bar
+        const indicator = document.getElementById('status-indicator');
+        const statusText = document.getElementById('status-text');
+        if (indicator && statusText) {
+            if (online) {
+                indicator.innerHTML = `
+                    <span class="animate-ping absolute inline-flex h-full w-full bg-green-400 opacity-75"></span>
+                    <span class="relative inline-flex h-3 w-3 bg-green-500"></span>`;
+                statusText.textContent = 'LLM READY: ' + MODEL_NAME;
+                statusText.className = 'text-xs font-black uppercase';
+            } else {
+                indicator.innerHTML = `
+                    <span class="relative inline-flex h-3 w-3 bg-red-500"></span>`;
+                statusText.textContent = 'LLM OFFLINE — CHẠY: OLLAMA SERVE';
+                statusText.className = 'text-xs font-black uppercase text-accent-red';
+            }
+        }
+    }
+
+    async function checkOllamaStatus() {
+        try {
+            const res = await fetch(STATUS_URL, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                updateStatusUI(data.online === true);
+            } else {
+                updateStatusUI(false);
+            }
+        } catch {
+            updateStatusUI(false);
+        }
+    }
+
+    // Run after page paint so UI never blocks
+    requestAnimationFrame(() => {
+        {% if word_count %}
+        // After generate: we already know Ollama was online
+        updateStatusUI(true);
+        {% else %}
+        // Initial page load: fetch status async
+        checkOllamaStatus();
+        {% endif %}
+    });
 </script>
 {% endblock %}

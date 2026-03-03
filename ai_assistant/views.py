@@ -17,19 +17,25 @@ from .ollama_service import (
 
 @login_required
 def chat_view(request):
-    """Main AI assistant page with generate form and recent documents."""
-    status = check_ollama_status()
+    """Main AI assistant page. Renders immediately; Ollama status is fetched async by JS."""
     recent_docs = AiDocument.objects.filter(
         created_by=request.user
     ).order_by('-created_at')[:5]
 
     context = {
-        'ollama_status': status,
+        'ollama_status': None,   # Will be fetched asynchronously by frontend
         'ollama_model': OLLAMA_MODEL,
         'recent_docs': recent_docs,
         'output': '',
     }
     return render(request, 'ai_assistant/chat.html', context)
+
+
+@login_required
+def ollama_status_api(request):
+    """Async endpoint: returns Ollama connection status as JSON."""
+    status = check_ollama_status()
+    return JsonResponse(status)
 
 
 @login_required
@@ -64,8 +70,8 @@ def generate_view(request):
         status=AiDocument.DocStatus.RAW,
     )
 
-    # Re-render chat page with output
-    status = check_ollama_status()
+    # Re-render chat page with output (status fetched async by JS)
+    status = {'online': True, 'models': [], 'has_model': True}  # optimistic after generate
     recent_docs = AiDocument.objects.filter(
         created_by=request.user
     ).order_by('-created_at')[:5]

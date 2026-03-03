@@ -179,7 +179,8 @@ Bảng 3.11 Thực thể budgets
 Bảng 3.12 Thực thể budget_items
 Bảng 3.13 Thực thể tasks
 Bảng 3.14 Thực thể activity_points
-Bảng 3.15 Thực thể audit_logs
+Bảng 3.15 Thực thể point_categories
+Bảng 3.16 Thực thể audit_logs
 
 # GIỚI THIỆU ĐỀ TÀI
 
@@ -985,6 +986,7 @@ description: Mô tả chi tiết hoạt động (text).
 activity_type: Loại hoạt động (enum: VOLUNTEER / MEETING / ACADEMIC / OTHER).
 semester_id: Học kỳ diễn ra hoạt động (khóa ngoại → semesters, nullable – ON DELETE SET NULL).
 start_time, end_time: Thời gian bắt đầu và kết thúc (datetime).
+point_category_id: Liên kết mục ĐRL (khóa ngoại → point_categories, nullable).
 location: Địa điểm tổ chức (varchar 255).
 status: Trạng thái (enum: DRAFT / PENDING / APPROVED / ONGOING / DONE / CANCELED).
 created_by: Người tạo hoạt động (khóa ngoại → users).
@@ -1108,6 +1110,18 @@ due_date: Hạn hoàn thành (date).
 status: Trạng thái nhiệm vụ (enum: TODO / IN_PROGRESS / DONE).
 created_at, updated_at: Thời gian tạo và cập nhật (timestamp).
 
+#### Thực thể point_categories (Mục điểm rèn luyện)
+
+> Mô tả: Lưu danh mục các mục điểm rèn luyện (VD: Mục I - Ý thức học tập, Mục II - Chấp hành nội quy).
+> Thuộc tính chính:
+
+id: Mã danh mục (khóa chính, bigint, auto increment).
+name: Tên mục điểm (varchar 255).
+code: Mã danh mục (varchar 50, unique).
+description: Mô tả chi tiết (text, nullable).
+is_active: Trạng thái sử dụng (boolean, default true).
+created_at, updated_at: Thời gian (timestamp).
+
 #### Thực thể activity_points (Điểm hoạt động)
 
 > Mô tả: Lưu điểm hoạt động tích lũy của sinh viên từ việc tham gia các hoạt động Đoàn – Hội, làm cơ sở tham chiếu cho điểm rèn luyện.
@@ -1200,6 +1214,7 @@ Nhóm này mô tả vòng đời của hoạt động ngoại khóa, quá trình
 | activities | `\|\|` | **phân công** | `O<` | tasks | Một hoạt động phân công 0..nhiều nhiệm vụ; mỗi nhiệm vụ thuộc đúng 1 hoạt động |
 | users | `\|\|` | **được giao** | `O<` | tasks | Một user được giao 0..nhiều nhiệm vụ; mỗi nhiệm vụ giao cho đúng 1 user |
 | users | `\|\|` | **tích lũy điểm** | `O<` | activity_points | Một sinh viên có 0..nhiều bản ghi điểm; mỗi bản ghi thuộc đúng 1 sinh viên |
+| point_categories | `\|\|` | **phân loại** | `O<` | activities | Một danh mục chứa 0..nhiều hoạt động; mỗi hoạt động thuộc 0..1 danh mục |
 | activities | `\|\|` | **có điểm hoạt động** | `O<` | activity_points | Một hoạt động phát sinh 0..nhiều bản ghi điểm; mỗi bản ghi gắn với đúng 1 hoạt động |
 
 **Diễn giải nghiệp vụ:**
@@ -1251,7 +1266,9 @@ Lược đồ quan hệ của hệ thống YouthHub bao gồm 15 quan hệ chín
 
 **semesters** (id, name, academic_year, start_date, end_date, is_current, created_at, updated_at)
 
-**activities** (id, organization_id*, semester_id*, title, code, description, activity_type, start_time, end_time, location, status, created_by*, approved_by*, approved_at, created_at, updated_at)
+**point_categories** (id, name, code, description, is_active, created_at, updated_at)
+
+**activities** (id, organization_id*, point_category_id*, semester_id*, title, code, description, activity_type, start_time, end_time, location, status, created_by*, approved_by*, approved_at, created_at, updated_at)
 
 **activity_registrations** (id, activity_id*, student_id*, registered_at, status)
 
@@ -1357,12 +1374,13 @@ Lược đồ quan hệ của hệ thống YouthHub bao gồm 15 quan hệ chín
 | 8 | start_time | Thời gian bắt đầu | datetime | – | NOT NULL | |
 | 9 | end_time | Thời gian kết thúc | datetime | – | NOT NULL | |
 | 10 | location | Địa điểm | varchar | 255 | NOT NULL | |
-| 11 | status | Trạng thái | enum | – | DEFAULT 'DRAFT' | DRAFT/PENDING/APPROVED/ONGOING/DONE/CANCELED |
-| 12 | created_by | Người tạo | bigint | – | FK → users; NOT NULL | |
-| 13 | approved_by | Người duyệt | bigint | – | FK → users; NULL | |
-| 14 | approved_at | Thời gian duyệt | datetime | – | NULL | |
-| 15 | created_at | Ngày tạo | timestamp | – | NOT NULL | |
-| 16 | updated_at | Ngày cập nhật | timestamp | – | NOT NULL | |
+| 11 | point_category_id | Mục ĐRL | bigint | – | FK → point_categories; NULL | ON DELETE SET NULL |
+| 12 | status | Trạng thái | enum | – | DEFAULT 'DRAFT' | DRAFT/PENDING/APPROVED/ONGOING/DONE/CANCELED |
+| 13 | created_by | Người tạo | bigint | – | FK → users; NOT NULL | |
+| 14 | approved_by | Người duyệt | bigint | – | FK → users; NULL | |
+| 15 | approved_at | Thời gian duyệt | datetime | – | NULL | |
+| 16 | created_at | Ngày tạo | timestamp | – | NOT NULL | |
+| 17 | updated_at | Ngày cập nhật | timestamp | – | NOT NULL | |
 
 #### Bảng 3.7 – Thực thể activity_registrations
 
@@ -1475,7 +1493,19 @@ Lược đồ quan hệ của hệ thống YouthHub bao gồm 15 quan hệ chín
 
 > Ràng buộc toàn vẹn: UNIQUE(student_id, activity_id, reason)
 
-#### Bảng 3.15 – Thực thể audit_logs
+#### Bảng 3.15 – Thực thể point_categories
+
+| STT | Thuộc tính | Diễn giải | Kiểu dữ liệu | Kích thước | Ràng buộc | Ghi chú |
+|-----|-----------|-----------|-------------|------------|-----------|---------|
+| 1 | id | Mã danh mục | bigint | – | PK; AUTO INCREMENT | |
+| 2 | name | Tên danh mục | varchar | 255 | NOT NULL | Ví dụ: Mục I |
+| 3 | code | Mã danh mục | varchar | 50 | UNIQUE; NOT NULL | |
+| 4 | description | Mô tả | text | – | NULL | |
+| 5 | is_active | Hoạt động | boolean | – | DEFAULT true | |
+| 6 | created_at| Ngày tạo | timestamp | – | NOT NULL | |
+| 7 | updated_at| Ngày cập | timestamp | – | NOT NULL | |
+
+#### Bảng 3.16 – Thực thể audit_logs
 
 | STT | Thuộc tính | Diễn giải | Kiểu dữ liệu | Kích thước | Ràng buộc | Ghi chú |
 |-----|-----------|-----------|-------------|------------|-----------|---------|

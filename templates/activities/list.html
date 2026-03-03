@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% block title %}⚡ HOẠT ĐỘNG — YOUTHHUB{% endblock %}
 
 {% block header_actions %}
@@ -32,11 +32,11 @@
             <select name="status"
                 class="border-3 border-black bg-white py-4 px-4 font-bold uppercase text-sm focus:ring-0">
                 <option value="">TẤT CẢ STATUS</option>
-                <option value="DRAFT" {% if request.GET.status=='DRAFT' %}selected{% endif %}>DRAFT</option>
-                <option value="PENDING" {% if request.GET.status=='PENDING' %}selected{% endif %}>PENDING</option>
-                <option value="APPROVED" {% if request.GET.status=='APPROVED' %}selected{% endif %}>APPROVED</option>
-                <option value="ONGOING" {% if request.GET.status=='ONGOING' %}selected{% endif %}>ONGOING</option>
-                <option value="DONE" {% if request.GET.status=='DONE' %}selected{% endif %}>DONE</option>
+                <option value="DRAFT" {% if request.GET.status == 'DRAFT' %}selected{% endif %}>DRAFT</option>
+                <option value="PENDING" {% if request.GET.status == 'PENDING' %}selected{% endif %}>PENDING</option>
+                <option value="APPROVED" {% if request.GET.status == 'APPROVED' %}selected{% endif %}>APPROVED</option>
+                <option value="ONGOING" {% if request.GET.status == 'ONGOING' %}selected{% endif %}>ONGOING</option>
+                <option value="DONE" {% if request.GET.status == 'DONE' %}selected{% endif %}>DONE</option>
             </select>
             <button type="submit"
                 class="bg-primary text-white border-3 border-black font-black uppercase py-4 px-8 shadow-brutal brutal-btn transition-all">
