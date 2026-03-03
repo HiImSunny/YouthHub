@@ -90,16 +90,28 @@
 
 <!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- ── Django Data Islands (VS Code lint-safe) ─────────────────────────── -->
+<script id="data-status-labels" type="application/json">{{ status_labels|safe }}</script>
+<script id="data-status-data" type="application/json">{{ status_data|safe }}</script>
+<script id="data-type-labels" type="application/json">{{ type_labels|safe }}</script>
+<script id="data-type-data" type="application/json">{{ type_data|safe }}</script>
+<script id="data-monthly-labels" type="application/json">{{ monthly_labels|safe }}</script>
+<script id="data-monthly-data" type="application/json">{{ monthly_data|safe }}</script>
+<script id="data-org-labels" type="application/json">{{ org_labels|safe }}</script>
+<script id="data-org-data" type="application/json">{{ org_data|safe }}</script>
+
 <script>
-    // ── Data from Django ────────────────────────────────────────────────────────
-    const statusLabels = {{ status_labels| safe }};
-    const statusData = {{ status_data| safe }};
-    const typeLabels = {{ type_labels| safe }};
-    const typeData = {{ type_data| safe }};
-    const monthlyLabels = {{ monthly_labels| safe }};
-    const monthlyData = {{ monthly_data| safe }};
-    const orgLabels = {{ org_labels| safe }};
-    const orgData = {{ org_data| safe }};
+    // ── Read data from islands ──────────────────────────────────────────────────
+    function jd(id) { return JSON.parse(document.getElementById(id).textContent); }
+    const statusLabels = jd('data-status-labels');
+    const statusData = jd('data-status-data');
+    const typeLabels = jd('data-type-labels');
+    const typeData = jd('data-type-data');
+    const monthlyLabels = jd('data-monthly-labels');
+    const monthlyData = jd('data-monthly-data');
+    const orgLabels = jd('data-org-labels');
+    const orgData = jd('data-org-data');
 
     // ── Neobrutalism Color Palette ──────────────────────────────────────────────
     const COLORS = ['#ff6a00', '#fbef2e', '#008080', '#ff4d4d', '#3b82f6', '#8b5cf6'];
