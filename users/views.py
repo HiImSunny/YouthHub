@@ -15,6 +15,9 @@ User = get_user_model()
 def login_view(request):
     """Handle user login (supports username OR email)."""
     if request.user.is_authenticated:
+        # Route already-logged-in users to the correct dashboard by role
+        if request.user.role == 'STUDENT':
+            return redirect('students:dashboard')
         return redirect('core:dashboard')
 
     if request.method == 'POST':
@@ -27,8 +30,11 @@ def login_view(request):
                 messages.error(request, 'Tai khoan da bi khoa. Vui long lien he Admin.')
             else:
                 login(request, user)
-                next_url = request.GET.get('next', 'core:dashboard')
-                return redirect(next_url)
+                # Honour 'next' param if provided, otherwise use role-based redirect
+                next_url = request.GET.get('next', '')
+                if next_url:
+                    return redirect(next_url)
+                return redirect('users:post_login_redirect')
         else:
             messages.error(request, 'Sai ten dang nhap/email hoac mat khau.')
 
@@ -38,6 +44,8 @@ def login_view(request):
 def register_view(request):
     """Register a new STUDENT account."""
     if request.user.is_authenticated:
+        if request.user.role == 'STUDENT':
+            return redirect('students:dashboard')
         return redirect('core:dashboard')
 
     if request.method == 'POST':
@@ -109,6 +117,14 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'Da dang xuat thanh cong.')
     return redirect('users:login')
+
+
+@login_required
+def post_login_redirect(request):
+    """Role-based redirect after login. Used as LOGIN_REDIRECT_URL target."""
+    if request.user.role == 'STUDENT':
+        return redirect('students:dashboard')
+    return redirect('core:dashboard')
 
 
 # ─── Profile & Password ───────────────────────────────────────────────────────

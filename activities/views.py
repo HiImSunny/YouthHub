@@ -13,7 +13,11 @@ from core.permissions import (
 
 @login_required
 def activity_list(request):
-    """List activities with filtering."""
+    """List activities with filtering. STUDENT gets redirected to their own portal."""
+    # Students should use their filtered portal, not the admin/staff list
+    if request.user.role == 'STUDENT':
+        return redirect('students:portal')
+
     qs = Activity.objects.select_related('organization', 'created_by', 'semester')
 
     # Filter by status

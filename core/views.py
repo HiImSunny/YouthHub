@@ -15,7 +15,11 @@ from .permissions import can_manage_org_staff, can_create_org, get_manageable_or
 
 @login_required
 def dashboard_view(request):
-    """Main dashboard with summary statistics."""
+    """Main dashboard with summary statistics. STUDENT gets redirected to their portal."""
+    # Students should not see the admin/staff dashboard — send them to their own portal
+    if request.user.role == 'STUDENT':
+        return redirect('students:dashboard')
+
     now = timezone.now()
     context = {
         'total_activities': Activity.objects.count(),

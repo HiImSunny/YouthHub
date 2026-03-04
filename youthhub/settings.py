@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'activities.apps.ActivitiesConfig',
     'attendance.apps.AttendanceConfig',
     'ai_assistant.apps.AiAssistantConfig',
+    'students.apps.StudentsConfig',
 ]
 
 MIDDLEWARE = [
@@ -135,5 +136,6 @@ OLLAMA_MODEL = env('OLLAMA_MODEL', default='qwen2.5:7b')
 # LOGIN / LOGOUT REDIRECTS
 # =============================================================================
 LOGIN_URL = '/auth/login/'
-LOGIN_REDIRECT_URL = '/'
+# Role-based redirect handled in users/views.py post_login_redirect view
+LOGIN_REDIRECT_URL = '/auth/redirect/'
 LOGOUT_REDIRECT_URL = '/auth/login/'
