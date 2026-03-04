@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% block title %}HOẠT ĐỘNG — SINH VIÊN — YOUTHHUB{% endblock %}
 
 {% block breadcrumb %}
@@ -68,8 +68,7 @@
                   {% if item.time_status == 'UPCOMING' %}text-primary
                   {% elif item.time_status == 'ONGOING' %}text-accent-teal
                   {% else %}text-slate-500{% endif %}">
-                    {% if item.time_status == 'ONGOING' %}⚡ {% elif item.time_status == 'UPCOMING' %}⏰ {% else %}✅ {%
-                    endif %}
+                    {% if item.time_status == 'ONGOING' %}⚡ {% elif item.time_status == 'UPCOMING' %}⏰ {% else %}✅ {% endif %}
                     {{ item.time_label }}
                 </span>
                 {% if act.point_category %}
