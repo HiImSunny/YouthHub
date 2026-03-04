@@ -15,9 +15,9 @@ urlpatterns = [
     path('<int:pk>/cancel-registration/', views.activity_cancel_registration, name='cancel_registration'),
     path('pending/', views.activity_pending_list, name='pending_list'),
     # C1/C2: Student activity portal
-    path('portal/', views.student_activity_list, name='student_list'),
+    path('student/activities/', views.student_activity_list, name='student_list'),
     # C3: Student dashboard
-    path('my-dashboard/', views.student_dashboard, name='student_dashboard'),
+    path('student/dashboard/', views.student_dashboard, name='student_dashboard'),
     # D1/D2/D3: Budget management
     path('<int:activity_pk>/budget/', views.budget_detail, name='budget_detail'),
     path('<int:activity_pk>/budget/create/', views.budget_create, name='budget_create'),

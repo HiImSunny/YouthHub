@@ -79,80 +79,86 @@
       <nav class="flex-1 p-4 space-y-1">
         {% with request.resolver_match.url_name as url_name %}
 
-        <!-- Dashboard — all roles -->
-        <a href="{% url 'core:dashboard' %}"
+        {% if user.role == 'STUDENT' %}
+        <!-- ═══ STUDENT NAV ═══ -->
+        <p class="text-[10px] uppercase tracking-[0.25em] text-zinc-500 px-4 py-1 font-bold mb-1">SINH VIÊN</p>
+
+        <!-- Student: Dashboard cá nhân -->
+        <a href="{% url 'activities:student_dashboard' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
-          {% if url_name == 'dashboard' %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          {% if 'student/dashboard' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
           <span class="material-symbols-outlined text-xl">dashboard</span> DASHBOARD
         </a>
 
-        <!-- Hoạt động — all roles -->
-        <a href="{% url 'activities:list' %}"
+        <!-- Student: Hoạt động -->
+        <a href="{% url 'activities:student_list' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
-          {% if 'activit' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          {% if 'student/activities' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
           <span class="material-symbols-outlined text-xl">event</span> HOẠT ĐỘNG
         </a>
 
-        <!-- Điểm danh — all roles -->
-        <a href="{% url 'attendance:sessions' %}"
-          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
-          {% if 'attendance' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
-          <span class="material-symbols-outlined text-xl">qr_code_scanner</span> ĐIỂM DANH
-        </a>
-
-        <!-- Tổ chức — all roles -->
-        <a href="{% url 'core:organizations' %}"
-          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
-          {% if 'organizations' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
-          <span class="material-symbols-outlined text-xl">apartment</span> TỔ CHỨC
-        </a>
-
-        <!-- AI Assistant — all roles -->
+        <!-- Student: AI Assistant -->
         <a href="{% url 'ai_assistant:chat' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
           {% if 'ai' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
           <span class="material-symbols-outlined text-xl">smart_toy</span> TRỢ LÝ AI
         </a>
 
-        {% if user.role == 'STUDENT' %}
-        <!-- Separator -->
-        <div class="border-t border-zinc-700 my-2"></div>
-        <p class="text-[10px] uppercase tracking-[0.25em] text-zinc-500 px-4 py-1 font-bold">SINH VIÊN</p>
+        {% else %}
+        <!-- ═══ STAFF / ADMIN NAV ═══ -->
 
-        <!-- Portal hoạt động -->
-        <a href="{% url 'activities:student_list' %}"
+        <!-- Dashboard -->
+        <a href="{% url 'core:dashboard' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
-          {% if 'portal' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          {% if url_name == 'dashboard' %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">dashboard</span> DASHBOARD
+        </a>
+
+        <!-- Hoạt động -->
+        <a href="{% url 'activities:list' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'activit' in request.path and 'portal' not in request.path and 'my-dashboard' not in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
           <span class="material-symbols-outlined text-xl">event</span> HOẠT ĐỘNG
         </a>
 
-        <!-- Dashboard cá nhân -->
-        <a href="{% url 'activities:student_dashboard' %}"
+        <!-- Điểm danh (session management) -->
+        <a href="{% url 'attendance:sessions' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
-          {% if 'my-dashboard' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
-          <span class="material-symbols-outlined text-xl">bar_chart</span> DASHBOARD
+          {% if 'attendance' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">qr_code_scanner</span> ĐIỂM DANH
         </a>
-        {% endif %}
 
-        {% if user.role == 'ADMIN' or user.role == 'STAFF' %}
-        <!-- Separator -->
+        <!-- Tổ chức -->
+        <a href="{% url 'core:organizations' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'organizations' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">apartment</span> TỔ CHỨC
+        </a>
+
+        <!-- AI Assistant -->
+        <a href="{% url 'ai_assistant:chat' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'ai' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">smart_toy</span> TRỢ LÝ AI
+        </a>
+
+        <!-- ── Quản trị (ADMIN + STAFF) ── -->
         <div class="border-t border-zinc-700 my-2"></div>
         <p class="text-[10px] uppercase tracking-[0.25em] text-zinc-500 px-4 py-1 font-bold">QUẢN TRỊ</p>
 
-        <!-- Chờ duyệt — ADMIN + STAFF -->
+        <!-- Chờ duyệt -->
         <a href="{% url 'activities:pending_list' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
           {% if 'pending' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
           <span class="material-symbols-outlined text-xl">pending_actions</span> CHỜ DUYỆT
         </a>
 
-        <!-- Thống kê — ADMIN + STAFF -->
+        <!-- Thống kê -->
         <a href="{% url 'core:statistics' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
           {% if 'statistics' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
           <span class="material-symbols-outlined text-xl">bar_chart</span> THỐNG KÊ
         </a>
-        {% endif %}
 
         {% if user.role == 'ADMIN' %}
         <!-- Audit Log — ADMIN only -->
@@ -169,6 +175,8 @@
           <span class="material-symbols-outlined text-xl">manage_accounts</span> USERS
         </a>
         {% endif %}
+
+        {% endif %}{# end STUDENT / STAFF-ADMIN split #}
 
         {% endwith %}
       </nav>
