@@ -40,6 +40,14 @@
                 CẬP NHẬT THÔNG TIN
             </button>
         </form>
+
+        <div class="mt-4 pt-4 border-t-3 border-black">
+            <a href="{% url 'users:change_password' %}"
+                class="w-full bg-zinc-900 text-white border-3 border-black p-3 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2 text-sm">
+                <span class="material-symbols-outlined text-lg">lock_reset</span>
+                ĐỔI MẬT KHẨU
+            </a>
+        </div>
     </div>
 </div>
 {% endblock %}

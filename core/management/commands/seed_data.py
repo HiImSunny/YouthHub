@@ -39,7 +39,7 @@ class Command(BaseCommand):
                 'parent': None,
                 'type': Organization.OrgType.UNION_SCHOOL,
                 'name': 'Đoàn trường Đại học Nam Cần Thơ',
-                'description': 'Đoàn TNCS HCM - Trường Đại học Nam Cần Thơ',
+                'description': 'Đoàn TNCS Cần Thơ - Trường Đại học Nam Cần Thơ',
                 'status': True,
             }
         )

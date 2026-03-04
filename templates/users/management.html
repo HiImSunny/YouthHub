@@ -48,7 +48,7 @@
                     class="w-full border-3 border-black bg-bg-light px-3 py-2 font-bold text-sm focus:outline-none focus:border-primary">
                     <option value="">Tất cả</option>
                     {% for val, label in role_choices %}
-                    <option value="{{ val }}" {% if val==current_role %}selected{% endif %}>{{ label }}</option>
+                    <option value="{{ val }}" {% if val == current_role %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -58,7 +58,7 @@
                     class="w-full border-3 border-black bg-bg-light px-3 py-2 font-bold text-sm focus:outline-none focus:border-primary">
                     <option value="">Tất cả</option>
                     {% for val, label in status_choices %}
-                    <option value="{{ val }}" {% if val==current_status %}selected{% endif %}>{{ label }}</option>
+                    <option value="{{ val }}" {% if val == current_status %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -159,7 +159,7 @@
                                     <select name="role"
                                         class="border-2 border-black text-xs font-black px-2 py-1 bg-white focus:outline-none">
                                         {% for val, label in role_choices %}
-                                        <option value="{{ val }}" {% if val==u.role %}selected{% endif %}>{{ label }}
+                                        <option value="{{ val }}" {% if val == u.role %}selected{% endif %}>{{ label }}
                                         </option>
                                         {% endfor %}
                                     </select>

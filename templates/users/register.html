@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}ĐĂNG KÝ — YOUTHHUB{% endblock %}
+
+{% block public_content %}
+<div class="w-full max-w-lg">
+    <div class="bg-white border-3 border-black p-8 shadow-brutal-lg">
+        <!-- Logo -->
+        <div class="text-center mb-6 pb-4 border-b-3 border-black">
+            <div class="flex items-center justify-center gap-3 mb-2">
+                <span class="material-symbols-outlined text-4xl text-primary">bolt</span>
+                <h1 class="text-3xl font-black uppercase tracking-tighter">YOUTH HUB</h1>
+            </div>
+            <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">TẠO TÀI KHOẢN SINH VIÊN</p>
+        </div>
+
+        {% if messages %}
+        {% for message in messages %}
+        <div class="border-3 border-black p-3 mb-4 font-bold uppercase text-sm
+          {% if message.tags == 'error' %}bg-accent-red/20 text-accent-red
+          {% elif message.tags == 'success' %}bg-accent-teal/20 text-accent-teal
+          {% else %}bg-primary/20 text-primary{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+
+            <!-- Row 1: Username + Email -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-black uppercase mb-1 tracking-wide">USERNAME *</label>
+                    <input type="text" name="username" required value="{{ form_data.username|default:'' }}"
+                        class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
+                        placeholder="vd: sv001">
+                </div>
+                <div>
+                    <label class="block text-xs font-black uppercase mb-1 tracking-wide">EMAIL *</label>
+                    <input type="email" name="email" required value="{{ form_data.email|default:'' }}"
+                        class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
+                        placeholder="vd: sv001@student.edu.vn">
+                </div>
+            </div>
+
+            <!-- Row 2: Full name -->
+            <div>
+                <label class="block text-xs font-black uppercase mb-1 tracking-wide">HỌ VÀ TÊN *</label>
+                <input type="text" name="full_name" required value="{{ form_data.full_name|default:'' }}"
+                    class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
+                    placeholder="Nguyễn Văn A">
+            </div>
+
+            <!-- Row 3: Student code + Faculty -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-black uppercase mb-1 tracking-wide">MÃ SINH VIÊN *</label>
+                    <input type="text" name="student_code" required value="{{ form_data.student_code|default:'' }}"
+                        class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
+                        placeholder="vd: NCT2100001">
+                </div>
+                <div>
+                    <label class="block text-xs font-black uppercase mb-1 tracking-wide">KHOA *</label>
+                    <input type="text" name="faculty" required value="{{ form_data.faculty|default:'' }}"
+                        class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
+                        placeholder="Công nghệ Thông tin">
+                </div>
+            </div>
+
+            <!-- Row 4: Class name -->
+            <div>
+                <label class="block text-xs font-black uppercase mb-1 tracking-wide">LỚP (tùy chọn)</label>
+                <input type="text" name="class_name" value="{{ form_data.class_name|default:'' }}"
+                    class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
+                    placeholder="DHCNTT21A">
+            </div>
+
+            <!-- Separator -->
+            <div class="border-t-3 border-black my-2"></div>
+
+            <!-- Row 5: Passwords -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-black uppercase mb-1 tracking-wide">MẬT KHẨU *</label>
+                    <input type="password" name="password" required
+                        class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
+                        placeholder="Tối thiểu 6 ký tự">
+                </div>
+                <div>
+                    <label class="block text-xs font-black uppercase mb-1 tracking-wide">XÁC NHẬN MẬT KHẨU *</label>
+                    <input type="password" name="password2" required
+                        class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
+                        placeholder="Nhập lại mật khẩu">
+                </div>
+            </div>
+
+            <button type="submit"
+                class="w-full bg-primary text-white border-3 border-black p-4 text-lg font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">person_add</span>
+                ĐĂNG KÝ TÀI KHOẢN
+            </button>
+        </form>
+
+        <div class="mt-6 pt-4 border-t-3 border-black text-center space-y-2">
+            <a href="{% url 'users:login' %}"
+                class="block text-sm font-black uppercase text-primary hover:underline tracking-wide">
+                ĐÃ CÓ TÀI KHOẢN? ĐĂNG NHẬP →
+            </a>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                Tài khoản mặc định sẽ có quyền SINH VIÊN
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

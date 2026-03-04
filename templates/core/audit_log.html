@@ -29,7 +29,7 @@
                     class="w-full border-3 border-black bg-bg-light px-3 py-2 font-bold text-sm focus:outline-none focus:border-primary">
                     <option value="">Tất cả</option>
                     {% for val, label in action_choices %}
-                    <option value="{{ val }}" {% if val==current_action %}selected{% endif %}>{{ label }}</option>
+                    <option value="{{ val }}" {% if val == current_action %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
