@@ -42,8 +42,7 @@
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- CHỌN --</option>
                         {% for org in organizations %}
-                        <option value="{{ org.pk }}" {% if activity.organization_id==org.pk %}selected{% endif %}>{{
-                            org.name }}</option>
+                        <option value="{{ org.pk }}" {% if activity.organization_id==org.pk %}selected{% endif %}>{{ org.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -53,8 +52,7 @@
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- KHÔNG XÁC ĐỊNH --</option>
                         {% for sem in semesters %}
-                        <option value="{{ sem.pk }}" {% if activity.semester_id==sem.pk %}selected{% endif %}>{{
-                            sem.name }} ({{ sem.academic_year }})</option>
+                        <option value="{{ sem.pk }}" {% if activity.semester_id==sem.pk %}selected{% endif %}>{{ sem.name }} ({{ sem.academic_year }})</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -79,8 +77,7 @@
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- KHÔNG XÁC ĐỊNH --</option>
                         {% for pc in point_categories %}
-                        <option value="{{ pc.pk }}" {% if activity.point_category_id==pc.pk %}selected{% endif %}>{{
-                            pc.code }} - {{ pc.name }}</option>
+                        <option value="{{ pc.pk }}" {% if activity.point_category_id==pc.pk %}selected{% endif %}>{{ pc.code }} - {{ pc.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -118,11 +115,26 @@
             </div>
 
             <div class="grid grid-cols-2 gap-4">
-                <div class="col-span-2">
+                <div>
                     <label class="block text-sm font-black uppercase mb-2">ĐỊA ĐIỂM</label>
                     <input type="text" name="location" value="{{ activity.location|default:'' }}"
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase placeholder:text-slate-400 focus:ring-0 focus:border-black text-sm"
                         placeholder="VD: HỘI TRƯỜNG A">
+                </div>
+                <div>
+                    <label class="block text-sm font-black uppercase mb-2">
+                        SỐ LƯỢNG TỐI ĐA
+                        <span class="text-slate-400 font-normal text-xs normal-case ml-1">(Để trống = không giới
+                            hạn)</span>
+                    </label>
+                    <div class="relative">
+                        <input type="number" name="max_participants" min="1" step="1"
+                            value="{{ activity.max_participants|default:'' }}"
+                            class="w-full border-3 border-black bg-white p-3 font-bold focus:ring-0 focus:border-black text-sm pr-20"
+                            placeholder="∞">
+                        <span
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black uppercase text-slate-400">NGƯỜI</span>
+                    </div>
                 </div>
             </div>
 

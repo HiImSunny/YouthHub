@@ -113,8 +113,7 @@
             <div class="bg-white border-3 border-black shadow-brutal">
                 <div class="p-4 border-b-3 border-black bg-bg-light flex items-center justify-between">
                     <h2 class="font-black uppercase text-lg">DANH MỤC CHI TIÊU</h2>
-                    <span class="bg-primary text-white border-2 border-black px-3 py-1 text-xs font-black uppercase">{{
-                        budget.items.count }} KHOẢN</span>
+                    <span class="bg-primary text-white border-2 border-black px-3 py-1 text-xs font-black uppercase">{{ budget.items.count }} KHOẢN</span>
                 </div>
 
                 {% if budget.items.all %}
@@ -139,14 +138,12 @@
                                 <td class="p-3 border-r-2 border-black font-black uppercase">{{ item.name }}</td>
                                 <td class="p-3 border-r-2 border-black">
                                     <span
-                                        class="bg-accent-yellow/30 border border-black px-2 py-0.5 text-xs font-black uppercase">{{
-                                        item.category|default:"—" }}</span>
+                                        class="bg-accent-yellow/30 border border-black px-2 py-0.5 text-xs font-black uppercase">{{ item.category|default:"—" }}</span>
                                 </td>
                                 <td class="p-3 border-r-2 border-black font-mono font-black text-primary">
                                     {{ item.amount|floatformat:0 }}
                                 </td>
-                                <td class="p-3 border-r-2 border-black text-xs text-slate-500">{{ item.note|default:"—"
-                                    }}</td>
+                                <td class="p-3 border-r-2 border-black text-xs text-slate-500">{{ item.note|default:"—" }}</td>
                                 {% if can_manage and budget.status == 'DRAFT' %}
                                 <td class="p-3">
                                     <form method="post"
@@ -166,8 +163,7 @@
                         <tfoot>
                             <tr class="border-t-3 border-black bg-primary/10">
                                 <td colspan="3" class="p-3 font-black uppercase text-right">TỔNG CỘNG:</td>
-                                <td class="p-3 font-black text-xl text-primary border-r-2 border-black">{{
-                                    budget.total_amount|floatformat:0 }} ₫</td>
+                                <td class="p-3 font-black text-xl text-primary border-r-2 border-black">{{ budget.total_amount|floatformat:0 }} ₫</td>
                                 <td colspan="2"></td>
                             </tr>
                         </tfoot>

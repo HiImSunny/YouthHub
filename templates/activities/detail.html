@@ -34,8 +34,7 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="material-symbols-outlined text-lg">calendar_today</span>
-                        <span>{{ activity.start_time|date:"d/m/Y H:i" }} — {{ activity.end_time|date:"d/m/Y H:i"
-                            }}</span>
+                        <span>{{ activity.start_time|date:"d/m/Y H:i" }} — {{ activity.end_time|date:"d/m/Y H:i" }}</span>
                     </div>
                     {% if activity.location %}
                     <div class="flex items-center gap-3">
@@ -56,8 +55,7 @@
                                 class="inline-block bg-accent-yellow border-2 border-black px-2 py-0.5 text-[11px] font-black uppercase">
                                 {{ activity.point_category.code }}
                             </span>
-                            <span class="text-xs font-bold text-slate-500 ml-1">{{ activity.point_category.name
-                                }}</span>
+                            <span class="text-xs font-bold text-slate-500 ml-1">{{ activity.point_category.name }}</span>
                             {% endif %}
                             {% if activity.points > 0 %}
                             <p class="text-xl font-black text-primary mt-1">
@@ -74,7 +72,8 @@
             <!-- Actions -->
             <div class="space-y-3">
                 {% if activity.status == 'DRAFT' and user.role != 'STUDENT' %}
-                <form method="post" action="{% url 'activities:submit' pk=activity.pk %}">
+                <form method="post" action="{% url 'activities:approve' pk=activity.pk %}">
+                    <input type="hidden" name="action" value="submit">
                     {% csrf_token %}
                     <button type="submit"
                         class="w-full bg-primary text-white border-3 border-black p-4 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2">
@@ -94,6 +93,7 @@
 
                 {% if activity.status == 'PENDING' and user.role == 'ADMIN' %}
                 <form method="post" action="{% url 'activities:approve' pk=activity.pk %}">
+                    <input type="hidden" name="action" value="approve">
                     {% csrf_token %}
                     <button type="submit"
                         class="w-full bg-accent-teal text-white border-3 border-black p-4 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2">
@@ -145,8 +145,7 @@
                     <h2 class="text-xl font-black uppercase">MÔ TẢ HOẠT ĐỘNG</h2>
                 </div>
                 <div class="p-6">
-                    <p class="text-sm leading-relaxed whitespace-pre-line">{{ activity.description|default:"Chưa có mô
-                        tả." }}</p>
+                    <p class="text-sm leading-relaxed whitespace-pre-line">{{ activity.description|default:"Chưa có mô tả." }}</p>
                 </div>
             </div>
 
@@ -155,8 +154,7 @@
             <div class="bg-white border-3 border-black shadow-brutal">
                 <div class="p-6 border-b-3 border-black bg-bg-light flex justify-between items-center">
                     <h2 class="text-xl font-black uppercase">DANH SÁCH ĐĂNG KÝ</h2>
-                    <span class="bg-primary text-white border-3 border-black px-3 py-1 text-sm font-black">{{
-                        registrations|length }} NGƯỜI</span>
+                    <span class="bg-primary text-white border-3 border-black px-3 py-1 text-sm font-black">{{ registrations|length }} NGƯỜI</span>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">

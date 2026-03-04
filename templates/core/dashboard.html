@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% block title %}DASHBOARD — YOUTHHUB{% endblock %}
 
 {% block content %}
@@ -93,8 +93,7 @@
                             <a href="{% url 'activities:detail' pk=act.pk %}"
                                 class="font-black uppercase hover:text-primary">{{ act.title }}</a>
                         </td>
-                        <td class="p-4 border-r-2 border-black text-sm font-bold uppercase">{{
-                            act.organization.name|default:"—" }}</td>
+                        <td class="p-4 border-r-2 border-black text-sm font-bold uppercase">{{ act.organization.name|default:"—" }}</td>
                         <td class="p-4 border-r-2 border-black text-sm font-bold">{{ act.start_time|date:"d/m/Y" }}</td>
                         <td class="p-4">
                             <span class="px-3 py-1 border-3 border-black text-xs font-black uppercase

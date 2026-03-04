@@ -1,0 +1,115 @@
+{# _org_tree_node.html — Recursive partial for org tree (admin only) #}
+{# Variables: org, depth (int 0=root, 1=child, …) #}
+
+{% comment %}
+Tree node layout:
+- depth=0 → full-width row with bold header strip
+- depth>=1 → indented, lighter background, connected via left border line
+{% endcomment %}
+
+{% if depth == 0 %}
+{# ── ROOT NODE ── #}
+<div class="border-3 border-black shadow-brutal bg-white">
+    <!-- Root header -->
+    <div class="flex items-center gap-3 px-5 py-4 bg-zinc-900 text-white border-b-3 border-black">
+        <div class="w-10 h-10 bg-primary border-3 border-black flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-white">school</span>
+        </div>
+        <div class="flex-1 min-w-0">
+            <h2 class="font-black uppercase text-lg leading-tight">{{ org.name }}</h2>
+            <p class="text-xs font-bold uppercase tracking-widest text-zinc-400">{{ org.get_type_display }} · {{ org.code }}</p>
+        </div>
+        <span class="border-2 border-zinc-600 px-2 py-0.5 text-[10px] font-black uppercase text-zinc-300">
+            {{ org.member_count }} TV
+        </span>
+        {% if org.pk in manageable_org_ids %}
+        <a href="{% url 'core:org_staff' org_pk=org.pk %}"
+            class="border-2 border-primary bg-primary/20 text-primary px-3 py-1.5 text-xs font-black uppercase brutal-btn flex items-center gap-1">
+            <span class="material-symbols-outlined text-sm">manage_accounts</span>NHÂN SỰ
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Children area -->
+    {% if org.tree_children %}
+    <div class="p-4 space-y-3">
+        {% for child in org.tree_children %}
+        {% include "core/_org_tree_node.html" with org=child depth=1 %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="px-5 py-3 text-xs font-bold uppercase text-slate-400 border-t border-slate-100">
+        <span class="material-symbols-outlined text-xs align-middle">info</span>
+        Chưa có tổ chức con
+    </div>
+    {% endif %}
+</div>
+
+{% elif depth == 1 %}
+{# ── CHILD NODE ── #}
+<div class="ml-4 pl-4 border-l-3 border-primary">
+    <div
+        class="bg-white border-2 border-black shadow-brutal-sm hover:-translate-y-0.5 hover:shadow-brutal transition-all">
+        <!-- Child header -->
+        <div class="flex items-center gap-3 px-4 py-3 border-b-2 border-black bg-zinc-50">
+            <div class="w-8 h-8 bg-zinc-900 border-2 border-black flex items-center justify-center flex-shrink-0">
+                <span class="material-symbols-outlined text-white text-base">
+                    {% if org.type == 'CLUB' %}groups{% else %}apartment{% endif %}
+                </span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h3 class="font-black uppercase text-sm leading-tight">{{ org.name }}</h3>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-primary">{{ org.get_type_display }} · {{ org.code }}</p>
+            </div>
+            <span class="text-xs font-black uppercase text-slate-400">{{ org.member_count }} TV</span>
+            {% if org.pk in manageable_org_ids %}
+            <a href="{% url 'core:org_staff' org_pk=org.pk %}"
+                class="border-2 border-black bg-zinc-900 text-white px-3 py-1 text-[10px] font-black uppercase brutal-btn flex items-center gap-1">
+                <span class="material-symbols-outlined text-xs">manage_accounts</span>NHÂN SỰ
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Description + grandchildren -->
+        {% if org.description %}
+        <p class="px-4 py-2 text-xs text-slate-500 font-bold border-b border-slate-100 line-clamp-1">{{ org.description }}</p>
+        {% endif %}
+
+        {% if org.tree_children %}
+        <div class="px-4 py-3 space-y-2">
+            {% for grandchild in org.tree_children %}
+            {% include "core/_org_tree_node.html" with org=grandchild depth=2 %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% else %}
+{# ── DEEP NODE (depth≥2) — simple row ── #}
+<div class="ml-4 pl-3 border-l-2 border-dashed border-slate-300">
+    <div
+        class="flex items-center gap-2 bg-zinc-50 border-2 border-black px-3 py-2 shadow-brutal-sm hover:-translate-y-0.5 hover:shadow-brutal transition-all">
+        <span class="material-symbols-outlined text-slate-400 text-sm">subdirectory_arrow_right</span>
+        <div class="flex-1 min-w-0">
+            <span class="font-black uppercase text-xs">{{ org.name }}</span>
+            <span class="ml-2 text-[10px] font-bold uppercase text-primary">{{ org.get_type_display }}</span>
+        </div>
+        <span class="text-[10px] font-black text-slate-400 font-mono">{{ org.code }}</span>
+        <span class="text-[10px] font-black text-slate-400">{{ org.member_count }} TV</span>
+        {% if org.pk in manageable_org_ids %}
+        <a href="{% url 'core:org_staff' org_pk=org.pk %}"
+            class="border-2 border-black bg-zinc-900 text-white px-2 py-0.5 text-[10px] font-black uppercase brutal-btn ml-1">
+            NHÂN SỰ
+        </a>
+        {% endif %}
+    </div>
+    {% if org.tree_children %}
+    <div class="mt-1 space-y-1">
+        {% for child in org.tree_children %}
+        {% include "core/_org_tree_node.html" with org=child depth=3 %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endif %}

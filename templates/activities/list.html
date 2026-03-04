@@ -39,9 +39,7 @@
                 <option value="DONE" {% if request.GET.status == 'DONE' %}selected{% endif %}>DONE</option>
             </select>
             <button type="submit"
-                class="bg-primary text-white border-3 border-black font-black uppercase py-4 px-8 shadow-brutal brutal-btn transition-all">
-                LỌC
-            </button>
+                class="bg-primary text-white border-3 border-black font-black uppercase py-4 px-8 shadow-brutal brutal-btn transition-all">LỌC</button>
         </form>
     </div>
 
@@ -53,22 +51,22 @@
             class="bg-white border-3 border-black flex flex-col shadow-brutal-lg hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all">
             <!-- Status Badge Header -->
             <div class="border-b-3 border-black p-4 bg-bg-light flex items-center justify-between">
-                <span class="px-3 py-1 border-3 border-black text-xs font-black uppercase
-          {% if act.status == 'APPROVED' %}bg-accent-teal/20 text-accent-teal
-          {% elif act.status == 'PENDING' %}bg-primary/20 text-primary
-          {% elif act.status == 'ONGOING' %}bg-accent-yellow text-black
-          {% elif act.status == 'DONE' %}bg-slate-200 text-slate-600
-          {% else %}bg-white{% endif %}">
+                <span
+                    class="px-3 py-1 border-3 border-black text-xs font-black uppercase {% if act.status == 'APPROVED' %}bg-accent-teal/20 text-accent-teal{% elif act.status == 'PENDING' %}bg-primary/20 text-primary{% elif act.status == 'ONGOING' %}bg-accent-yellow text-black{% elif act.status == 'DONE' %}bg-slate-200 text-slate-600{% else %}bg-white{% endif %}">
                     {{ act.get_status_display }}
                 </span>
-                <span class="text-xs font-bold uppercase text-slate-400">{{ act.get_activity_type_display|default:""
-                    }}</span>
+                <span class="text-xs font-bold uppercase text-slate-500">
+                    {% if act.point_category %}
+                    <span class="bg-accent-yellow border-2 border-black px-1.5 py-0.5 text-[10px] font-black mr-1">{{ act.point_category.code }}</span>{{ act.point_category.name }}
+                    {% else %}
+                    {{ act.get_activity_type_display }}
+                    {% endif %}
+                </span>
             </div>
 
             <!-- Content -->
             <div class="p-6 flex-1 flex flex-col">
-                <span class="text-primary font-black text-xs uppercase mb-2 tracking-widest">{{
-                    act.organization.name|default:"" }}</span>
+                <span class="text-primary font-black text-xs uppercase mb-2 tracking-widest">{{ act.organization.name|default:"" }}</span>
                 <h3 class="text-xl font-black uppercase mb-4 leading-tight">{{ act.title }}</h3>
                 <div class="space-y-2 mb-6 text-sm font-bold uppercase text-slate-600">
                     <div class="flex items-center gap-2">

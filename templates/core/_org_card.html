@@ -1,0 +1,50 @@
+{# _org_card.html — Partial: single org card (used in flat lists) #}
+<div
+    class="bg-white border-3 border-black p-6 shadow-brutal hover:-translate-y-1 hover:shadow-brutal-lg transition-all">
+    <div class="flex items-start gap-3 mb-4">
+        <!-- Icon badge -->
+        <div
+            class="w-12 h-12 flex-shrink-0 bg-primary border-3 border-black flex items-center justify-center shadow-brutal-sm">
+            <span class="material-symbols-outlined text-white text-2xl">
+                {% if org.type == 'UNION_SCHOOL' %}school{% elif org.type == 'CLUB' %}groups{% else %}apartment{% endif
+                %}
+            </span>
+        </div>
+        <div class="flex-1 min-w-0">
+            <h3 class="text-base font-black uppercase leading-tight">{{ org.name }}</h3>
+            <p class="text-xs font-bold uppercase text-primary tracking-widest mt-0.5">{{ org.get_type_display }}</p>
+            {% if org.parent %}
+            <p class="text-xs text-slate-400 font-bold uppercase mt-1 truncate">
+                <span class="material-symbols-outlined text-xs align-middle">subdirectory_arrow_right</span>
+                {{ org.parent.name }}
+            </p>
+            {% endif %}
+        </div>
+        <!-- Status badge -->
+        <span
+            class="flex-shrink-0 border-2 border-black px-2 py-0.5 text-[10px] font-black uppercase
+              {% if org.status %}bg-accent-teal/20 text-accent-teal{% else %}bg-accent-red/20 text-accent-red{% endif %}">
+            {% if org.status %}ACTIVE{% else %}INACTIVE{% endif %}
+        </span>
+    </div>
+
+    {% if org.description %}
+    <p class="text-sm text-slate-500 font-bold line-clamp-2 mb-4">{{ org.description }}</p>
+    {% endif %}
+
+    <!-- Footer bar -->
+    <div class="pt-3 border-t-2 border-black text-xs font-black uppercase text-slate-400 flex items-center gap-2 mb-3">
+        <span class="material-symbols-outlined text-sm">group</span>
+        <span>{{ org.member_count }} thành viên</span>
+        <span class="ml-auto border-2 border-black px-2 py-0.5 bg-zinc-100 font-mono">{{ org.code }}</span>
+    </div>
+
+    <!-- Action -->
+    {% if org.pk in manageable_org_ids %}
+    <a href="{% url 'core:org_staff' org_pk=org.pk %}"
+        class="w-full flex items-center justify-center gap-2 bg-zinc-900 text-white border-2 border-black px-3 py-2 text-xs font-black uppercase shadow-brutal-sm brutal-btn transition-all">
+        <span class="material-symbols-outlined text-sm">manage_accounts</span>
+        QUẢN LÝ NHÂN SỰ
+    </a>
+    {% endif %}
+</div>

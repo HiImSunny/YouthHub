@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Count, Sum
+from django.db.models import Count, Sum, Q
+
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
 import json
@@ -34,14 +35,66 @@ def dashboard_view(request):
 
 @login_required
 def organizations_view(request):
-    """List all organizations. B4: Only admin sees Create button."""
-    orgs = Organization.objects.filter(status=True).select_related('parent').annotate(
+    """
+    List organizations.
+    - ADMIN: sees all orgs in tree structure (parent -> children).
+    - STAFF: sees only orgs they belong to (flat list).
+    - Both: support search (q) and filter (org_type).
+    """
+    search_q = request.GET.get('q', '').strip()
+    org_type_filter = request.GET.get('org_type', '').strip()
+
+    # --- Base queryset ---
+    base_qs = Organization.objects.filter(status=True).select_related('parent').annotate(
         member_count=Count('members')
-    ).order_by('type', 'name')
+    )
+
+    # --- Role-based scoping ---
+    is_admin = request.user.role == 'ADMIN'
+    if not is_admin:
+        # Staff: only orgs they are member of
+        staff_org_ids = OrganizationMember.objects.filter(
+            user=request.user
+        ).values_list('organization_id', flat=True)
+        base_qs = base_qs.filter(pk__in=staff_org_ids)
+
+    # --- Search & Filter ---
+    if search_q:
+        base_qs = base_qs.filter(
+            Q(name__icontains=search_q) | Q(code__icontains=search_q)
+        )
+
+    if org_type_filter:
+        base_qs = base_qs.filter(type=org_type_filter)
+
+    base_qs = base_qs.order_by('type', 'name')
+
+    # --- Build tree for Admin (when not actively searching) ---
+    org_tree = None
+    if is_admin and not search_q and not org_type_filter:
+        all_orgs = list(base_qs)
+        # Group: root orgs (no parent or parent is inactive/missing)
+        org_map = {o.pk: o for o in all_orgs}
+        for o in all_orgs:
+            o.tree_children = []
+        roots = []
+        for o in all_orgs:
+            if o.parent_id and o.parent_id in org_map:
+                org_map[o.parent_id].tree_children.append(o)
+            else:
+                roots.append(o)
+        org_tree = roots  # nested via .tree_children
+
     context = {
-        'organizations': orgs,
-        'can_create_org': can_create_org(request.user),  # B4
-        'manageable_org_ids': set(  # B3: which orgs can user manage staff for
+        'organizations': base_qs,          # flat list (used by staff / when searching)
+        'org_tree': org_tree,              # nested list (used by admin when not searching)
+        'is_admin': is_admin,
+        'is_searching': bool(search_q or org_type_filter),
+        'search_q': search_q,
+        'org_type_filter': org_type_filter,
+        'org_type_choices': Organization.OrgType.choices,
+        'can_create_org': can_create_org(request.user),
+        'manageable_org_ids': set(
             get_manageable_orgs(request.user).values_list('id', flat=True)
         ),
     }

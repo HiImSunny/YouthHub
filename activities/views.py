@@ -109,6 +109,10 @@ def activity_create(request):
                 'type_choices': Activity.ActivityType.choices,
             })
 
+        # Parse max_participants (empty string -> None meaning unlimited)
+        max_p_raw = request.POST.get('max_participants', '').strip()
+        max_p = int(max_p_raw) if max_p_raw.isdigit() else None
+
         activity = Activity(
             title=request.POST.get('title'),
             code=request.POST.get('code'),
@@ -121,6 +125,7 @@ def activity_create(request):
             semester_id=request.POST.get('semester') or None,
             point_category_id=request.POST.get('point_category') or None,
             points=request.POST.get('points') or 0,
+            max_participants=max_p,
             created_by=request.user,
             status=Activity.ActivityStatus.DRAFT,
         )
@@ -170,6 +175,10 @@ def activity_edit(request, pk):
                 'is_edit': True,
             })
 
+        # Parse max_participants (empty string -> None meaning unlimited)
+        max_p_raw = request.POST.get('max_participants', '').strip()
+        max_p = int(max_p_raw) if max_p_raw.isdigit() else None
+
         activity.title = request.POST.get('title')
         activity.code = request.POST.get('code')
         activity.description = request.POST.get('description')
@@ -181,6 +190,7 @@ def activity_edit(request, pk):
         activity.semester_id = request.POST.get('semester') or None
         activity.point_category_id = request.POST.get('point_category') or None
         activity.points = request.POST.get('points') or 0
+        activity.max_participants = max_p
         activity.save()
         messages.success(request, 'Da cap nhat hoat dong thanh cong!')
         return redirect('activities:detail', pk=pk)
@@ -316,12 +326,27 @@ def activity_register(request, pk):
         return redirect('activities:detail', pk=pk)
 
     if request.method == 'POST':
+        # Check slot limit before registering
+        if activity.max_participants is not None:
+            current_count = activity.registrations.filter(status='REGISTERED').count()
+            if current_count >= activity.max_participants:
+                messages.error(
+                    request,
+                    f'Hoat dong da du so luong dang ky toi da ({activity.max_participants} nguoi). Rat tiec ban khong the dang ky luc nay.'
+                )
+                return redirect('activities:detail', pk=pk)
+
         reg, created = ActivityRegistration.objects.get_or_create(
             activity=activity,
             student=request.user,
             defaults={'status': 'REGISTERED'},
         )
-        if created:
+        if not created and reg.status == 'CANCELED':
+            # Re-register (was previously canceled) - check slot again counted above
+            reg.status = 'REGISTERED'
+            reg.save()
+            messages.success(request, 'Dang ky tham gia thanh cong!')
+        elif created:
             messages.success(request, 'Dang ky tham gia thanh cong!')
         else:
             messages.info(request, 'Ban da dang ky hoat dong nay roi.')

@@ -71,6 +71,11 @@ class Activity(models.Model):
         default=0.00,
         help_text='Số điểm rèn luyện nhận được khi hoàn thành hoạt động',
     )
+    max_participants = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        help_text='Giới hạn số lượng sinh viên đăng ký. Để trống nếu không giới hạn.',
+    )
     title = models.CharField(max_length=255)
     code = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True, null=True)

@@ -17,61 +17,119 @@
 
 {% block content %}
 <div>
-    <div class="mb-8">
+    <!-- ── Page Header ── -->
+    <div class="mb-6">
         <h1 class="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-2">🏛 TỔ CHỨC</h1>
-        <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">ORGANIZATION MANAGEMENT</p>
+        <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">
+            {% if is_admin %}ORGANIZATION TREE · ADMIN VIEW{% else %}YOUR ORGANIZATIONS · STAFF VIEW{% endif %}
+        </p>
     </div>
 
-    {% if organizations %}
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {% for org in organizations %}
-        <div
-            class="bg-white border-3 border-black p-6 shadow-brutal hover:-translate-y-1 hover:shadow-brutal-lg transition-all">
-            <div class="flex items-center gap-3 mb-4">
-                <div
-                    class="w-12 h-12 bg-primary border-3 border-black flex items-center justify-center shadow-brutal-sm">
-                    <span class="material-symbols-outlined text-white text-2xl">apartment</span>
-                </div>
-                <div>
-                    <h3 class="text-lg font-black uppercase">{{ org.name }}</h3>
-                    <p class="text-xs font-bold uppercase text-primary tracking-widest">{{ org.get_type_display }}</p>
-                </div>
+    <!-- ── Search & Filter Bar ── -->
+    <div class="bg-white border-3 border-black p-6 mb-8 shadow-brutal-lg">
+        <form method="GET" id="org-filter-form" class="flex flex-col lg:flex-row gap-4 items-stretch">
+            <!-- Search -->
+            <div class="flex-1 relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined">search</span>
+                <input type="text" name="q" value="{{ search_q }}"
+                    class="w-full pl-12 pr-4 py-4 border-3 border-black bg-white text-sm font-bold uppercase placeholder:text-slate-400 focus:ring-0 focus:outline-none"
+                    placeholder="TÌM THEO TÊN HOẶC MÃ TỔ CHỨC..." id="org-search-input">
             </div>
 
-            {% if org.description %}
-            <p class="text-sm font-bold text-slate-500 mb-4 line-clamp-2">{{ org.description }}</p>
+            <!-- Type Filter -->
+            <select name="org_type" id="org-type-select"
+                class="border-3 border-black bg-white py-4 px-4 font-black uppercase text-sm focus:ring-0 outline-none cursor-pointer min-w-[200px]"
+                onchange="this.form.submit()">
+                <option value="">-- TẤT CẢ LOẠI --</option>
+                {% for val, label in org_type_choices %}
+                <option value="{{ val }}" {% if org_type_filter == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+
+            <!-- Submit -->
+            <button type="submit"
+                class="bg-zinc-900 text-white border-3 border-black py-4 px-8 font-black uppercase text-sm shadow-brutal brutal-btn transition-all whitespace-nowrap">
+                LỌC
+            </button>
+
+            {% if is_searching %}
+            <!-- Clear -->
+            <a href="{% url 'core:organizations' %}"
+                class="bg-accent-yellow border-3 border-black py-4 px-6 text-black font-black uppercase text-sm shadow-brutal brutal-btn transition-all whitespace-nowrap flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm">close</span>XÓA BỘ LỌC
+            </a>
             {% endif %}
+        </form>
+    </div>
 
-            <div
-                class="pt-3 border-t-2 border-black text-xs font-black uppercase text-slate-400 flex items-center gap-2 mb-3">
-                <span class="material-symbols-outlined text-sm">group</span>
-                {% if org.parent %}CON CỦA: {{ org.parent.name }}{% else %}TỔ CHỨC GỐC{% endif %}
-                <span class="ml-auto">{{ org.member_count }} TV</span>
-            </div>
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- ADMIN VIEW: Tree (khi không search) / Flat (khi search)              -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    {% if is_admin %}
 
-            <!-- B3: Show staff management button if user can manage this org -->
-            {% if org.pk in manageable_org_ids %}
-            <a href="{% url 'core:org_staff' org_pk=org.pk %}"
-                class="w-full flex items-center justify-center gap-2 bg-zinc-900 text-white border-2 border-black px-3 py-2 text-xs font-black uppercase shadow-brutal-sm brutal-btn transition-all">
-                <span class="material-symbols-outlined text-sm">manage_accounts</span>
-                QUẢN LÝ NHÂN SỰ
+    {% if not is_searching and org_tree %}
+    <!-- ── Admin Tree View ── -->
+    <div class="space-y-4" id="org-tree">
+        {% for root in org_tree %}
+        {% include "core/_org_tree_node.html" with org=root depth=0 %}
+        {% empty %}
+        <div class="bg-white border-3 border-black p-16 text-center shadow-brutal">
+            <span class="material-symbols-outlined text-6xl text-slate-300">apartment</span>
+            <h3 class="text-2xl font-black uppercase text-slate-400 mt-4">CHƯA CÓ TỔ CHỨC NÀO</h3>
+            {% if can_create_org %}
+            <a href="{% url 'core:org_create' %}"
+                class="mt-6 inline-flex items-center gap-2 bg-primary text-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn">
+                <span class="material-symbols-outlined">add_circle</span>TẠO TỔ CHỨC ĐẦU TIÊN
             </a>
             {% endif %}
         </div>
         {% endfor %}
     </div>
+
     {% else %}
-    <div class="bg-white border-3 border-black p-16 text-center shadow-brutal">
-        <span class="material-symbols-outlined text-6xl text-slate-300">apartment</span>
-        <h3 class="text-2xl font-black uppercase text-slate-400 mt-4">CHƯA CÓ TỔ CHỨC NÀO</h3>
-        {% if can_create_org %}
-        <a href="{% url 'core:org_create' %}"
-            class="mt-6 inline-flex items-center gap-2 bg-primary text-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn">
-            <span class="material-symbols-outlined">add_circle</span>
-            TẠO TỔ CHỨC ĐẦU TIÊN
-        </a>
-        {% endif %}
+    <!-- ── Admin Flat (search result) ── -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {% for org in organizations %}
+        {% include "core/_org_card.html" with org=org %}
+        {% empty %}
+        <div class="md:col-span-3 bg-white border-3 border-black p-16 text-center shadow-brutal">
+            <span class="material-symbols-outlined text-6xl text-slate-300">search_off</span>
+            <h3 class="text-2xl font-black uppercase text-slate-400 mt-4">KHÔNG TÌM THẤY KẾT QUẢ</h3>
+            <a href="{% url 'core:organizations' %}"
+                class="mt-4 inline-flex items-center gap-2 bg-accent-yellow border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn text-sm">
+                <span class="material-symbols-outlined text-sm">restart_alt</span>XEM TẤT CẢ
+            </a>
+        </div>
+        {% endfor %}
     </div>
+    {% endif %}
+
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    <!-- STAFF VIEW: Flat Card list (chỉ org của mình)                        -->
+    <!-- ══════════════════════════════════════════════════════════════════════ -->
+    {% else %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {% for org in organizations %}
+        {% include "core/_org_card.html" with org=org %}
+        {% empty %}
+        <div class="md:col-span-2 bg-white border-3 border-black p-16 text-center shadow-brutal">
+            <span class="material-symbols-outlined text-6xl text-slate-300">
+                {% if is_searching %}search_off{% else %}apartment{% endif %}
+            </span>
+            <h3 class="text-2xl font-black uppercase text-slate-400 mt-4">
+                {% if is_searching %}KHÔNG TÌM THẤY KẾT QUẢ{% else %}BẠN CHƯA THUỘC TỔ CHỨC NÀO{% endif %}
+            </h3>
+            {% if is_searching %}
+            <a href="{% url 'core:organizations' %}"
+                class="mt-4 inline-flex items-center gap-2 bg-accent-yellow border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn text-sm">
+                <span class="material-symbols-outlined text-sm">restart_alt</span>XEM TẤT CẢ
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
     {% endif %}
 </div>
 {% endblock %}
