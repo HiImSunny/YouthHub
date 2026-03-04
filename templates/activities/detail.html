@@ -34,7 +34,8 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="material-symbols-outlined text-lg">calendar_today</span>
-                        <span>{{ activity.start_time|date:"d/m/Y H:i" }} — {{ activity.end_time|date:"d/m/Y H:i" }}</span>
+                        <span>{{ activity.start_time|date:"d/m/Y H:i" }} — {{ activity.end_time|date:"d/m/Y H:i"
+                            }}</span>
                     </div>
                     {% if activity.location %}
                     <div class="flex items-center gap-3">
@@ -46,6 +47,27 @@
                         <span class="material-symbols-outlined text-lg">group</span>
                         <span>{{ activity.max_participants|default:"∞" }} NGƯỜI TỐI ĐA</span>
                     </div>
+                    {% if activity.point_category or activity.points %}
+                    <div class="flex items-start gap-3 border-t-2 border-black pt-3 mt-1">
+                        <span class="material-symbols-outlined text-lg text-accent-yellow">stars</span>
+                        <div>
+                            {% if activity.point_category %}
+                            <span
+                                class="inline-block bg-accent-yellow border-2 border-black px-2 py-0.5 text-[11px] font-black uppercase">
+                                {{ activity.point_category.code }}
+                            </span>
+                            <span class="text-xs font-bold text-slate-500 ml-1">{{ activity.point_category.name
+                                }}</span>
+                            {% endif %}
+                            {% if activity.points > 0 %}
+                            <p class="text-xl font-black text-primary mt-1">
+                                +{{ activity.points }}
+                                <span class="text-sm font-bold text-slate-500">điểm rèn luyện</span>
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
@@ -114,7 +136,8 @@
                     <h2 class="text-xl font-black uppercase">MÔ TẢ HOẠT ĐỘNG</h2>
                 </div>
                 <div class="p-6">
-                    <p class="text-sm leading-relaxed whitespace-pre-line">{{ activity.description|default:"Chưa có mô tả." }}</p>
+                    <p class="text-sm leading-relaxed whitespace-pre-line">{{ activity.description|default:"Chưa có mô
+                        tả." }}</p>
                 </div>
             </div>
 

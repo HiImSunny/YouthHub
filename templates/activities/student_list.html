@@ -68,13 +68,21 @@
                   {% if item.time_status == 'UPCOMING' %}text-primary
                   {% elif item.time_status == 'ONGOING' %}text-accent-teal
                   {% else %}text-slate-500{% endif %}">
-                    {% if item.time_status == 'ONGOING' %}⚡ {% elif item.time_status == 'UPCOMING' %}⏰ {% else %}✅ {% endif %}
+                    {% if item.time_status == 'ONGOING' %}⚡ {% elif item.time_status == 'UPCOMING' %}⏰ {% else %}✅ {%
+                    endif %}
                     {{ item.time_label }}
                 </span>
-                {% if act.point_category %}
-                <span class="text-[10px] font-black uppercase bg-accent-yellow border border-black px-1.5 py-0.5">
-                    {{ act.point_category.code }}
-                </span>
+                {% if act.point_category or act.points > 0 %}
+                <div class="flex items-center gap-1.5">
+                    {% if act.point_category %}
+                    <span class="text-[10px] font-black uppercase bg-accent-yellow border border-black px-1.5 py-0.5">
+                        {{ act.point_category.code }}
+                    </span>
+                    {% endif %}
+                    {% if act.points > 0 %}
+                    <span class="text-[10px] font-black text-primary">+{{ act.points }}đ</span>
+                    {% endif %}
+                </div>
                 {% endif %}
             </div>
 
