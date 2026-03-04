@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block header_actions %}
-<a href="{% url 'activities:student_list' %}"
+<a href="{% url 'students:portal' %}"
     class="bg-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn flex items-center gap-2">
     <span class="material-symbols-outlined text-sm">event</span>
     XEM HOẠT ĐỘNG
@@ -121,7 +121,7 @@
                 <div class="p-16 text-center">
                     <span class="material-symbols-outlined text-5xl text-slate-300 block mb-3">qr_code_scanner</span>
                     <p class="font-black uppercase text-slate-400">CHƯA CÓ BẢN GHI ĐIỂM DANH</p>
-                    <a href="{% url 'activities:student_list' %}"
+                    <a href="{% url 'students:portal' %}"
                         class="mt-4 inline-flex items-center gap-2 bg-primary text-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal brutal-btn">
                         XEM HOẠT ĐỘNG NGAY
                     </a>

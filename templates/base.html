@@ -84,14 +84,14 @@
         <p class="text-[10px] uppercase tracking-[0.25em] text-zinc-500 px-4 py-1 font-bold mb-1">SINH VIÊN</p>
 
         <!-- Student: Dashboard cá nhân -->
-        <a href="{% url 'activities:student_dashboard' %}"
+        <a href="{% url 'students:dashboard' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
           {% if 'student/dashboard' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
           <span class="material-symbols-outlined text-xl">dashboard</span> DASHBOARD
         </a>
 
         <!-- Student: Hoạt động -->
-        <a href="{% url 'activities:student_list' %}"
+        <a href="{% url 'students:portal' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
           {% if 'student/activities' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
           <span class="material-symbols-outlined text-xl">event</span> HOẠT ĐỘNG

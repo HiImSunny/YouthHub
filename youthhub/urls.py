@@ -1,6 +1,3 @@
-"""
-YouthHub URL Configuration
-"""
 from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
@@ -13,6 +10,8 @@ urlpatterns = [
     path('activities/', include('activities.urls')),
     path('attendance/', include('attendance.urls')),
     path('ai/', include('ai_assistant.urls')),
+    # Student portal — clean URLs at /student/
+    path('student/', include('students.urls')),
 ]
 
 # Serve media files in development

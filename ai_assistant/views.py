@@ -1,5 +1,3 @@
-import json
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -15,9 +13,19 @@ from .ollama_service import (
 )
 
 
+def _staff_only(request):
+    """Return redirect response if user is STUDENT, else None."""
+    if request.user.role == 'STUDENT':
+        messages.error(request, 'Sinh vien khong co quyen truy cap trang nay.')
+        return redirect('students:dashboard')
+    return None
+
+
 @login_required
 def chat_view(request):
     """Main AI assistant page. Renders immediately; Ollama status is fetched async by JS."""
+    if (denied := _staff_only(request)):
+        return denied
     recent_docs = AiDocument.objects.filter(
         created_by=request.user
     ).order_by('-created_at')[:5]
@@ -42,6 +50,8 @@ def ollama_status_api(request):
 @require_POST
 def generate_view(request):
     """Handle document generation request."""
+    if (denied := _staff_only(request)):
+        return denied
     doc_type = request.POST.get('doc_type', 'KẾ HOẠCH / BÁO CÁO')
     event_name = request.POST.get('event_name', '')
     organization = request.POST.get('organization', '')
