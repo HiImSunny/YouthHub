@@ -114,6 +114,26 @@
           <span class="material-symbols-outlined text-xl">smart_toy</span> TRỢ LÝ AI
         </a>
 
+        {% if user.role == 'STUDENT' %}
+        <!-- Separator -->
+        <div class="border-t border-zinc-700 my-2"></div>
+        <p class="text-[10px] uppercase tracking-[0.25em] text-zinc-500 px-4 py-1 font-bold">SINH VIÊN</p>
+
+        <!-- Portal hoạt động -->
+        <a href="{% url 'activities:student_list' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'portal' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">event</span> HOẠT ĐỘNG
+        </a>
+
+        <!-- Dashboard cá nhân -->
+        <a href="{% url 'activities:student_dashboard' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'my-dashboard' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">bar_chart</span> DASHBOARD
+        </a>
+        {% endif %}
+
         {% if user.role == 'ADMIN' or user.role == 'STAFF' %}
         <!-- Separator -->
         <div class="border-t border-zinc-700 my-2"></div>

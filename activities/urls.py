@@ -14,4 +14,8 @@ urlpatterns = [
     path('<int:pk>/register/', views.activity_register, name='register'),
     path('<int:pk>/cancel-registration/', views.activity_cancel_registration, name='cancel_registration'),
     path('pending/', views.activity_pending_list, name='pending_list'),
+    # C1/C2: Student activity portal
+    path('portal/', views.student_activity_list, name='student_list'),
+    # C3: Student dashboard
+    path('my-dashboard/', views.student_dashboard, name='student_dashboard'),
 ]

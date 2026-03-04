@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% block title %}HOẠT ĐỘNG — SINH VIÊN — YOUTHHUB{% endblock %}
+
+{% block breadcrumb %}
+<span class="font-black uppercase text-sm">🎓 Portal Sinh viên</span>
+{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'activities:student_dashboard' %}"
+    class="bg-accent-yellow border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal brutal-btn flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">bar_chart</span>
+    DASHBOARD CỦA TÔI
+</a>
+{% endblock %}
+
+{% block content %}
+<div>
+    <!-- Hero -->
+    <div class="mb-6">
+        <h1 class="text-5xl font-black uppercase tracking-tighter leading-none mb-2">🎓 HOẠT ĐỘNG</h1>
+        <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">DANH SÁCH HOẠT ĐỘNG DÀNH CHO BẠN</p>
+    </div>
+
+    <!-- Tabs: time filter -->
+    <div class="flex gap-3 mb-6 border-b-3 border-black pb-4 flex-wrap">
+        <a href="?time=upcoming{% if search_query %}&q={{ search_query }}{% endif %}" class="border-3 border-black px-5 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn flex items-center gap-2
+           {% if time_filter == 'upcoming' %}bg-primary text-white{% else %}bg-white hover:bg-primary/10{% endif %}">
+            <span class="material-symbols-outlined text-sm">schedule</span>
+            SẮP DIỄN RA <span class="ml-1 bg-white/20 px-1.5 rounded-none text-xs">{{ upcoming_count }}</span>
+        </a>
+        <a href="?time=ongoing{% if search_query %}&q={{ search_query }}{% endif %}"
+            class="border-3 border-black px-5 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn flex items-center gap-2
+           {% if time_filter == 'ongoing' %}bg-accent-teal text-white{% else %}bg-white hover:bg-accent-teal/10{% endif %}">
+            <span class="material-symbols-outlined text-sm">play_circle</span>
+            ĐANG DIỄN RA <span class="ml-1 bg-white/20 px-1.5 rounded-none text-xs">{{ ongoing_count }}</span>
+        </a>
+        <a href="?time=ended{% if search_query %}&q={{ search_query }}{% endif %}" class="border-3 border-black px-5 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn flex items-center gap-2
+           {% if time_filter == 'ended' %}bg-zinc-700 text-white{% else %}bg-white hover:bg-zinc-100{% endif %}">
+            <span class="material-symbols-outlined text-sm">check_circle</span>
+            ĐÃ KẾT THÚC <span class="ml-1 bg-white/20 px-1.5 rounded-none text-xs">{{ ended_count }}</span>
+        </a>
+
+        <!-- Search -->
+        <form method="get" class="ml-auto flex gap-2">
+            <input type="hidden" name="time" value="{{ time_filter }}">
+            <input type="text" name="q" value="{{ search_query }}" placeholder="Tìm kiếm hoạt động..."
+                class="border-3 border-black px-3 py-2 font-bold text-sm focus:ring-0 focus:border-primary">
+            <button type="submit"
+                class="bg-zinc-900 text-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn">
+                TÌM
+            </button>
+        </form>
+    </div>
+
+    <!-- Activity cards -->
+    {% if activities_data %}
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {% for item in activities_data %}
+        {% with act=item.activity %}
+        <div
+            class="bg-white border-3 border-black shadow-brutal hover:-translate-y-1 hover:shadow-brutal-lg transition-all flex flex-col">
+            <!-- Status banner -->
+            <div class="border-b-3 border-black px-4 py-2 flex items-center justify-between
+              {% if item.time_status == 'UPCOMING' %}bg-primary/10
+              {% elif item.time_status == 'ONGOING' %}bg-accent-teal/20
+              {% else %}bg-slate-100{% endif %}">
+                <span class="text-xs font-black uppercase tracking-widest
+                  {% if item.time_status == 'UPCOMING' %}text-primary
+                  {% elif item.time_status == 'ONGOING' %}text-accent-teal
+                  {% else %}text-slate-500{% endif %}">
+                    {% if item.time_status == 'ONGOING' %}⚡ {% elif item.time_status == 'UPCOMING' %}⏰ {% else %}✅ {%
+                    endif %}
+                    {{ item.time_label }}
+                </span>
+                {% if act.point_category %}
+                <span class="text-[10px] font-black uppercase bg-accent-yellow border border-black px-1.5 py-0.5">
+                    {{ act.point_category.code }}
+                </span>
+                {% endif %}
+            </div>
+
+            <div class="p-5 flex flex-col flex-1">
+                <!-- Title -->
+                <h3 class="text-lg font-black uppercase leading-tight mb-2">
+                    <a href="{% url 'activities:detail' pk=act.pk %}" class="hover:text-primary transition-colors">
+                        {{ act.title }}
+                    </a>
+                </h3>
+
+                <!-- Meta -->
+                <div class="space-y-1.5 text-xs font-bold text-slate-500 mb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">apartment</span>
+                        {{ act.organization.name|default:"—" }}
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">calendar_today</span>
+                        {{ act.start_time|date:"d/m/Y H:i" }} → {{ act.end_time|date:"d/m/Y H:i" }}
+                    </div>
+                    {% if act.location %}
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">location_on</span>
+                        {{ act.location }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Actions -->
+                <div class="mt-auto flex gap-2">
+                    <a href="{% url 'activities:detail' pk=act.pk %}"
+                        class="flex-1 text-center bg-white border-3 border-black px-3 py-2 font-black uppercase text-xs shadow-brutal-sm brutal-btn">
+                        XEM CHI TIẾT
+                    </a>
+
+                    <!-- C2: Check-in button - only show if active session exists -->
+                    {% if item.active_session %}
+                    {% if item.already_checkedin %}
+                    <span
+                        class="bg-accent-teal/20 text-accent-teal border-3 border-black px-3 py-2 font-black uppercase text-xs flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">check_circle</span>
+                        ĐÃ ĐIỂM DANH
+                    </span>
+                    {% else %}
+                    <a href="{% url 'attendance:checkin' token=item.active_session.qr_token %}"
+                        class="bg-accent-teal text-white border-3 border-black px-3 py-2 font-black uppercase text-xs shadow-brutal brutal-btn flex items-center gap-1 animate-pulse">
+                        <span class="material-symbols-outlined text-sm">qr_code_scanner</span>
+                        ĐIỂM DANH
+                    </a>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white border-3 border-black p-16 text-center shadow-brutal">
+        <span class="material-symbols-outlined text-6xl text-slate-300 block mb-4">event_busy</span>
+        <h3 class="text-2xl font-black uppercase text-slate-400">KHÔNG CÓ HOẠT ĐỘNG NÀO</h3>
+        <p class="text-sm font-bold text-slate-300 uppercase mt-2">
+            {% if time_filter == 'upcoming' %}Không có hoạt động sắp diễn ra{% elif time_filter == 'ongoing' %}Không có
+            hoạt động đang diễn ra{% else %}Chưa có hoạt động kết thúc{% endif %}
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -329,3 +329,194 @@ def activity_cancel_registration(request, pk):
             messages.error(request, 'Khong tim thay dang ky cua ban.')
 
     return redirect('activities:detail', pk=pk)
+
+
+# ─── PHASE C: Student Portal ──────────────────────────────────────────────────
+
+def _get_activity_time_status(activity, now):
+    """
+    C1: Return time-based display status for students.
+    Ignores internal DRAFT/PENDING, shows meaningful status.
+    """
+    if activity.end_time and activity.end_time < now:
+        return 'ENDED', 'Đã kết thúc'
+    if activity.start_time and activity.start_time <= now:
+        return 'ONGOING', 'Đang diễn ra'
+    return 'UPCOMING', 'Sắp diễn ra'
+
+
+def _get_student_visible_orgs(user):
+    """
+    C1: Get all org IDs a student can see activities for:
+    - Đoàn Trường (UNION_SCHOOL) → all students
+    - Đoàn Khoa / Chi đoàn their faculty belongs to (via StudentProfile.faculty)
+    - CLB / groups they are a member of (via OrganizationMember)
+    """
+    from core.models import OrganizationMember
+    org_ids = set()
+
+    # 1. Đoàn Trường - public to all
+    school_orgs = Organization.objects.filter(type='UNION_SCHOOL', status=True)
+    org_ids.update(school_orgs.values_list('id', flat=True))
+
+    # 2. Org matching student's faculty (via StudentProfile)
+    try:
+        profile = user.student_profile
+        faculty_name = profile.faculty
+        # Match by name containing faculty keyword
+        faculty_orgs = Organization.objects.filter(
+            status=True,
+            type__in=['UNION_FACULTY', 'CLASS'],
+            name__icontains=faculty_name,
+        )
+        org_ids.update(faculty_orgs.values_list('id', flat=True))
+
+        # Also include parent orgs of faculty orgs (Đoàn Trường already covered)
+        for org in faculty_orgs:
+            if org.parent:
+                org_ids.add(org.parent.id)
+    except Exception:
+        pass
+
+    # 3. Orgs the student is a member of (CLB, Chi đoàn etc.)
+    member_org_ids = OrganizationMember.objects.filter(
+        user=user
+    ).values_list('organization_id', flat=True)
+    org_ids.update(member_org_ids)
+
+    return org_ids
+
+
+@login_required
+def student_activity_list(request):
+    """
+    C1: Student activity portal.
+    - Only shows APPROVED/ONGOING/DONE activities (no DRAFT/PENDING)
+    - Filters by student's org visibility
+    - Status shown as time-based: Sắp diễn ra / Đang diễn ra / Đã kết thúc
+    C2: Detects active AttendanceSession to decide check-in availability
+    """
+    now = timezone.now()
+
+    # C1: Filter base queryset - only published activities
+    qs = Activity.objects.filter(
+        status__in=['APPROVED', 'ONGOING', 'DONE']
+    ).select_related('organization', 'semester', 'point_category').order_by('start_time')
+
+    # C1: Filter by student's visible orgs (only for STUDENT role)
+    if request.user.role == 'STUDENT':
+        visible_org_ids = _get_student_visible_orgs(request.user)
+        if visible_org_ids:
+            qs = qs.filter(organization_id__in=visible_org_ids)
+        else:
+            qs = qs.none()
+
+    # Filter: time-based status tab
+    time_filter = request.GET.get('time', 'upcoming')
+    if time_filter == 'upcoming':
+        display_qs = qs.filter(start_time__gt=now)
+    elif time_filter == 'ongoing':
+        display_qs = qs.filter(start_time__lte=now, end_time__gte=now)
+    elif time_filter == 'ended':
+        display_qs = qs.filter(end_time__lt=now).order_by('-end_time')
+    else:
+        display_qs = qs
+
+    # Search
+    search = request.GET.get('q', '').strip()
+    if search:
+        display_qs = display_qs.filter(title__icontains=search)
+
+    # Annotate each activity with time-based status and active session
+    from attendance.models import AttendanceSession
+    activities_data = []
+    for act in display_qs:
+        time_status, time_label = _get_activity_time_status(act, now)
+
+        # C2: Check if there's an OPEN AttendanceSession in the current time window
+        active_session = act.attendance_sessions.filter(
+            status='OPEN',
+            start_time__lte=now,
+            end_time__gte=now,
+        ).first()
+
+        # Check if student already checked in for this session
+        already_checkedin = False
+        if active_session and request.user.is_authenticated:
+            already_checkedin = active_session.records.filter(
+                student=request.user
+            ).exists()
+
+        activities_data.append({
+            'activity': act,
+            'time_status': time_status,
+            'time_label': time_label,
+            'active_session': active_session,
+            'already_checkedin': already_checkedin,
+        })
+
+    context = {
+        'activities_data': activities_data,
+        'time_filter': time_filter,
+        'search_query': search,
+        'now': now,
+        'upcoming_count': qs.filter(start_time__gt=now).count(),
+        'ongoing_count': qs.filter(start_time__lte=now, end_time__gte=now).count(),
+        'ended_count': qs.filter(end_time__lt=now).count(),
+    }
+    return render(request, 'activities/student_list.html', context)
+
+
+@login_required
+def student_dashboard(request):
+    """
+    C3: Student personal dashboard.
+    - Total attendance count (VERIFIED)
+    - Attendance history table with activity, point category, status
+    - Summary by point category
+    """
+    from attendance.models import AttendanceRecord
+
+    # All attendance records for this student
+    records = AttendanceRecord.objects.filter(
+        student=request.user
+    ).select_related(
+        'activity',
+        'activity__point_category',
+        'attendance_session',
+        'verified_by',
+    ).order_by('-checkin_time')
+
+    # Aggregate stats
+    total_checkins = records.count()
+    verified_count = records.filter(status='VERIFIED').count()
+    pending_count = records.filter(status='PENDING').count()
+    rejected_count = records.filter(status='REJECTED').count()
+
+    # Group by point category for summary
+    from django.db.models import Count
+    category_summary = {}
+    for record in records.filter(status='VERIFIED'):
+        cat = record.activity.point_category if record.activity else None
+        cat_name = cat.name if cat else 'Không phân loại'
+        cat_code = cat.code if cat else '-'
+        if cat_name not in category_summary:
+            category_summary[cat_name] = {'code': cat_code, 'count': 0}
+        category_summary[cat_name]['count'] += 1
+
+    # Student profile
+    try:
+        profile = request.user.student_profile
+    except Exception:
+        profile = None
+
+    context = {
+        'records': records[:50],  # latest 50
+        'total_checkins': total_checkins,
+        'verified_count': verified_count,
+        'pending_count': pending_count,
+        'rejected_count': rejected_count,
+        'category_summary': category_summary,
+        'profile': profile,
+    }
+    return render(request, 'activities/student_dashboard.html', context)
