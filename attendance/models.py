@@ -45,6 +45,7 @@ class AttendanceRecord(models.Model):
     Individual check-in record for a student in a session.
     Maps to table: attendance_records
     student_id is nullable to support guests who are not logged in.
+    NOTE: Activity is accessed via attendance_session.activity (no direct FK to avoid redundancy).
     """
 
     class RecordStatus(models.TextChoices):
@@ -56,13 +57,6 @@ class AttendanceRecord(models.Model):
         AttendanceSession,
         on_delete=models.CASCADE,
         related_name='records',
-    )
-    activity = models.ForeignKey(
-        'activities.Activity',
-        on_delete=models.CASCADE,
-        related_name='attendance_records',
-        null=True,
-        blank=True,
     )
     student = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -103,11 +97,19 @@ class AttendanceRecord(models.Model):
     def __str__(self):
         return f"{self.entered_student_code} @ {self.attendance_session}"
 
+    @property
+    def activity(self):
+        """Convenience property — access activity via session (no direct FK)."""
+        return self.attendance_session.activity
+
 
 class ActivityPoint(models.Model):
     """
-    Activity points earned by students.
+    Activity points earned by students after being approved.
     Maps to table: activity_points
+    - point_category: snapshot of activity's category at award time
+    - awarded_by: who granted the points (audit trail)
+    - awarded_at: when points were granted
     """
 
     student = models.ForeignKey(
@@ -118,10 +120,27 @@ class ActivityPoint(models.Model):
     activity = models.ForeignKey(
         'activities.Activity',
         on_delete=models.CASCADE,
-        related_name='points',
+        related_name='awarded_activity_points',
+    )
+    point_category = models.ForeignKey(
+        'activities.PointCategory',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='awarded_points',
+        help_text='Snapshot danh mục điểm tại thời điểm cấp — không thay đổi dù Activity bị sửa',
     )
     points = models.DecimalField(max_digits=5, decimal_places=2)
-    reason = models.CharField(max_length=255)
+    reason = models.CharField(max_length=255, blank=True, default='')
+    awarded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='awarded_points',
+        help_text='Cán bộ đã duyệt và cấp điểm',
+    )
+    awarded_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -129,11 +148,12 @@ class ActivityPoint(models.Model):
         verbose_name = 'Điểm hoạt động'
         verbose_name_plural = 'Điểm hoạt động'
         constraints = [
+            # Each student can only receive points once per activity
             models.UniqueConstraint(
-                fields=['student', 'activity', 'reason'],
+                fields=['student', 'activity'],
                 name='unique_student_activity_point',
             )
         ]
 
     def __str__(self):
-        return f"{self.student} +{self.points} ({self.reason})"
+        return f"{self.student} +{self.points} ({self.activity.title})"

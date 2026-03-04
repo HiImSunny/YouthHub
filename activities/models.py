@@ -65,6 +65,12 @@ class Activity(models.Model):
         blank=True,
         related_name='activities',
     )
+    points = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0.00,
+        help_text='Số điểm rèn luyện nhận được khi hoàn thành hoạt động',
+    )
     title = models.CharField(max_length=255)
     code = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True, null=True)
@@ -116,6 +122,8 @@ class ActivityRegistration(models.Model):
         REGISTERED = 'REGISTERED', 'Đã đăng ký'
         CANCELED = 'CANCELED', 'Đã hủy'
         BANNED = 'BANNED', 'Bị cấm'
+        ATTENDED = 'ATTENDED', 'Đã tham gia'
+        POINT_AWARDED = 'POINT_AWARDED', 'Đã cộng điểm'
 
     activity = models.ForeignKey(
         Activity,

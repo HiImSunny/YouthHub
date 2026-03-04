@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 # Default Ollama configuration
 OLLAMA_BASE_URL = getattr(settings, 'OLLAMA_BASE_URL', 'http://localhost:11434')
-OLLAMA_MODEL = getattr(settings, 'OLLAMA_MODEL', 'qwen2.5:7b')
+OLLAMA_MODEL = getattr(settings, 'OLLAMA_MODEL', 'qwen2.5-coder:1.5b')
 OLLAMA_TIMEOUT = getattr(settings, 'OLLAMA_TIMEOUT', 120)
 
 

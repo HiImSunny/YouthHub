@@ -130,7 +130,7 @@ CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 # OLLAMA AI (will be used in Phase 4)
 # =============================================================================
 OLLAMA_BASE_URL = env('OLLAMA_BASE_URL', default='http://localhost:11434')
-OLLAMA_MODEL = env('OLLAMA_MODEL', default='qwen2.5:7b')
+OLLAMA_MODEL = env('OLLAMA_MODEL', default='qwen2.5-coder:1.5b')
 
 # =============================================================================
 # LOGIN / LOGOUT REDIRECTS

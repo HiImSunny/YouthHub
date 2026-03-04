@@ -55,10 +55,12 @@ def activity_detail(request, pk):
     )
     registrations = activity.registrations.select_related('student').order_by('-registered_at')
 
-    # Check if current user is registered
+    # Check if current user is registered (only REGISTERED status, not CANCELED)
     user_registration = None
     if request.user.role == 'STUDENT':
-        user_registration = activity.registrations.filter(student=request.user).first()
+        user_registration = activity.registrations.filter(
+            student=request.user, status='REGISTERED'
+        ).first()
 
     # D3: Budget info for Staff/Admin
     from .models import Budget
@@ -118,6 +120,7 @@ def activity_create(request):
             organization=org,
             semester_id=request.POST.get('semester') or None,
             point_category_id=request.POST.get('point_category') or None,
+            points=request.POST.get('points') or 0,
             created_by=request.user,
             status=Activity.ActivityStatus.DRAFT,
         )
@@ -177,6 +180,7 @@ def activity_edit(request, pk):
         activity.organization = org
         activity.semester_id = request.POST.get('semester') or None
         activity.point_category_id = request.POST.get('point_category') or None
+        activity.points = request.POST.get('points') or 0
         activity.save()
         messages.success(request, 'Da cap nhat hoat dong thanh cong!')
         return redirect('activities:detail', pk=pk)
@@ -494,9 +498,9 @@ def student_dashboard(request):
     records = AttendanceRecord.objects.filter(
         student=request.user
     ).select_related(
-        'activity',
-        'activity__point_category',
         'attendance_session',
+        'attendance_session__activity',
+        'attendance_session__activity__point_category',
         'verified_by',
     ).order_by('-checkin_time')
 

@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+﻿{% extends 'base.html' %}
 {% block title %}{{ activity.title|upper }} — YOUTHHUB{% endblock %}
 
 {% block content %}
@@ -34,8 +34,7 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <span class="material-symbols-outlined text-lg">calendar_today</span>
-                        <span>{{ activity.start_time|date:"d/m/Y H:i" }} — {{ activity.end_time|date:"d/m/Y H:i"
-                            }}</span>
+                        <span>{{ activity.start_time|date:"d/m/Y H:i" }} — {{ activity.end_time|date:"d/m/Y H:i" }}</span>
                     </div>
                     {% if activity.location %}
                     <div class="flex items-center gap-3">
@@ -82,12 +81,17 @@
                 {% endif %}
 
                 {% if activity.status == 'APPROVED' and user.role == 'STUDENT' %}
-                {% if is_registered %}
-                <form method="post" action="{% url 'activities:unregister' pk=activity.pk %}">
+                {% if user_registration %}
+                <div
+                    class="w-full bg-accent-teal/20 border-3 border-accent-teal p-4 font-black uppercase text-center text-accent-teal flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">check_circle</span> ĐÃ ĐĂNG KÝ THAM GIA
+                </div>
+                <form method="post" action="{% url 'activities:cancel_registration' pk=activity.pk %}" class="mt-2">
                     {% csrf_token %}
                     <button type="submit"
-                        class="w-full bg-accent-red text-white border-3 border-black p-4 font-black uppercase shadow-brutal brutal-btn transition-all">HỦY
-                        ĐĂNG KÝ</button>
+                        class="w-full bg-white text-accent-red border-3 border-accent-red p-3 font-black uppercase shadow-brutal brutal-btn transition-all text-sm">
+                        HỦY ĐĂNG KÝ
+                    </button>
                 </form>
                 {% else %}
                 <form method="post" action="{% url 'activities:register' pk=activity.pk %}">
@@ -110,8 +114,7 @@
                     <h2 class="text-xl font-black uppercase">MÔ TẢ HOẠT ĐỘNG</h2>
                 </div>
                 <div class="p-6">
-                    <p class="text-sm leading-relaxed whitespace-pre-line">{{ activity.description|default:"Chưa có mô
-                        tả." }}</p>
+                    <p class="text-sm leading-relaxed whitespace-pre-line">{{ activity.description|default:"Chưa có mô tả." }}</p>
                 </div>
             </div>
 
@@ -175,7 +178,8 @@
                                 {{ budget.get_status_display }}
                             </span>
                             <p class="text-2xl font-black text-primary mt-2">{{ budget.total_amount|floatformat:0 }}
-                                <span class="text-sm">₫</span></p>
+                                <span class="text-sm">₫</span>
+                            </p>
                             <p class="text-xs font-bold text-slate-400 uppercase mt-1">{{ budget.items.count }} khoản
                                 mục</p>
                         </div>

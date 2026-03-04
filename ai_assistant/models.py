@@ -42,7 +42,7 @@ class AiDocument(models.Model):
     title = models.CharField(max_length=255, blank=True, null=True)
     prompt = models.TextField()
     generated_content = models.TextField()
-    model = models.CharField(max_length=100, default='qwen2.5:7b')
+    model = models.CharField(max_length=100, default='qwen2.5-coder:1.5b')
     tokens_input = models.IntegerField(blank=True, null=True)
     tokens_output = models.IntegerField(blank=True, null=True)
     status = models.CharField(

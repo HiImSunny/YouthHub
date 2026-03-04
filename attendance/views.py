@@ -180,7 +180,6 @@ def checkin_submit(request, token):
 
         record = AttendanceRecord(
             attendance_session=session,
-            activity=session.activity,
             student=request.user,
             entered_student_code=getattr(request.user, 'student_code', request.user.username),
             status=record_status,
@@ -285,11 +284,17 @@ def points_view(request):
 # ────────────────────────────────────────────────────────────
 # HELPERS
 # ────────────────────────────────────────────────────────────
-def _grant_points(student, activity, points: int = 5):
-    """Grant 5 activity points, skip if already granted."""
+def _grant_points(student, activity, awarded_by=None):
+    """Grant activity points (taken from activity.points), skip if already granted."""
+    from django.utils import timezone as tz
     ActivityPoint.objects.get_or_create(
         student=student,
         activity=activity,
-        reason='ATTENDANCE',
-        defaults={'points': points},
+        defaults={
+            'points': activity.points,
+            'point_category': activity.point_category,
+            'reason': 'ATTENDANCE',
+            'awarded_by': awarded_by,
+            'awarded_at': tz.now(),
+        },
     )
