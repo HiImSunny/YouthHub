@@ -56,6 +56,12 @@ def activity_detail(request, pk):
     if request.user.role == 'STUDENT':
         user_registration = activity.registrations.filter(student=request.user).first()
 
+    # D3: Budget info for Staff/Admin
+    from .models import Budget
+    budget = None
+    if request.user.role != 'STUDENT':
+        budget = Budget.objects.filter(activity=activity).first()
+
     context = {
         'activity': activity,
         'registrations': registrations,
@@ -64,6 +70,9 @@ def activity_detail(request, pk):
         # B1/B2 permission flags - used in template to show/hide buttons
         'can_edit': can_edit_activity(request.user, activity),
         'can_approve': can_approve_activity(request.user, activity),
+        # D3: Budget tab
+        'budget': budget,
+        'can_manage_budget': request.user.role != 'STUDENT' and can_edit_activity(request.user, activity),
     }
     return render(request, 'activities/detail.html', context)
 
@@ -520,3 +529,211 @@ def student_dashboard(request):
         'profile': profile,
     }
     return render(request, 'activities/student_dashboard.html', context)
+
+
+# ─── PHASE D: Budget Management ───────────────────────────────────────────────
+
+def _can_manage_budget(user, activity):
+    """D2: Who can create/edit/submit a budget."""
+    from core.permissions import can_edit_activity
+    return can_edit_activity(user, activity)
+
+
+def _can_approve_budget(user, activity):
+    """D2: Who can approve/reject a budget (Parent Staff or Admin)."""
+    from core.permissions import can_approve_activity
+    return can_approve_activity(user, activity)
+
+
+@login_required
+def budget_detail(request, activity_pk):
+    """D1/D3: View budget and its line items for an activity."""
+    activity = get_object_or_404(Activity, pk=activity_pk)
+
+    if request.user.role == 'STUDENT':
+        messages.error(request, 'Sinh vien khong co quyen xem ngan sach.')
+        return redirect('activities:detail', pk=activity_pk)
+
+    from .models import Budget, BudgetItem
+    budget = Budget.objects.filter(activity=activity).prefetch_related('items').first()
+
+    context = {
+        'activity': activity,
+        'budget': budget,
+        'can_manage': _can_manage_budget(request.user, activity),
+        'can_approve': _can_approve_budget(request.user, activity),
+    }
+    return render(request, 'activities/budget_detail.html', context)
+
+
+@login_required
+def budget_create(request, activity_pk):
+    """D1: Create a new budget for an activity (Staff only)."""
+    activity = get_object_or_404(Activity, pk=activity_pk)
+
+    if not _can_manage_budget(request.user, activity):
+        messages.error(request, 'Ban khong co quyen quan ly ngan sach hoat dong nay.')
+        return redirect('activities:detail', pk=activity_pk)
+
+    from .models import Budget
+    if Budget.objects.filter(activity=activity).exists():
+        messages.info(request, 'Hoat dong nay da co ngan sach.')
+        return redirect('activities:budget_detail', activity_pk=activity_pk)
+
+    if request.method == 'POST':
+        description = request.POST.get('description', '').strip()
+        total_amount = request.POST.get('total_amount', '0') or '0'
+
+        try:
+            Budget.objects.create(
+                activity=activity,
+                total_amount=float(total_amount),
+                description=description,
+                status='DRAFT',
+            )
+            messages.success(request, 'Da tao du tru ngan sach!')
+            return redirect('activities:budget_detail', activity_pk=activity_pk)
+        except Exception as e:
+            messages.error(request, f'Loi: {e}')
+
+    return render(request, 'activities/budget_form.html', {'activity': activity})
+
+
+@login_required
+def budget_add_item(request, activity_pk):
+    """D1: Add a line item to the budget."""
+    activity = get_object_or_404(Activity, pk=activity_pk)
+
+    if not _can_manage_budget(request.user, activity):
+        messages.error(request, 'Ban khong co quyen.')
+        return redirect('activities:budget_detail', activity_pk=activity_pk)
+
+    from .models import Budget, BudgetItem
+    budget = get_object_or_404(Budget, activity=activity)
+
+    if budget.status != 'DRAFT':
+        messages.error(request, 'Chi co the them hang muc khi ngan sach con o trang thai Nhap.')
+        return redirect('activities:budget_detail', activity_pk=activity_pk)
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        amount = request.POST.get('amount', '0') or '0'
+        category = request.POST.get('category', '').strip()
+        note = request.POST.get('note', '').strip()
+
+        if name and amount:
+            try:
+                BudgetItem.objects.create(
+                    budget=budget,
+                    name=name,
+                    amount=float(amount),
+                    category=category,
+                    note=note,
+                )
+                # Auto-update total
+                total = sum(item.amount for item in budget.items.all())
+                budget.total_amount = total
+                budget.save(update_fields=['total_amount'])
+                messages.success(request, f'Da them hang muc "{name}".')
+            except Exception as e:
+                messages.error(request, f'Loi: {e}')
+        else:
+            messages.error(request, 'Ten va so tien la bat buoc.')
+
+    return redirect('activities:budget_detail', activity_pk=activity_pk)
+
+
+@login_required
+def budget_delete_item(request, activity_pk, item_pk):
+    """D1: Delete a line item from the budget."""
+    activity = get_object_or_404(Activity, pk=activity_pk)
+
+    if not _can_manage_budget(request.user, activity):
+        messages.error(request, 'Ban khong co quyen.')
+        return redirect('activities:budget_detail', activity_pk=activity_pk)
+
+    from .models import Budget, BudgetItem
+    budget = get_object_or_404(Budget, activity=activity)
+
+    if budget.status != 'DRAFT':
+        messages.error(request, 'Khong the xoa hang muc khi ngan sach da gui duyet.')
+        return redirect('activities:budget_detail', activity_pk=activity_pk)
+
+    if request.method == 'POST':
+        item = BudgetItem.objects.filter(pk=item_pk, budget=budget).first()
+        if item:
+            item.delete()
+            # Recalculate total
+            total = sum(i.amount for i in budget.items.all())
+            budget.total_amount = total
+            budget.save(update_fields=['total_amount'])
+            messages.success(request, 'Da xoa hang muc.')
+
+    return redirect('activities:budget_detail', activity_pk=activity_pk)
+
+
+@login_required
+def budget_submit(request, activity_pk):
+    """D2: Staff submits budget for approval (DRAFT → PENDING)."""
+    activity = get_object_or_404(Activity, pk=activity_pk)
+
+    if not _can_manage_budget(request.user, activity):
+        messages.error(request, 'Ban khong co quyen.')
+        return redirect('activities:budget_detail', activity_pk=activity_pk)
+
+    from .models import Budget
+    budget = get_object_or_404(Budget, activity=activity)
+
+    if request.method == 'POST':
+        if budget.status == 'DRAFT':
+            if not budget.items.exists():
+                messages.error(request, 'Ngan sach phai co it nhat 1 hang muc truoc khi gui duyet.')
+            else:
+                budget.status = 'PENDING'
+                budget.save(update_fields=['status'])
+                messages.success(request, 'Da gui ngan sach de phe duyet!')
+        else:
+            messages.error(request, 'Ngan sach khong o trang thai Nhap.')
+
+    return redirect('activities:budget_detail', activity_pk=activity_pk)
+
+
+@login_required
+def budget_approve(request, activity_pk):
+    """D2: Parent Staff or Admin approves a budget (PENDING → APPROVED)."""
+    activity = get_object_or_404(Activity, pk=activity_pk)
+
+    if not _can_approve_budget(request.user, activity):
+        messages.error(request, 'Ban khong co quyen phe duyet ngan sach nay.')
+        return redirect('activities:budget_detail', activity_pk=activity_pk)
+
+    from .models import Budget
+    budget = get_object_or_404(Budget, activity=activity)
+
+    if request.method == 'POST' and budget.status == 'PENDING':
+        budget.status = 'APPROVED'
+        budget.approved_by = request.user
+        budget.save(update_fields=['status', 'approved_by'])
+        messages.success(request, 'Da phe duyet ngan sach!')
+
+    return redirect('activities:budget_detail', activity_pk=activity_pk)
+
+
+@login_required
+def budget_reject(request, activity_pk):
+    """D2: Parent Staff or Admin rejects a budget (PENDING → DRAFT)."""
+    activity = get_object_or_404(Activity, pk=activity_pk)
+
+    if not _can_approve_budget(request.user, activity):
+        messages.error(request, 'Ban khong co quyen tu choi ngan sach nay.')
+        return redirect('activities:budget_detail', activity_pk=activity_pk)
+
+    from .models import Budget
+    budget = get_object_or_404(Budget, activity=activity)
+
+    if request.method == 'POST' and budget.status == 'PENDING':
+        budget.status = 'DRAFT'
+        budget.save(update_fields=['status'])
+        messages.success(request, 'Da tu choi ngan sach. Ngan sach quay ve trang thai Nhap.')
+
+    return redirect('activities:budget_detail', activity_pk=activity_pk)

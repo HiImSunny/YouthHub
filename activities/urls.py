@@ -18,4 +18,12 @@ urlpatterns = [
     path('portal/', views.student_activity_list, name='student_list'),
     # C3: Student dashboard
     path('my-dashboard/', views.student_dashboard, name='student_dashboard'),
+    # D1/D2/D3: Budget management
+    path('<int:activity_pk>/budget/', views.budget_detail, name='budget_detail'),
+    path('<int:activity_pk>/budget/create/', views.budget_create, name='budget_create'),
+    path('<int:activity_pk>/budget/add-item/', views.budget_add_item, name='budget_add_item'),
+    path('<int:activity_pk>/budget/delete-item/<int:item_pk>/', views.budget_delete_item, name='budget_delete_item'),
+    path('<int:activity_pk>/budget/submit/', views.budget_submit, name='budget_submit'),
+    path('<int:activity_pk>/budget/approve/', views.budget_approve, name='budget_approve'),
+    path('<int:activity_pk>/budget/reject/', views.budget_reject, name='budget_reject'),
 ]

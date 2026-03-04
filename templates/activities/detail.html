@@ -149,6 +149,53 @@
                 </div>
             </div>
             {% endif %}
+
+            <!-- D3: Budget tab — Staff/Admin only -->
+            {% if user.role != 'STUDENT' %}
+            <div class="bg-white border-3 border-black shadow-brutal">
+                <div class="p-6 border-b-3 border-black bg-bg-light flex items-center justify-between">
+                    <h2 class="text-xl font-black uppercase flex items-center gap-2">
+                        <span class="material-symbols-outlined">account_balance_wallet</span>
+                        NGÂN SÁCH
+                    </h2>
+                    <a href="{% url 'activities:budget_detail' activity_pk=activity.pk %}"
+                        class="bg-zinc-900 text-white border-2 border-black px-3 py-1.5 text-xs font-black uppercase shadow-brutal-sm brutal-btn flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">open_in_new</span>
+                        XEM CHI TIẾT
+                    </a>
+                </div>
+                <div class="p-6">
+                    {% if budget %}
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="px-3 py-1 border-2 border-black text-xs font-black uppercase
+                                {% if budget.status == 'APPROVED' %}bg-accent-teal/20 text-accent-teal
+                                {% elif budget.status == 'PENDING' %}bg-accent-yellow text-black
+                                {% else %}bg-white{% endif %}">
+                                {{ budget.get_status_display }}
+                            </span>
+                            <p class="text-2xl font-black text-primary mt-2">{{ budget.total_amount|floatformat:0 }}
+                                <span class="text-sm">₫</span></p>
+                            <p class="text-xs font-bold text-slate-400 uppercase mt-1">{{ budget.items.count }} khoản
+                                mục</p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-sm font-bold text-slate-400 uppercase mb-3">Chưa có ngân sách</p>
+                        {% if can_manage_budget %}
+                        <a href="{% url 'activities:budget_create' activity_pk=activity.pk %}"
+                            class="inline-flex items-center gap-2 bg-primary text-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal brutal-btn">
+                            <span class="material-symbols-outlined text-sm">add_circle</span>
+                            TẠO NGÂN SÁCH
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
         </div>
     </div>
 </div>
