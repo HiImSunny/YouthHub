@@ -42,7 +42,7 @@
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- CHỌN --</option>
                         {% for org in organizations %}
-                        <option value="{{ org.pk }}" {% if activity.organization_id==org.pk %}selected{% endif %}>{{
+                        <option value="{{ org.pk }}" {% if activity.organization_id == org.pk %}selected{% endif %}>{{
                             org.name }}</option>
                         {% endfor %}
                     </select>
@@ -53,7 +53,7 @@
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- KHÔNG XÁC ĐỊNH --</option>
                         {% for sem in semesters %}
-                        <option value="{{ sem.pk }}" {% if activity.semester_id==sem.pk %}selected{% endif %}>{{
+                        <option value="{{ sem.pk }}" {% if activity.semester_id == sem.pk %}selected{% endif %}>{{
                             sem.name }} ({{ sem.academic_year }})</option>
                         {% endfor %}
                     </select>
@@ -68,7 +68,7 @@
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- CHỌN --</option>
                         {% for val, label in type_choices %}
-                        <option value="{{ val }}" {% if activity.activity_type==val %}selected{% endif %}>{{ label }}
+                        <option value="{{ val }}" {% if activity.activity_type == val %}selected{% endif %}>{{ label }}
                         </option>
                         {% endfor %}
                     </select>
@@ -79,7 +79,7 @@
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- KHÔNG XÁC ĐỊNH --</option>
                         {% for pc in point_categories %}
-                        <option value="{{ pc.pk }}" {% if activity.point_category_id==pc.pk %}selected{% endif %}>{{
+                        <option value="{{ pc.pk }}" {% if activity.point_category_id == pc.pk %}selected{% endif %}>{{
                             pc.code }} - {{ pc.name }}</option>
                         {% endfor %}
                     </select>
