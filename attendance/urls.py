@@ -22,4 +22,11 @@ urlpatterns = [
 
     # Points
     path('points/', views.points_view, name='points'),
+
+    # Phase 3: Activity-level attendance verification matrix
+    path('activity/<int:activity_pk>/verify/', views.activity_attendance_verify, name='activity_verify'),
+
+    # Phase 4: Award points (individual + bulk)
+    path('activity/<int:activity_pk>/award/<int:student_pk>/', views.award_student_points, name='award_student'),
+    path('activity/<int:activity_pk>/award/bulk/', views.award_bulk_points, name='award_bulk'),
 ]

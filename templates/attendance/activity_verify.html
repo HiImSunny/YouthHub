@@ -1,0 +1,277 @@
+{% extends 'base.html' %}
+{% block title %}DUYỆT ĐIỂM DANH — {{ activity.title|upper }}{% endblock %}
+
+{% block content %}
+<div>
+    <!-- Breadcrumb -->
+    <nav class="flex items-center gap-2 text-sm font-bold uppercase mb-6 text-slate-500">
+        <a href="{% url 'activities:list' %}" class="hover:text-primary">HOẠT ĐỘNG</a>
+        <span class="material-symbols-outlined text-base">chevron_right</span>
+        <a href="{% url 'activities:detail' pk=activity.pk %}" class="hover:text-primary">{{
+            activity.title|truncatechars:25|upper }}</a>
+        <span class="material-symbols-outlined text-base">chevron_right</span>
+        <span class="text-slate-900">DUYỆT ĐIỂM DANH</span>
+    </nav>
+
+    <!-- Header + Stats bar -->
+    <div class="flex flex-col lg:flex-row lg:items-start gap-6 mb-8">
+        <!-- Title block -->
+        <div class="flex-1">
+            <h1 class="text-4xl font-black uppercase tracking-tighter leading-none mb-1">
+                <span class="material-symbols-outlined text-3xl align-middle text-accent-yellow">fact_check</span>
+                DUYỆT ĐIỂM DANH
+            </h1>
+            <p class="text-sm font-bold uppercase tracking-widest text-slate-500 mt-1">{{ activity.title }}</p>
+            {% if activity.point_category %}
+            <div class="mt-2 flex items-center gap-2">
+                <span class="bg-accent-yellow border-2 border-black px-2 py-0.5 text-xs font-black uppercase">{{
+                    activity.point_category.code }}</span>
+                <span class="text-xs font-bold text-slate-500">{{ activity.point_category.name }}</span>
+                {% if activity.points > 0 %}
+                <span class="text-sm font-black text-primary">+{{ activity.points }} điểm rèn luyện</span>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Stats cards -->
+        <div class="flex gap-3 flex-wrap">
+            <div class="bg-white border-3 border-black p-4 shadow-brutal text-center min-w-[100px]">
+                <p class="text-3xl font-black text-slate-900">{{ total_students }}</p>
+                <p class="text-[10px] font-black uppercase text-slate-400">TỔNG SV</p>
+            </div>
+            <div class="bg-white border-3 border-black p-4 shadow-brutal text-center min-w-[100px]">
+                <p class="text-3xl font-black text-accent-teal">{{ fully_attended_count }}</p>
+                <p class="text-[10px] font-black uppercase text-slate-400">ĐỦ PHIÊN</p>
+            </div>
+            <div class="bg-white border-3 border-black p-4 shadow-brutal text-center min-w-[100px]">
+                <p class="text-3xl font-black text-primary">{{ awarded_count }}</p>
+                <p class="text-[10px] font-black uppercase text-slate-400">ĐÃ CẤP ĐIỂM</p>
+            </div>
+            <div class="bg-white border-3 border-black p-4 shadow-brutal text-center min-w-[100px]">
+                <p class="text-3xl font-black text-slate-900">{{ sessions|length }}</p>
+                <p class="text-[10px] font-black uppercase text-slate-400">SỐ PHIÊN</p>
+            </div>
+        </div>
+    </div>
+
+    {% if not sessions %}
+    <!-- No sessions yet -->
+    <div class="bg-white border-3 border-black p-16 text-center shadow-brutal">
+        <span class="material-symbols-outlined text-6xl text-slate-300 block mb-4">event_busy</span>
+        <h3 class="text-2xl font-black uppercase text-slate-400">CHƯA CÓ PHIÊN ĐIỂM DANH</h3>
+        <p class="text-sm font-bold text-slate-300 uppercase mt-2">Tạo phiên điểm danh trước khi duyệt</p>
+        <a href="{% url 'attendance:session_create' %}"
+            class="inline-flex items-center gap-2 mt-6 bg-primary text-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn">
+            <span class="material-symbols-outlined">add</span> TẠO PHIÊN ĐIỂM DANH
+        </a>
+    </div>
+
+    {% elif not student_rows %}
+    <!-- Has sessions but no students -->
+    <div class="bg-white border-3 border-black p-16 text-center shadow-brutal">
+        <span class="material-symbols-outlined text-6xl text-slate-300 block mb-4">group_off</span>
+        <h3 class="text-2xl font-black uppercase text-slate-400">CHƯA CÓ SINH VIÊN NÀO</h3>
+        <p class="text-sm font-bold text-slate-300 uppercase mt-2">Chưa có sinh viên đăng ký hoặc điểm danh</p>
+    </div>
+
+    {% else %}
+    <!-- Bulk award button for fully-attended students -->
+    {% if fully_attended_count > 0 and fully_attended_count > awarded_count %}
+    <div class="bg-accent-yellow border-3 border-black p-4 shadow-brutal mb-6 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-2xl">auto_awesome</span>
+            <div>
+                <p class="font-black uppercase text-sm">{{ fully_attended_count }} sinh viên đủ điều kiện (đã điểm danh
+                    đầy đủ)</p>
+                <p class="text-xs font-bold text-black/60 uppercase">Duyệt hàng loạt cho tất cả sinh viên đủ điều kiện
+                </p>
+            </div>
+        </div>
+        <form method="post" action="{% url 'attendance:award_bulk' activity_pk=activity.pk %}"
+            onsubmit="return confirm('CẤP ĐIỂM CHO {{ fully_attended_count }} SINH VIÊN ĐỦ ĐIỀU KIỆN?')">
+            {% csrf_token %}
+            <input type="hidden" name="eligible_only" value="1">
+            <button type="submit"
+                class="bg-black text-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn flex items-center gap-2 whitespace-nowrap">
+                <span class="material-symbols-outlined">done_all</span>
+                DUYỆT HÀNG LOẠT
+            </button>
+        </form>
+    </div>
+    {% endif %}
+
+    <!-- Main attendance matrix table -->
+    <div class="bg-white border-3 border-black shadow-brutal overflow-hidden">
+        <div class="p-5 border-b-3 border-black bg-bg-light flex items-center justify-between">
+            <h2 class="text-xl font-black uppercase flex items-center gap-2">
+                <span class="material-symbols-outlined">table_chart</span>
+                BẢNG ĐIỂM DANH
+            </h2>
+            <span class="text-xs font-bold text-slate-500 uppercase">{{ student_rows|length }} sinh viên × {{
+                sessions|length }} phiên</span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse" style="min-width: 600px;">
+                <thead>
+                    <tr class="border-b-3 border-black bg-slate-100">
+                        <!-- Student info columns -->
+                        <th class="p-4 font-black uppercase text-xs border-r-2 border-black whitespace-nowrap"
+                            style="min-width:60px">#</th>
+                        <th class="p-4 font-black uppercase text-xs border-r-2 border-black whitespace-nowrap"
+                            style="min-width:180px">HỌ TÊN</th>
+                        <th class="p-4 font-black uppercase text-xs border-r-2 border-black whitespace-nowrap"
+                            style="min-width:100px">MSSV</th>
+
+                        <!-- Session columns - dynamic -->
+                        {% for session in sessions %}
+                        <th class="p-3 font-black uppercase text-xs border-r-2 border-black text-center whitespace-nowrap"
+                            style="min-width:100px">
+                            <div>{{ session.name|upper }}</div>
+                            <div class="text-[10px] font-bold text-slate-400 normal-case mt-0.5">{{
+                                session.start_time|date:"d/m H:i" }}</div>
+                        </th>
+                        {% endfor %}
+
+                        <!-- Summary + Action columns -->
+                        <th class="p-4 font-black uppercase text-xs border-r-2 border-black text-center whitespace-nowrap"
+                            style="min-width:100px">TỔNG KẾT</th>
+                        <th class="p-4 font-black uppercase text-xs text-center whitespace-nowrap"
+                            style="min-width:140px">HÀNH ĐỘNG</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in student_rows %}
+                    <tr class="border-b-2 border-black
+                        {% if row.already_awarded %}bg-accent-teal/5
+                        {% elif row.is_fully_attended %}bg-primary/5
+                        {% endif %}
+                        hover:bg-slate-50 transition-colors">
+
+                        <!-- #  -->
+                        <td class="p-4 border-r-2 border-black font-mono text-sm text-slate-400">{{ forloop.counter }}
+                        </td>
+
+                        <!-- Name -->
+                        <td class="p-4 border-r-2 border-black">
+                            <p class="font-black uppercase text-sm leading-tight">{{ row.student.full_name }}</p>
+                            {% if row.student.email %}<p class="text-[10px] text-slate-400 font-bold">{{
+                                row.student.email }}</p>{% endif %}
+                        </td>
+
+                        <!-- Student code -->
+                        <td class="p-4 border-r-2 border-black font-mono text-xs text-slate-600">
+                            {% if row.student.student_profile.student_code %}
+                            {{ row.student.student_profile.student_code }}
+                            {% else %}
+                            {{ row.student.username }}
+                            {% endif %}
+                        </td>
+
+                        <!-- Session cells -->
+                        {% for cell in row.cells %}
+                        <td class="p-3 border-r-2 border-black text-center">
+                            {% if cell.is_verified %}
+                            <span class="material-symbols-outlined text-accent-teal text-2xl"
+                                title="Đã xác nhận">check_circle</span>
+                            {% elif cell.is_checked %}
+                            <span class="material-symbols-outlined text-primary text-2xl"
+                                title="Chờ xác nhận (có ảnh)">pending</span>
+                            {% else %}
+                            <span class="material-symbols-outlined text-slate-200 text-2xl"
+                                title="Chưa điểm danh">cancel</span>
+                            {% endif %}
+                            {% if cell.record and cell.record.checkin_time %}
+                            <div class="text-[10px] font-bold text-slate-400 mt-0.5">{{
+                                cell.record.checkin_time|date:"H:i" }}</div>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+
+                        <!-- Summary: checked/total -->
+                        <td class="p-4 border-r-2 border-black text-center">
+                            <span class="text-lg font-black
+                                {% if row.is_fully_attended %}text-accent-teal
+                                {% elif row.checked_count > 0 %}text-primary
+                                {% else %}text-slate-300
+                                {% endif %}">
+                                {{ row.checked_count }}/{{ row.total_sessions }}
+                            </span>
+                            <div class="text-[10px] font-bold uppercase mt-0.5
+                                {% if row.is_fully_attended %}text-accent-teal
+                                {% elif row.checked_count > 0 %}text-primary
+                                {% else %}text-slate-300
+                                {% endif %}">
+                                {% if row.is_fully_attended %}ĐỦ PHIÊN{% elif row.checked_count > 0 %}THIẾU{% else
+                                %}VẮNG{% endif %}
+                            </div>
+                        </td>
+
+                        <!-- Action button -->
+                        <td class="p-3 text-center">
+                            {% if row.already_awarded %}
+                            <span
+                                class="inline-flex items-center gap-1 px-3 py-2 bg-accent-teal/10 border-2 border-accent-teal text-accent-teal text-xs font-black uppercase">
+                                <span class="material-symbols-outlined text-sm">verified</span>
+                                ĐÃ CẤP ĐIỂM
+                            </span>
+                            {% else %}
+                            <form method="post"
+                                action="{% url 'attendance:award_student' activity_pk=activity.pk student_pk=row.student.pk %}"
+                                onsubmit="return confirm('CẤP {{ activity.points }} ĐIỂM CHO {{ row.student.full_name }}?')">
+                                {% csrf_token %}
+                                <button type="submit"
+                                    class="inline-flex items-center gap-1 px-3 py-2 border-3 border-black font-black uppercase text-xs shadow-brutal-sm brutal-btn transition-all
+                                    {% if row.is_fully_attended %}bg-primary text-white{% else %}bg-white text-slate-700 hover:bg-primary/10{% endif %}">
+                                    <span class="material-symbols-outlined text-sm">stars</span>
+                                    CẤP ĐIỂM
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+
+                <!-- Footer summary row -->
+                <tfoot>
+                    <tr class="border-t-3 border-black bg-black text-white">
+                        <td colspan="3" class="p-4 font-black uppercase text-sm">
+                            TỔNG KẾT — {{ total_students }} SINH VIÊN
+                        </td>
+                        {% for session in sessions %}
+                        <td class="p-4 text-center font-black text-sm">
+                            {{ session.records.count }}
+                            <div class="text-[10px] font-bold text-white/50 uppercase">đã check-in</div>
+                        </td>
+                        {% endfor %}
+                        <td class="p-4 text-center font-black text-accent-teal">
+                            {{ fully_attended_count }}/{{ total_students }}
+                            <div class="text-[10px] font-bold text-white/50 uppercase">đủ phiên</div>
+                        </td>
+                        <td class="p-4 text-center font-black text-accent-yellow">
+                            {{ awarded_count }}/{{ total_students }}
+                            <div class="text-[10px] font-bold text-white/50 uppercase">đã cấp điểm</div>
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="flex items-center gap-6 mt-4 text-xs font-bold uppercase text-slate-500">
+        <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-accent-teal text-lg">check_circle</span> Đã xác nhận (VERIFIED)
+        </div>
+        <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-primary text-lg">pending</span> Chờ xác nhận (có ảnh)
+        </div>
+        <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-slate-200 text-lg">cancel</span> Chưa điểm danh
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

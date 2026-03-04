@@ -125,6 +125,15 @@
                 </form>
                 {% endif %}
                 {% endif %}
+
+                {% if user.role != 'STUDENT' and activity.status not in 'DRAFT,CANCELED' %}
+                <a href="{% url 'attendance:activity_verify' activity_pk=activity.pk %}"
+                    class="w-full block bg-accent-yellow border-3 border-black p-4 text-center font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">fact_check</span>
+                    DUYỆT ĐIỂM DANH
+                </a>
+                {% endif %}
+
             </div>
         </div>
 

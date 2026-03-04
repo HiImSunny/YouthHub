@@ -282,6 +282,106 @@ def points_view(request):
 
 
 # ────────────────────────────────────────────────────────────
+# PHASE 3: Verify attendance grouped by student × activity
+# ────────────────────────────────────────────────────────────
+@login_required
+def activity_attendance_verify(request, activity_pk):
+    """
+    Staff/Admin view: attendance matrix for a single activity.
+    Rows = Students who registered or checked in.
+    Cols = AttendanceSessions (Phiên 1, Phiên 2, ...).
+    Each cell: True/False (đã điểm danh phiên đó chưa).
+    Shows total checked/total sessions and Award button per student.
+    """
+    if request.user.role == 'STUDENT':
+        messages.error(request, 'Bạn không có quyền duyệt điểm danh.')
+        return redirect('activities:detail', pk=activity_pk)
+
+    activity = get_object_or_404(
+        Activity.objects.select_related('point_category'),
+        pk=activity_pk,
+    )
+
+    # All sessions for this activity (ordered)
+    sessions = list(
+        AttendanceSession.objects.filter(activity=activity).order_by('start_time')
+    )
+
+    # All records across all sessions of this activity
+    all_records = AttendanceRecord.objects.filter(
+        attendance_session__activity=activity,
+        student__isnull=False,
+    ).select_related('student', 'attendance_session')
+
+    # Map student_id → student object
+    student_map = {}
+    # Map (student_id, session_id) → record
+    record_map = {}
+    for rec in all_records:
+        sid = rec.student_id
+        if sid not in student_map:
+            student_map[sid] = rec.student
+        record_map[(sid, rec.attendance_session_id)] = rec
+
+    # Also include students who registered but haven't checked in yet
+    from activities.models import ActivityRegistration
+    registered = ActivityRegistration.objects.filter(
+        activity=activity,
+        status__in=['REGISTERED', 'ATTENDED', 'POINT_AWARDED'],
+    ).select_related('student')
+    for reg in registered:
+        if reg.student_id not in student_map:
+            student_map[reg.student_id] = reg.student
+
+    # Build matrix rows
+    total_sessions = len(sessions)
+
+    # Students who already received points
+    awarded_student_ids = set(
+        ActivityPoint.objects.filter(activity=activity).values_list('student_id', flat=True)
+    )
+
+    student_rows = []
+    for student_id, student in sorted(student_map.items(), key=lambda x: x[1].full_name):
+        session_cells = []
+        checked_count = 0
+        for session in sessions:
+            rec = record_map.get((student_id, session.pk))
+            is_checked = rec is not None and rec.status in ('PENDING', 'VERIFIED')
+            is_verified = rec is not None and rec.status == 'VERIFIED'
+            session_cells.append({
+                'session': session,
+                'record': rec,
+                'is_checked': is_checked,
+                'is_verified': is_verified,
+            })
+            if is_checked:
+                checked_count += 1
+
+        is_fully_attended = (checked_count == total_sessions and total_sessions > 0)
+        already_awarded = student_id in awarded_student_ids
+
+        student_rows.append({
+            'student': student,
+            'cells': session_cells,
+            'checked_count': checked_count,
+            'total_sessions': total_sessions,
+            'is_fully_attended': is_fully_attended,
+            'already_awarded': already_awarded,
+        })
+
+    context = {
+        'activity': activity,
+        'sessions': sessions,
+        'student_rows': student_rows,
+        'total_students': len(student_rows),
+        'fully_attended_count': sum(1 for r in student_rows if r['is_fully_attended']),
+        'awarded_count': sum(1 for r in student_rows if r['already_awarded']),
+    }
+    return render(request, 'attendance/activity_verify.html', context)
+
+
+# ────────────────────────────────────────────────────────────
 # HELPERS
 # ────────────────────────────────────────────────────────────
 def _grant_points(student, activity, awarded_by=None):
@@ -298,3 +398,22 @@ def _grant_points(student, activity, awarded_by=None):
             'awarded_at': tz.now(),
         },
     )
+
+
+# ────────────────────────────────────────────────────────────
+# PHASE 4 STUBS — Full logic in Phase 4
+# ────────────────────────────────────────────────────────────
+@login_required
+@transaction.atomic
+def award_student_points(request, activity_pk, student_pk):
+    """Phase 4: Award points to a single student. Stub — implemented in Phase 4."""
+    messages.info(request, 'Chức năng cấp điểm sẽ được hoàn thiện ở Phase 4.')
+    return redirect('attendance:activity_verify', activity_pk=activity_pk)
+
+
+@login_required
+@transaction.atomic
+def award_bulk_points(request, activity_pk):
+    """Phase 4: Award points to all eligible students. Stub — implemented in Phase 4."""
+    messages.info(request, 'Chức năng cấp điểm hàng loạt sẽ được hoàn thiện ở Phase 4.')
+    return redirect('attendance:activity_verify', activity_pk=activity_pk)
