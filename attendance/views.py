@@ -401,19 +401,168 @@ def _grant_points(student, activity, awarded_by=None):
 
 
 # ────────────────────────────────────────────────────────────
-# PHASE 4 STUBS — Full logic in Phase 4
+# PHASE 4: Award Points — Individual + Bulk
 # ────────────────────────────────────────────────────────────
+
+def _do_award_student(student, activity, awarded_by):
+    """
+    Core award logic for a single student:
+    1. Verify all PENDING attendance records for this student in the activity
+    2. Create ActivityPoint (skips if already exists via unique constraint)
+    3. Update ActivityRegistration → POINT_AWARDED
+    Returns (awarded: bool, reason: str)
+    """
+    from activities.models import ActivityRegistration
+    from django.utils import timezone as tz
+
+    # 1. Mark all PENDING records as VERIFIED
+    records_updated = AttendanceRecord.objects.filter(
+        attendance_session__activity=activity,
+        student=student,
+        status=AttendanceRecord.RecordStatus.PENDING,
+    ).update(
+        status=AttendanceRecord.RecordStatus.VERIFIED,
+        verified_by=awarded_by,
+        approved_at=tz.now(),
+    )
+
+    # 2. Create ActivityPoint — skip if already exists
+    _, created = ActivityPoint.objects.get_or_create(
+        student=student,
+        activity=activity,
+        defaults={
+            'points': activity.points,
+            'point_category': activity.point_category,
+            'reason': f'Hoàn thành hoạt động: {activity.title}',
+            'awarded_by': awarded_by,
+            'awarded_at': tz.now(),
+        },
+    )
+
+    # 3. Update ActivityRegistration status
+    ActivityRegistration.objects.filter(
+        activity=activity,
+        student=student,
+        status__in=['REGISTERED', 'ATTENDED'],
+    ).update(status='POINT_AWARDED')
+
+    return created, records_updated
+
+
 @login_required
 @transaction.atomic
 def award_student_points(request, activity_pk, student_pk):
-    """Phase 4: Award points to a single student. Stub — implemented in Phase 4."""
-    messages.info(request, 'Chức năng cấp điểm sẽ được hoàn thiện ở Phase 4.')
+    """
+    Phase 4: Award points to a single student.
+    POST only. Updates attendance records + creates ActivityPoint.
+    Idempotent — calling again for same student is safe (skipped).
+    """
+    if request.user.role == 'STUDENT':
+        messages.error(request, 'Bạn không có quyền cấp điểm.')
+        return redirect('activities:detail', pk=activity_pk)
+
+    if request.method != 'POST':
+        return redirect('attendance:activity_verify', activity_pk=activity_pk)
+
+    activity = get_object_or_404(
+        Activity.objects.select_related('point_category'),
+        pk=activity_pk,
+    )
+
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    student = get_object_or_404(User, pk=student_pk)
+
+    awarded, records_updated = _do_award_student(student, activity, awarded_by=request.user)
+
+    if awarded:
+        messages.success(
+            request,
+            f'✅ Đã cấp {activity.points} điểm rèn luyện cho {student.full_name}.'
+            + (f' Xác nhận {records_updated} bản ghi điểm danh.' if records_updated else '')
+        )
+    else:
+        messages.warning(
+            request,
+            f'{student.full_name} đã được cấp điểm trước đó — bỏ qua.'
+        )
+
     return redirect('attendance:activity_verify', activity_pk=activity_pk)
 
 
 @login_required
 @transaction.atomic
 def award_bulk_points(request, activity_pk):
-    """Phase 4: Award points to all eligible students. Stub — implemented in Phase 4."""
-    messages.info(request, 'Chức năng cấp điểm hàng loạt sẽ được hoàn thiện ở Phase 4.')
+    """
+    Phase 4: Award points to multiple students at once.
+    POST only.
+    - If eligible_only=1: only award students with all sessions checked
+    - Otherwise: award all students not yet awarded
+    Returns summary of awarded / skipped counts.
+    """
+    if request.user.role == 'STUDENT':
+        messages.error(request, 'Bạn không có quyền cấp điểm.')
+        return redirect('activities:detail', pk=activity_pk)
+
+    if request.method != 'POST':
+        return redirect('attendance:activity_verify', activity_pk=activity_pk)
+
+    activity = get_object_or_404(
+        Activity.objects.select_related('point_category'),
+        pk=activity_pk,
+    )
+
+    eligible_only = request.POST.get('eligible_only') == '1'
+
+    # Get all sessions count
+    sessions = AttendanceSession.objects.filter(activity=activity)
+    total_sessions = sessions.count()
+
+    # Already awarded student IDs
+    awarded_ids = set(
+        ActivityPoint.objects.filter(activity=activity).values_list('student_id', flat=True)
+    )
+
+    # Candidates: students who checked in to at least 1 session
+    from django.contrib.auth import get_user_model
+    from django.db.models import Count
+    User = get_user_model()
+
+    candidate_qs = User.objects.filter(
+        attendance_records__attendance_session__activity=activity,
+        attendance_records__status__in=['PENDING', 'VERIFIED'],
+    ).annotate(
+        checked_sessions=Count('attendance_records__attendance_session', distinct=True)
+    ).distinct()
+
+    awarded_count = 0
+    skipped_count = 0
+
+    for student in candidate_qs:
+        # Skip already-awarded
+        if student.pk in awarded_ids:
+            skipped_count += 1
+            continue
+
+        # Filter by eligible_only
+        if eligible_only and total_sessions > 0:
+            if student.checked_sessions < total_sessions:
+                skipped_count += 1
+                continue
+
+        _, was_awarded = _do_award_student(student, activity, awarded_by=request.user)
+        if was_awarded:
+            awarded_count += 1
+        else:
+            skipped_count += 1
+
+    if awarded_count > 0:
+        messages.success(
+            request,
+            f'✅ Đã cấp điểm cho {awarded_count} sinh viên.'
+            + (f' Bỏ qua {skipped_count} (đã cấp hoặc chưa đủ điều kiện).' if skipped_count else '')
+        )
+    else:
+        messages.warning(request, 'Không có sinh viên nào được cấp điểm mới.')
+
     return redirect('attendance:activity_verify', activity_pk=activity_pk)

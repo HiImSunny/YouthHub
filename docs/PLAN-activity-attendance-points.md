@@ -62,10 +62,10 @@
 
 ### Phase 4: Xử lý chức năng Duyệt & Cấp ActivityPoint
 
-- [ ] Xây dựng Endpoint API / Form submit để "Duyệt" cho 1 hoặc nhiều sinh viên.
-- [ ] **Xử lý bên dưới**:
+- [x] Xây dựng Endpoint API / Form submit để "Duyệt" cho 1 hoặc nhiều sinh viên.
+- [x] **Xử lý bên dưới**:
   - Update `ActivityRegistration.status` → `POINT_AWARDED`.
   - Update các record điểm danh của student đó thành `VERIFIED`.
   - Tạo mới `ActivityPoint` với `point_category` snapshot từ `activity.point_category`, `points = activity.points`, `awarded_by = request.user`, `awarded_at = now()`.
   - Ngăn ngừa cộng trùng điểm qua unique `(student, activity)`.
-- [ ] Bổ sung Nút "Duyệt Hàng Loạt" gộp những người "Đã điểm danh N/N phiên".
+- [x] Bổ sung Nút "Duyệt Hàng Loạt" gộp những người "Đã điểm danh N/N phiên".
