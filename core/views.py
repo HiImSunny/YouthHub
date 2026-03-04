@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.db.models import Count, Sum
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
@@ -7,8 +8,9 @@ import json
 
 from activities.models import Activity
 from attendance.models import AttendanceRecord
-from .models import Organization, Semester, AuditLog
+from .models import Organization, OrganizationMember, Semester, AuditLog
 from .decorators import admin_required, staff_required
+from .permissions import can_manage_org_staff, can_create_org, get_manageable_orgs
 
 
 @login_required
@@ -28,10 +30,19 @@ def dashboard_view(request):
 
 @login_required
 def organizations_view(request):
-    """List all organizations in tree structure."""
-    orgs = Organization.objects.filter(status=True).select_related('parent').order_by('type', 'name')
-    context = {'organizations': orgs}
+    """List all organizations. B4: Only admin sees Create button."""
+    orgs = Organization.objects.filter(status=True).select_related('parent').annotate(
+        member_count=Count('members')
+    ).order_by('type', 'name')
+    context = {
+        'organizations': orgs,
+        'can_create_org': can_create_org(request.user),  # B4
+        'manageable_org_ids': set(  # B3: which orgs can user manage staff for
+            get_manageable_orgs(request.user).values_list('id', flat=True)
+        ),
+    }
     return render(request, 'core/organizations.html', context)
+
 
 
 @staff_required
@@ -136,3 +147,116 @@ def audit_log_view(request):
         'current_user': user_q or '',
     }
     return render(request, 'core/audit_log.html', context)
+
+
+# ─── B4: Create Organization (Admin Only) ─────────────────────────────────────
+
+@admin_required
+def organization_create(request):
+    """B4: Create a new organization. ADMIN only."""
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        code = request.POST.get('code', '').strip()
+        org_type = request.POST.get('type', '')
+        parent_id = request.POST.get('parent') or None
+        description = request.POST.get('description', '').strip()
+
+        if not name or not code or not org_type:
+            messages.error(request, 'Vui long dien day du thong tin bat buoc.')
+        elif Organization.objects.filter(code__iexact=code).exists():
+            messages.error(request, 'Ma to chuc da ton tai.')
+        else:
+            org = Organization.objects.create(
+                name=name,
+                code=code.upper(),
+                type=org_type,
+                parent_id=parent_id,
+                description=description,
+                status=True,
+            )
+            messages.success(request, f'Da tao to chuc "{org.name}" thanh cong!')
+            return redirect('core:organizations')
+
+    context = {
+        'parent_orgs': Organization.objects.filter(status=True).order_by('type', 'name'),
+        'type_choices': Organization.OrgType.choices,
+    }
+    return render(request, 'core/organization_form.html', context)
+
+
+# ─── B3: Manage Staff of Child Orgs ──────────────────────────────────────────
+
+@login_required
+def org_staff_view(request, org_pk):
+    """
+    B3: View and manage staff (OrganizationMember with is_officer=True) of an org.
+    - Admin: can manage any org's staff.
+    - Parent Staff: can manage staff of their child orgs.
+    """
+    org = get_object_or_404(Organization, pk=org_pk, status=True)
+
+    if not can_manage_org_staff(request.user, org):
+        messages.error(request, 'Ban khong co quyen quan ly nhan su cua to chuc nay.')
+        return redirect('core:organizations')
+
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    members = OrganizationMember.objects.filter(
+        organization=org
+    ).select_related('user').order_by('-is_officer', 'user__full_name')
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'add_officer':
+            user_id = request.POST.get('user_id')
+            position = request.POST.get('position', 'Can bo').strip()
+            try:
+                target_user = User.objects.get(pk=user_id, role='STAFF')
+                member, created = OrganizationMember.objects.get_or_create(
+                    organization=org,
+                    user=target_user,
+                    defaults={
+                        'position': position,
+                        'is_officer': True,
+                        'joined_at': timezone.now().date(),
+                    }
+                )
+                if not created:
+                    member.is_officer = True
+                    member.position = position
+                    member.save(update_fields=['is_officer', 'position'])
+                messages.success(request, f'Da them "{target_user.full_name}" lam can bo.')
+            except User.DoesNotExist:
+                messages.error(request, 'Khong tim thay user hoac user khong phai Staff.')
+
+        elif action == 'remove_officer':
+            member_id = request.POST.get('member_id')
+            member = OrganizationMember.objects.filter(pk=member_id, organization=org).first()
+            if member:
+                member.is_officer = False
+                member.save(update_fields=['is_officer'])
+                messages.success(request, f'Da xoa quyen can bo khoi "{member.user.full_name}".')
+
+        elif action == 'remove_member':
+            member_id = request.POST.get('member_id')
+            member = OrganizationMember.objects.filter(pk=member_id, organization=org).first()
+            if member:
+                member.delete()
+                messages.success(request, 'Da xoa thanh vien khoi to chuc.')
+
+        return redirect('core:org_staff', org_pk=org_pk)
+
+    # Available staff users not yet in this org
+    existing_user_ids = members.values_list('user_id', flat=True)
+    available_staff = User.objects.filter(role='STAFF', status='ACTIVE').exclude(
+        pk__in=existing_user_ids
+    ).order_by('full_name')
+
+    context = {
+        'org': org,
+        'members': members,
+        'available_staff': available_staff,
+    }
+    return render(request, 'core/org_staff.html', context)

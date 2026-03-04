@@ -13,4 +13,5 @@ urlpatterns = [
     path('<int:pk>/reject/', views.activity_reject, name='reject'),
     path('<int:pk>/register/', views.activity_register, name='register'),
     path('<int:pk>/cancel-registration/', views.activity_cancel_registration, name='cancel_registration'),
+    path('pending/', views.activity_pending_list, name='pending_list'),
 ]

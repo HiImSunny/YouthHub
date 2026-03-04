@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% block title %}NHÂN SỰ - {{ org.name }} — YOUTHHUB{% endblock %}
+
+{% block breadcrumb %}
+<span class="font-black uppercase text-sm">🏛 {{ org.name }} / Nhân sự</span>
+{% endblock %}
+
+{% block content %}
+<div>
+    <!-- Header -->
+    <div class="mb-6 flex items-end justify-between gap-4">
+        <div>
+            <h1 class="text-4xl font-black uppercase tracking-tighter mb-1">👥 NHÂN SỰ TỔ CHỨC</h1>
+            <p class="text-sm font-bold uppercase tracking-[0.3em] text-primary">{{ org.get_type_display|upper }} — {{
+                org.name|upper }}</p>
+        </div>
+        <a href="{% url 'core:organizations' %}"
+            class="bg-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">arrow_back</span>
+            QUAY LẠI
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left: Members list -->
+        <div class="lg:col-span-2">
+            <div class="bg-white border-3 border-black shadow-brutal">
+                <div class="p-4 border-b-3 border-black bg-bg-light flex items-center justify-between">
+                    <h2 class="font-black uppercase text-lg">DANH SÁCH THÀNH VIÊN</h2>
+                    <span class="bg-primary text-white border-2 border-black px-3 py-1 text-xs font-black uppercase">{{
+                        members.count }} NGƯỜI</span>
+                </div>
+                {% if members %}
+                <div class="divide-y-2 divide-black">
+                    {% for member in members %}
+                    <div class="p-4 flex items-center justify-between hover:bg-primary/5 transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 border-3 border-black flex items-center justify-center font-black text-white
+                                {% if member.is_officer %}bg-primary{% else %}bg-zinc-400{% endif %}">
+                                {{ member.user.full_name|first|upper }}
+                            </div>
+                            <div>
+                                <p class="font-black uppercase text-sm">{{ member.user.full_name }}</p>
+                                <p class="text-xs text-slate-500 font-bold">
+                                    {{ member.position }}
+                                    {% if member.is_officer %}
+                                    <span
+                                        class="ml-1 bg-primary text-white px-1 py-0.5 text-[10px] font-black uppercase">CÁN
+                                        BỘ</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            {% if member.is_officer %}
+                            <!-- Remove officer role -->
+                            <form method="post" class="inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="remove_officer">
+                                <input type="hidden" name="member_id" value="{{ member.pk }}">
+                                <button type="submit"
+                                    onclick="return confirm('Thu hồi quyền cán bộ của {{ member.user.full_name }}?')"
+                                    class="border-2 border-black px-2 py-1 text-[10px] font-black uppercase bg-accent-yellow brutal-btn shadow-brutal-sm">
+                                    THU HỒI
+                                </button>
+                            </form>
+                            {% endif %}
+                            <!-- Remove from org -->
+                            <form method="post" class="inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="remove_member">
+                                <input type="hidden" name="member_id" value="{{ member.pk }}">
+                                <button type="submit"
+                                    onclick="return confirm('Xóa {{ member.user.full_name }} khỏi tổ chức?')"
+                                    class="border-2 border-black px-2 py-1 text-[10px] font-black uppercase bg-accent-red text-white brutal-btn shadow-brutal-sm">
+                                    XÓA
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-12 text-center">
+                    <span class="material-symbols-outlined text-5xl text-slate-300 block mb-2">group_off</span>
+                    <p class="font-black uppercase text-slate-400">CHƯA CÓ THÀNH VIÊN</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right: Add staff -->
+        <div>
+            <div class="bg-white border-3 border-black shadow-brutal sticky top-4">
+                <div class="p-4 border-b-3 border-black bg-bg-light">
+                    <h2 class="font-black uppercase">THÊM CÁN BỘ MỚI</h2>
+                </div>
+                <div class="p-4">
+                    {% if available_staff %}
+                    <form method="post" class="space-y-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_officer">
+                        <div>
+                            <label class="block text-xs font-black uppercase mb-1">CHỌN STAFF</label>
+                            <select name="user_id" required
+                                class="w-full border-3 border-black bg-white p-2 font-bold text-sm focus:ring-0">
+                                <option value="">-- Chọn Staff --</option>
+                                {% for staff in available_staff %}
+                                <option value="{{ staff.pk }}">{{ staff.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black uppercase mb-1">CHỨC VỤ</label>
+                            <input type="text" name="position"
+                                class="w-full border-3 border-black bg-white p-2 font-bold text-sm focus:ring-0"
+                                placeholder="VD: Bí thư, Phó bí thư">
+                        </div>
+                        <button type="submit"
+                            class="w-full bg-primary text-white border-3 border-black p-3 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2 text-sm">
+                            <span class="material-symbols-outlined text-sm">person_add</span>
+                            THÊM CÁN BỘ
+                        </button>
+                    </form>
+                    {% else %}
+                    <p class="text-sm font-bold text-slate-400 text-center py-4">Không còn Staff nào để thêm vào tổ chức
+                        này.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

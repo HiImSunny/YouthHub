@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}CHỜ DUYỆT — YOUTHHUB{% endblock %}
+
+{% block breadcrumb %}
+<span class="font-black uppercase text-sm">⏳ Hoạt động Chờ duyệt</span>
+{% endblock %}
+
+{% block content %}
+<div>
+    <div class="mb-8 flex items-end justify-between gap-4">
+        <div>
+            <h1 class="text-5xl font-black uppercase tracking-tighter leading-none mb-2">⏳ CHỜ DUYỆT</h1>
+            <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">HOẠT ĐỘNG ĐANG CHỜ PHÊ DUYỆT</p>
+        </div>
+        <div class="bg-accent-yellow border-3 border-black px-4 py-2 shadow-brutal-sm">
+            <span class="font-black uppercase text-lg">{{ total_pending }}</span>
+            <span class="text-xs font-black uppercase ml-1">PENDING</span>
+        </div>
+    </div>
+
+    {% if pending_activities %}
+    <div class="bg-white border-3 border-black shadow-brutal">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b-3 border-black bg-slate-100">
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">TÊN HOẠT ĐỘNG</th>
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">TỔ CHỨC</th>
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">NGƯỜI TẠO</th>
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">NGÀY TẠO</th>
+                        <th class="p-4 font-black uppercase text-sm">THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for act in pending_activities %}
+                    <tr class="border-b-2 border-black hover:bg-primary/5 transition-all">
+                        <td class="p-4 border-r-2 border-black">
+                            <a href="{% url 'activities:detail' pk=act.pk %}"
+                                class="font-black uppercase hover:text-primary transition-colors">
+                                {{ act.title }}
+                            </a>
+                            <span class="block text-xs text-slate-400 font-bold mt-1">{{ act.activity_type }}</span>
+                        </td>
+                        <td class="p-4 border-r-2 border-black">
+                            <span class="font-black text-sm uppercase">{{ act.organization.name|default:"—" }}</span>
+                            {% if act.organization.parent %}
+                            <span class="block text-xs text-slate-400">↑ {{ act.organization.parent.name }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-4 border-r-2 border-black text-sm font-bold">
+                            {{ act.created_by.full_name|default:"—" }}
+                        </td>
+                        <td class="p-4 border-r-2 border-black text-sm font-bold">
+                            {{ act.created_at|date:"d/m/Y H:i" }}
+                        </td>
+                        <td class="p-4">
+                            <div class="flex gap-2">
+                                <!-- Approve -->
+                                <form method="post" action="{% url 'activities:approve' pk=act.pk %}" class="inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="approve">
+                                    <button type="submit" onclick="return confirm('Xác nhận phê duyệt hoạt động này?')"
+                                        class="bg-accent-teal text-white border-2 border-black px-3 py-1.5 text-xs font-black uppercase shadow-brutal-sm brutal-btn flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-sm">check_circle</span>
+                                        DUYỆT
+                                    </button>
+                                </form>
+                                <!-- Reject -->
+                                <form method="post" action="{% url 'activities:reject' pk=act.pk %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                        onclick="return confirm('Từ chối hoạt động này? Hoạt động sẽ quay về trạng thái Nháp.')"
+                                        class="bg-accent-red text-white border-2 border-black px-3 py-1.5 text-xs font-black uppercase shadow-brutal-sm brutal-btn flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-sm">cancel</span>
+                                        TỪ CHỐI
+                                    </button>
+                                </form>
+                                <!-- View -->
+                                <a href="{% url 'activities:detail' pk=act.pk %}"
+                                    class="bg-white border-2 border-black px-3 py-1.5 text-xs font-black uppercase shadow-brutal-sm brutal-btn flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-sm">visibility</span>
+                                    XEM
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white border-3 border-black p-16 text-center shadow-brutal">
+        <span class="material-symbols-outlined text-6xl text-slate-300 block mb-4">task_alt</span>
+        <h3 class="text-2xl font-black uppercase text-slate-400">KHÔNG CÓ HOẠT ĐỘNG NÀO CHỜ DUYỆT</h3>
+        <p class="text-sm font-bold uppercase text-slate-300 mt-2">Mọi thứ đã được xử lý</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

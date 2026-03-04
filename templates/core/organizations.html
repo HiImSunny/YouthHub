@@ -1,6 +1,20 @@
 {% extends 'base.html' %}
 {% block title %}TỔ CHỨC — YOUTHHUB{% endblock %}
 
+{% block breadcrumb %}
+<span class="font-black uppercase text-sm">🏛 Tổ chức</span>
+{% endblock %}
+
+{% block header_actions %}
+{% if can_create_org %}
+<a href="{% url 'core:org_create' %}"
+    class="bg-primary text-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal brutal-btn flex items-center gap-2">
+    <span class="material-symbols-outlined text-sm">add_circle</span>
+    TẠO TỔ CHỨC
+</a>
+{% endif %}
+{% endblock %}
+
 {% block content %}
 <div>
     <div class="mb-8">
@@ -20,18 +34,29 @@
                 </div>
                 <div>
                     <h3 class="text-lg font-black uppercase">{{ org.name }}</h3>
-                    <p class="text-xs font-bold uppercase text-primary tracking-widest">{{ org.get_org_type_display }}
-                    </p>
+                    <p class="text-xs font-bold uppercase text-primary tracking-widest">{{ org.get_type_display }}</p>
                 </div>
             </div>
+
             {% if org.description %}
             <p class="text-sm font-bold text-slate-500 mb-4 line-clamp-2">{{ org.description }}</p>
             {% endif %}
+
             <div
-                class="pt-3 border-t-2 border-black text-xs font-black uppercase text-slate-400 flex items-center gap-2">
+                class="pt-3 border-t-2 border-black text-xs font-black uppercase text-slate-400 flex items-center gap-2 mb-3">
                 <span class="material-symbols-outlined text-sm">group</span>
                 {% if org.parent %}CON CỦA: {{ org.parent.name }}{% else %}TỔ CHỨC GỐC{% endif %}
+                <span class="ml-auto">{{ org.member_count }} TV</span>
             </div>
+
+            <!-- B3: Show staff management button if user can manage this org -->
+            {% if org.pk in manageable_org_ids %}
+            <a href="{% url 'core:org_staff' org_pk=org.pk %}"
+                class="w-full flex items-center justify-center gap-2 bg-zinc-900 text-white border-2 border-black px-3 py-2 text-xs font-black uppercase shadow-brutal-sm brutal-btn transition-all">
+                <span class="material-symbols-outlined text-sm">manage_accounts</span>
+                QUẢN LÝ NHÂN SỰ
+            </a>
+            {% endif %}
         </div>
         {% endfor %}
     </div>
@@ -39,6 +64,13 @@
     <div class="bg-white border-3 border-black p-16 text-center shadow-brutal">
         <span class="material-symbols-outlined text-6xl text-slate-300">apartment</span>
         <h3 class="text-2xl font-black uppercase text-slate-400 mt-4">CHƯA CÓ TỔ CHỨC NÀO</h3>
+        {% if can_create_org %}
+        <a href="{% url 'core:org_create' %}"
+            class="mt-6 inline-flex items-center gap-2 bg-primary text-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn">
+            <span class="material-symbols-outlined">add_circle</span>
+            TẠO TỔ CHỨC ĐẦU TIÊN
+        </a>
+        {% endif %}
     </div>
     {% endif %}
 </div>

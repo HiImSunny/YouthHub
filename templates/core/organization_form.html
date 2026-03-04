@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}TẠO TỔ CHỨC — YOUTHHUB{% endblock %}
+
+{% block breadcrumb %}
+<span class="font-black uppercase text-sm">🏛 Tạo Tổ chức</span>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-xl">
+    <h1 class="text-4xl font-black uppercase tracking-tighter mb-2">🏛 TẠO TỔ CHỨC</h1>
+    <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500 mb-6">ADMIN ONLY</p>
+
+    <div class="bg-white border-3 border-black p-6 shadow-brutal-lg">
+        <form method="post" class="space-y-5">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-black uppercase mb-2">TÊN TỔ CHỨC <span
+                            class="text-accent-red">*</span></label>
+                    <input type="text" name="name" required
+                        class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
+                        placeholder="Đoàn Khoa CNTT">
+                </div>
+                <div>
+                    <label class="block text-sm font-black uppercase mb-2">MÃ TỔ CHỨC <span
+                            class="text-accent-red">*</span></label>
+                    <input type="text" name="code" required
+                        class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0 focus:border-black"
+                        placeholder="DOAN-CNTT">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-black uppercase mb-2">LOẠI TỔ CHỨC <span
+                        class="text-accent-red">*</span></label>
+                <select name="type" required
+                    class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
+                    <option value="">-- CHỌN LOẠI --</option>
+                    {% for val, label in type_choices %}
+                    <option value="{{ val }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-black uppercase mb-2">TỔ CHỨC CHA (nếu có)</label>
+                <select name="parent" class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0">
+                    <option value="">-- Tổ chức gốc --</option>
+                    {% for org in parent_orgs %}
+                    <option value="{{ org.pk }}">{{ org.get_type_display }} - {{ org.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-black uppercase mb-2">MÔ TẢ</label>
+                <textarea name="description" rows="3"
+                    class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0"
+                    placeholder="Mô tả về tổ chức..."></textarea>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="submit"
+                    class="flex-1 bg-primary text-white border-3 border-black p-4 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">add_circle</span>
+                    TẠO TỔ CHỨC
+                </button>
+                <a href="{% url 'core:organizations' %}"
+                    class="bg-white border-3 border-black p-4 font-black uppercase shadow-brutal-sm brutal-btn transition-all px-8 flex items-center">
+                    HỦY
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

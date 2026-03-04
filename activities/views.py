@@ -5,6 +5,10 @@ from django.utils import timezone
 
 from .models import Activity, ActivityRegistration, PointCategory
 from core.models import Organization, Semester
+from core.permissions import (
+    can_create_activity, can_edit_activity, can_approve_activity,
+    get_officer_orgs, get_approvable_orgs,
+)
 
 
 @login_required
@@ -57,18 +61,39 @@ def activity_detail(request, pk):
         'registrations': registrations,
         'user_registration': user_registration,
         'registration_count': registrations.filter(status='REGISTERED').count(),
+        # B1/B2 permission flags - used in template to show/hide buttons
+        'can_edit': can_edit_activity(request.user, activity),
+        'can_approve': can_approve_activity(request.user, activity),
     }
     return render(request, 'activities/detail.html', context)
 
 
 @login_required
 def activity_create(request):
-    """Create a new activity (STAFF/ADMIN only)."""
+    """Create a new activity (STAFF/ADMIN only).
+    B1: Staff can only select orgs they are officer of.
+    """
     if request.user.role == 'STUDENT':
         messages.error(request, 'Ban khong co quyen tao hoat dong.')
         return redirect('activities:list')
 
+    # B1: Get only the orgs this user can create activities for
+    allowed_orgs = get_officer_orgs(request.user)
+
     if request.method == 'POST':
+        org_id = request.POST.get('organization')
+        org = Organization.objects.filter(pk=org_id, status=True).first()
+
+        # B1: Verify the submitted org is actually allowed
+        if not org or not can_create_activity(request.user, org):
+            messages.error(request, 'Ban khong co quyen tao hoat dong cho to chuc nay.')
+            return render(request, 'activities/form.html', {
+                'organizations': allowed_orgs,
+                'semesters': Semester.objects.all().order_by('-start_date'),
+                'point_categories': PointCategory.objects.filter(is_active=True).order_by('code'),
+                'type_choices': Activity.ActivityType.choices,
+            })
+
         activity = Activity(
             title=request.POST.get('title'),
             code=request.POST.get('code'),
@@ -77,7 +102,7 @@ def activity_create(request):
             start_time=request.POST.get('start_time'),
             end_time=request.POST.get('end_time'),
             location=request.POST.get('location'),
-            organization_id=request.POST.get('organization'),
+            organization=org,
             semester_id=request.POST.get('semester') or None,
             point_category_id=request.POST.get('point_category') or None,
             created_by=request.user,
@@ -88,7 +113,7 @@ def activity_create(request):
         return redirect('activities:detail', pk=activity.pk)
 
     context = {
-        'organizations': Organization.objects.filter(status=True),
+        'organizations': allowed_orgs,  # B1: filtered list
         'semesters': Semester.objects.all().order_by('-start_date'),
         'point_categories': PointCategory.objects.filter(is_active=True).order_by('code'),
         'type_choices': Activity.ActivityType.choices,
@@ -98,18 +123,37 @@ def activity_create(request):
 
 @login_required
 def activity_edit(request, pk):
-    """Edit activity (only DRAFT status)."""
+    """Edit activity (only DRAFT status, with B1 permission check)."""
     activity = get_object_or_404(Activity, pk=pk)
 
     if activity.status != 'DRAFT':
         messages.error(request, 'Chi co the chinh sua hoat dong o trang thai Nhap.')
         return redirect('activities:detail', pk=pk)
 
-    if request.user.role == 'STUDENT':
-        messages.error(request, 'Ban khong co quyen chinh sua hoat dong.')
+    # B1: Check edit permission
+    if not can_edit_activity(request.user, activity):
+        messages.error(request, 'Ban khong co quyen chinh sua hoat dong nay.')
         return redirect('activities:detail', pk=pk)
 
+    # B1: Staff only sees their own orgs, Admin sees all
+    allowed_orgs = get_officer_orgs(request.user)
+
     if request.method == 'POST':
+        org_id = request.POST.get('organization')
+        org = Organization.objects.filter(pk=org_id, status=True).first()
+
+        # B1: Verify the submitted org is actually allowed
+        if not org or not can_create_activity(request.user, org):
+            messages.error(request, 'Ban khong co quyen gan hoat dong cho to chuc nay.')
+            return render(request, 'activities/form.html', {
+                'activity': activity,
+                'organizations': allowed_orgs,
+                'semesters': Semester.objects.all().order_by('-start_date'),
+                'point_categories': PointCategory.objects.filter(is_active=True).order_by('code'),
+                'type_choices': Activity.ActivityType.choices,
+                'is_edit': True,
+            })
+
         activity.title = request.POST.get('title')
         activity.code = request.POST.get('code')
         activity.description = request.POST.get('description')
@@ -117,7 +161,7 @@ def activity_edit(request, pk):
         activity.start_time = request.POST.get('start_time')
         activity.end_time = request.POST.get('end_time')
         activity.location = request.POST.get('location')
-        activity.organization_id = request.POST.get('organization')
+        activity.organization = org
         activity.semester_id = request.POST.get('semester') or None
         activity.point_category_id = request.POST.get('point_category') or None
         activity.save()
@@ -126,7 +170,7 @@ def activity_edit(request, pk):
 
     context = {
         'activity': activity,
-        'organizations': Organization.objects.filter(status=True),
+        'organizations': allowed_orgs,  # B1: filtered
         'semesters': Semester.objects.all().order_by('-start_date'),
         'point_categories': PointCategory.objects.filter(is_active=True).order_by('code'),
         'type_choices': Activity.ActivityType.choices,
@@ -137,11 +181,15 @@ def activity_edit(request, pk):
 
 @login_required
 def activity_delete(request, pk):
-    """Delete activity (DRAFT only, STAFF/ADMIN)."""
+    """Delete activity (DRAFT only, STAFF/ADMIN with edit permission)."""
     activity = get_object_or_404(Activity, pk=pk)
 
     if activity.status != 'DRAFT':
         messages.error(request, 'Chi co the xoa hoat dong o trang thai Nhap.')
+        return redirect('activities:detail', pk=pk)
+
+    if not can_edit_activity(request.user, activity):
+        messages.error(request, 'Ban khong co quyen xoa hoat dong nay.')
         return redirect('activities:detail', pk=pk)
 
     if request.method == 'POST':
@@ -155,43 +203,90 @@ def activity_delete(request, pk):
 
 @login_required
 def activity_approve(request, pk):
-    """Approve a pending activity (ADMIN/STAFF)."""
+    """
+    Approve/submit a pending activity.
+    B2: Parent Org Staff can approve Child Org activities.
+    Flow:
+      DRAFT -> PENDING  (Staff/creator submits for review)
+      PENDING -> APPROVED  (Parent Staff or Admin approves)
+    """
     activity = get_object_or_404(Activity, pk=pk)
 
-    if request.user.role == 'STUDENT':
-        messages.error(request, 'Ban khong co quyen phe duyet hoat dong.')
-        return redirect('activities:detail', pk=pk)
-
     if request.method == 'POST':
-        if activity.status == 'DRAFT':
-            activity.status = Activity.ActivityStatus.PENDING
-            activity.save()
-            messages.success(request, 'Da gui hoat dong de phe duyet.')
-        elif activity.status == 'PENDING':
-            activity.status = Activity.ActivityStatus.APPROVED
-            activity.approved_by = request.user
-            activity.approved_at = timezone.now()
-            activity.save()
-            messages.success(request, 'Da phe duyet hoat dong thanh cong!')
+        action = request.POST.get('action', 'submit')
+
+        if action == 'submit' and activity.status == 'DRAFT':
+            # Any Staff with edit permission can submit for review
+            if can_edit_activity(request.user, activity):
+                activity.status = Activity.ActivityStatus.PENDING
+                activity.save()
+                messages.success(request, 'Da gui hoat dong de phe duyet.')
+            else:
+                messages.error(request, 'Ban khong co quyen gui hoat dong nay.')
+
+        elif action == 'approve' and activity.status == 'PENDING':
+            # B2: Only parent staff or admin can approve
+            if can_approve_activity(request.user, activity):
+                activity.status = Activity.ActivityStatus.APPROVED
+                activity.approved_by = request.user
+                activity.approved_at = timezone.now()
+                activity.save()
+                messages.success(request, 'Da phe duyet hoat dong thanh cong!')
+            else:
+                messages.error(request, 'Ban khong co quyen phe duyet hoat dong nay.')
 
     return redirect('activities:detail', pk=pk)
 
 
 @login_required
 def activity_reject(request, pk):
-    """Reject a pending activity back to DRAFT."""
+    """
+    Reject a pending activity back to DRAFT.
+    B2: Only Parent Org Staff or Admin can reject.
+    """
     activity = get_object_or_404(Activity, pk=pk)
 
-    if request.user.role == 'STUDENT':
-        messages.error(request, 'Ban khong co quyen tu choi hoat dong.')
-        return redirect('activities:detail', pk=pk)
-
     if request.method == 'POST' and activity.status == 'PENDING':
-        activity.status = Activity.ActivityStatus.DRAFT
-        activity.save()
-        messages.success(request, 'Da tu choi hoat dong. Hoat dong da quay lai trang thai Nhap.')
+        # B2: Same approval permission is needed to reject
+        if can_approve_activity(request.user, activity):
+            activity.status = Activity.ActivityStatus.DRAFT
+            activity.save()
+            messages.success(request, 'Da tu choi. Hoat dong quay ve trang thai Nhap.')
+        else:
+            messages.error(request, 'Ban khong co quyen tu choi hoat dong nay.')
 
     return redirect('activities:detail', pk=pk)
+
+
+@login_required
+def activity_pending_list(request):
+    """
+    B2: List of activities pending approval.
+    Staff: sees only child org activities they can approve.
+    Admin: sees all pending activities.
+    """
+    if request.user.role == 'STUDENT':
+        messages.error(request, 'Ban khong co quyen xem danh sach phe duyet.')
+        return redirect('activities:list')
+
+    if request.user.role == 'ADMIN':
+        pending = Activity.objects.filter(status='PENDING').select_related('organization', 'created_by')
+    else:
+        # B2: Get child orgs this staff can approve for
+        approvable_orgs = get_approvable_orgs(request.user)
+        if not approvable_orgs.exists():
+            pending = Activity.objects.none()
+        else:
+            pending = Activity.objects.filter(
+                status='PENDING',
+                organization__in=approvable_orgs,
+            ).select_related('organization', 'created_by')
+
+    context = {
+        'pending_activities': pending.order_by('-created_at'),
+        'total_pending': pending.count(),
+    }
+    return render(request, 'activities/pending_list.html', context)
 
 
 @login_required
