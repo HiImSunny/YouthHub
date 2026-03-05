@@ -36,7 +36,7 @@
                 class="border-3 border-black bg-white py-4 px-4 font-bold uppercase text-sm focus:ring-0">
                 <option value="">TẤT CẢ TỔ CHỨC</option>
                 {% for org in manageable_orgs %}
-                <option value="{{ org.pk }}" {% if selected_org_id==org.pk|stringformat:"s" %}selected{% endif %}>
+                <option value="{{ org.pk }}" {% if selected_org_id == org.pk|stringformat:"s" %}selected{% endif %}>
                     {{ org.name }}
                 </option>
                 {% endfor %}
@@ -56,38 +56,7 @@
         </form>
     </div>
 
-    <!-- Stats strip -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div class="bg-white border-3 border-black p-4 shadow-brutal flex items-center gap-3">
-            <span class="material-symbols-outlined text-3xl text-primary">category</span>
-            <div>
-                <p class="text-xs font-black uppercase text-slate-500">TỔNG DANH MỤC</p>
-                <p class="text-3xl font-black">{{ categories|length }}</p>
-            </div>
-        </div>
-        <div class="bg-accent-yellow border-3 border-black p-4 shadow-brutal flex items-center gap-3">
-            <span class="material-symbols-outlined text-3xl">check_circle</span>
-            <div>
-                <p class="text-xs font-black uppercase">ĐANG HOẠT ĐỘNG</p>
-                <p class="text-3xl font-black">{% with active=categories|length %}{{ active }}{% endwith %}</p>
-            </div>
-        </div>
-        <div class="bg-white border-3 border-black p-4 shadow-brutal flex items-center gap-3">
-            <span class="material-symbols-outlined text-3xl text-accent-teal">domain</span>
-            <div>
-                <p class="text-xs font-black uppercase text-slate-500">TỔ CHỨC</p>
-                <p class="text-3xl font-black">{{ manageable_orgs|length }}</p>
-            </div>
-        </div>
-        <a href="{% url 'activities:point_category_create' %}"
-            class="bg-primary text-white border-3 border-black p-4 shadow-brutal brutal-btn transition-all flex items-center gap-3">
-            <span class="material-symbols-outlined text-3xl">add_circle</span>
-            <div>
-                <p class="text-xs font-black uppercase">THÊM DANH MỤC</p>
-                <p class="text-sm font-black">MỚI NGAY</p>
-            </div>
-        </a>
-    </div>
+
 
     <!-- Table -->
     {% if categories %}
