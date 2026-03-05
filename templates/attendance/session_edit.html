@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}SỬA PHIÊN - {{ session.name|upper }} — YOUTHHUB{% endblock %}
+
+{% block content %}
+<div class="max-w-xl">
+    <div class="flex items-center gap-4 mb-6">
+        <h1 class="text-4xl font-black uppercase tracking-tighter">✏️ SỬA PHIÊN ĐIỂM DANH</h1>
+    </div>
+
+    <div class="bg-white border-3 border-black p-6 shadow-brutal-lg">
+        <form method="post" class="space-y-5">
+            {% csrf_token %}
+
+            <div>
+                <label class="block text-sm font-black uppercase mb-2">TÊN PHIÊN <span
+                        class="text-accent-red">*</span></label>
+                <input type="text" name="name" required value="{{ session.name }}"
+                    class="w-full border-3 border-black bg-white p-3 font-bold uppercase placeholder:text-slate-400 focus:ring-0 focus:border-black text-sm"
+                    placeholder="VD: ĐIỂM DANH KHAI MẠC">
+            </div>
+
+            <div>
+                <label class="block text-sm font-black uppercase mb-2">HOẠT ĐỘNG <span
+                        class="text-accent-red">*</span></label>
+                <select name="activity" required
+                    class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
+                    <option value="">-- CHỌN HOẠT ĐỘNG --</option>
+                    {% for act in activities %}
+                    <option value="{{ act.pk }}" {% if act.pk == session.activity_id %}selected{% endif %}>
+                        {{ act.title }} ({{ act.start_time|date:"d/m/Y" }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-black uppercase mb-2">GIỜ BẮT ĐẦU <span
+                            class="text-accent-red">*</span></label>
+                    <input type="datetime-local" name="start_time" required
+                        value="{{ session.start_time|date:'Y-m-d\TH:i' }}"
+                        class="w-full border-3 border-black bg-white p-3 font-bold focus:ring-0 focus:border-black text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-black uppercase mb-2">GIỜ KẾT THÚC <span
+                            class="text-accent-red">*</span></label>
+                    <input type="datetime-local" name="end_time" required
+                        value="{{ session.end_time|date:'Y-m-d\TH:i' }}"
+                        class="w-full border-3 border-black bg-white p-3 font-bold focus:ring-0 focus:border-black text-sm">
+                </div>
+            </div>
+
+            <div class="border-3 border-black bg-bg-light p-4 flex items-center gap-3">
+                <input type="checkbox" name="requires_photo" id="requires_photo"
+                    {% if session.requires_photo %}checked{% endif %}
+                    class="w-5 h-5 border-3 border-black focus:ring-0 text-primary">
+                <label for="requires_photo">
+                    <span class="text-sm font-black uppercase">YÊU CẦU ẢNH SELFIE MINH CHỨNG</span>
+                    <span class="block text-xs font-bold text-slate-500 mt-0.5 uppercase">CÁN BỘ DUYỆT TỪNG ẢNH THỦ
+                        CÔNG</span>
+                </label>
+            </div>
+
+            <div class="pt-4 text-xs font-bold uppercase text-slate-500 border-t-3 border-black mt-4">
+                Lưu ý: Mọi chỉnh sửa về thời gian sẽ lập tức áp dụng lên Trạng Thái mã QR và trang check-in.
+            </div>
+
+            <div class="flex gap-4 pt-2">
+                <button type="submit"
+                    class="flex-1 bg-accent-yellow text-black border-3 border-black p-4 font-black uppercase shadow-brutal brutal-btn transition-all flex justify-center items-center gap-2">
+                    <span class="material-symbols-outlined">save</span>
+                    CẬP NHẬT THÔNG TIN
+                </button>
+                <a href="{% url 'attendance:session_detail' pk=session.pk %}"
+                    class="bg-white border-3 border-black p-4 font-black uppercase shadow-brutal-sm brutal-btn transition-all text-center px-8">HỦY</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

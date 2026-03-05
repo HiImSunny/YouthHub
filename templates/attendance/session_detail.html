@@ -13,7 +13,20 @@
         <!-- Left: QR Section -->
         <div class="lg:col-span-4 space-y-6">
             <div class="bg-white border-3 border-black p-6 shadow-brutal flex flex-col items-center text-center">
-                <h2 class="text-2xl font-black mb-4 border-b-4 border-primary pb-2 w-full uppercase">SESSION ACCESS</h2>
+                <div class="flex flex-col md:flex-row gap-3 items-center justify-between w-full mb-4 border-b-4 border-primary pb-2">
+                    <h2 class="text-2xl font-black uppercase">SESSION ACCESS</h2>
+                    <div>
+                        {% if session.status == 'CLOSED' %}
+                        <span class="px-3 py-1 border-3 border-black text-xs font-black uppercase bg-slate-300 text-slate-800 shadow-brutal-sm">ĐÃ ĐÓNG</span>
+                        {% elif now > session.end_time %}
+                        <span class="px-3 py-1 border-3 border-black text-xs font-black uppercase bg-accent-red text-white shadow-brutal-sm">ĐÃ KẾT THÚC</span>
+                        {% elif now < session.start_time %}
+                        <span class="px-3 py-1 border-3 border-black text-xs font-black uppercase bg-slate-200 text-slate-600 shadow-brutal-sm">CHƯA MỞ</span>
+                        {% else %}
+                        <span class="px-3 py-1 border-3 border-black text-xs font-black uppercase bg-accent-yellow text-black shadow-brutal-sm animate-pulse">ĐANG MỞ</span>
+                        {% endif %}
+                    </div>
+                </div>
 
                 {% if session.status == 'OPEN' %}
                 <a href="{% url 'attendance:session_qr' pk=session.pk %}" target="_blank"
@@ -59,17 +72,30 @@
 
             <!-- Actions -->
             <div class="space-y-3">
-                {% if session.status == 'OPEN' and user.role != 'STUDENT' %}
+                {% if user.role != 'STUDENT' %}
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <a href="{% url 'attendance:session_edit' pk=session.pk %}"
+                        class="bg-accent-yellow text-black border-3 border-black p-4 font-black uppercase shadow-brutal brutal-btn transition-all text-center flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-base">edit</span> SỬA
+                    </a>
+                    
+                    {% if session.status == 'OPEN' %}
+                    <form method="post" action="{% url 'attendance:session_close' pk=session.pk %}" class="w-full">
+                        {% csrf_token %}
+                        <button type="submit" onclick="return confirm('ĐÓNG PHIÊN NÀY?')"
+                            class="w-full bg-accent-red text-white border-3 border-black p-4 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-base">close</span> ĐÓNG
+                        </button>
+                    </form>
+                    {% endif %}
+                </div>
+                
+                {% if session.status == 'OPEN' %}
                 <a href="{% url 'attendance:session_qr' pk=session.pk %}" target="_blank"
-                    class="w-full block bg-accent-teal text-white border-3 border-black p-4 text-center font-black uppercase shadow-brutal brutal-btn transition-all">
+                    class="w-full block bg-accent-teal text-white border-3 border-black p-4 text-center font-black uppercase shadow-brutal brutal-btn transition-all mb-3">
                     <span class="material-symbols-outlined align-middle mr-1">fullscreen</span> QR TOÀN MÀN HÌNH
                 </a>
-                <form method="post" action="{% url 'attendance:session_close' pk=session.pk %}">
-                    {% csrf_token %}
-                    <button type="submit" onclick="return confirm('ĐÓNG PHIÊN NÀY?')"
-                        class="w-full bg-accent-red text-white border-3 border-black p-4 font-black uppercase shadow-brutal brutal-btn transition-all">ĐÓNG
-                        PHIÊN</button>
-                </form>
+                {% endif %}
                 {% endif %}
                 <a href="{% url 'attendance:records_list' session_pk=session.pk %}"
                     class="w-full block bg-white border-3 border-black p-4 text-center font-black uppercase shadow-brutal-sm brutal-btn transition-all">XEM

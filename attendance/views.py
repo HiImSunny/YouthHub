@@ -48,7 +48,10 @@ def sessions_view(request):
             status=AttendanceSession.SessionStatus.OPEN,
         ).select_related('activity')
 
-    context = {'sessions': qs.order_by('-created_at')}
+    context = {
+        'sessions': qs.order_by('-created_at'),
+        'now': timezone.now(),
+    }
     return render(request, 'attendance/sessions.html', context)
 
 
@@ -103,6 +106,37 @@ def session_detail(request, pk):
         'now': timezone.now(),
     }
     return render(request, 'attendance/session_detail.html', context)
+
+
+@login_required
+def session_edit(request, pk):
+    """Edit an existing attendance session (STAFF/ADMIN only)."""
+    if request.user.role == 'STUDENT':
+        messages.error(request, 'Bạn không có quyền chỉnh sửa phiên điểm danh.')
+        return redirect('attendance:sessions')
+
+    session = get_object_or_404(AttendanceSession, pk=pk)
+
+    if request.method == 'POST':
+        session.activity_id = request.POST.get('activity')
+        session.name = request.POST.get('name')
+        session.start_time = request.POST.get('start_time')
+        session.end_time = request.POST.get('end_time')
+        session.requires_photo = request.POST.get('requires_photo') == 'on'
+        
+        # If admin edits, we assume they are re-opening or extending it
+        # Setting status back to OPEN ensures it works if it was manually closed before.
+        session.status = AttendanceSession.SessionStatus.OPEN
+        session.save()
+        
+        messages.success(request, f'Thông tin phiên "{session.name}" đã được cập nhật!')
+        return redirect('attendance:session_detail', pk=session.pk)
+
+    activities = Activity.objects.filter(status__in=['APPROVED', 'ONGOING']).order_by('-start_time')
+    return render(request, 'attendance/session_edit.html', {
+        'session': session,
+        'activities': activities
+    })
 
 
 @login_required

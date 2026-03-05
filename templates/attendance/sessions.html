@@ -29,11 +29,23 @@
         <div
             class="bg-white border-3 border-black shadow-brutal hover:-translate-y-1 hover:shadow-brutal-lg transition-all">
             <div class="p-6 border-b-3 border-black flex items-center justify-between">
-                <span
-                    class="px-3 py-1 border-3 border-black text-xs font-black uppercase
-          {% if session.status == 'OPEN' %}bg-accent-teal/20 text-accent-teal{% else %}bg-slate-200 text-slate-600{% endif %}">
-                    {{ session.get_status_display }}
+                {% if session.status == 'CLOSED' %}
+                <span class="px-3 py-1 border-3 border-black text-xs font-black uppercase bg-slate-300 text-slate-800 shadow-brutal-sm">
+                    ĐÃ ĐÓNG
                 </span>
+                {% elif now > session.end_time %}
+                <span class="px-3 py-1 border-3 border-black text-xs font-black uppercase bg-accent-red text-white shadow-brutal-sm">
+                    ĐÃ KẾT THÚC
+                </span>
+                {% elif now < session.start_time %}
+                <span class="px-3 py-1 border-3 border-black text-xs font-black uppercase bg-slate-200 text-slate-600 shadow-brutal-sm">
+                    CHƯA MỞ
+                </span>
+                {% else %}
+                <span class="px-3 py-1 border-3 border-black text-xs font-black uppercase bg-accent-yellow text-black shadow-brutal-sm animate-pulse">
+                    ĐANG MỞ
+                </span>
+                {% endif %}
                 {% if session.requires_photo %}
                 <span class="flex items-center gap-1 text-xs font-black uppercase text-primary">
                     <span class="material-symbols-outlined text-base">photo_camera</span> ẢNH

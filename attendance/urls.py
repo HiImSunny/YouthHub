@@ -8,6 +8,7 @@ urlpatterns = [
     path('', views.sessions_view, name='sessions'),
     path('create/', views.session_create, name='session_create'),
     path('<int:pk>/', views.session_detail, name='session_detail'),
+    path('<int:pk>/edit/', views.session_edit, name='session_edit'),
     path('<int:pk>/qr/', views.session_qr, name='session_qr'),
     path('<int:pk>/close/', views.session_close, name='session_close'),
 
