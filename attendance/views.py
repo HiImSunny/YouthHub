@@ -90,11 +90,13 @@ def session_detail(request, pk):
     )
     records = session.records.select_related('student', 'verified_by').order_by('-checkin_time')
     checkin_url = request.build_absolute_uri(f'/attendance/checkin/{session.qr_token}/')
+    qr_data = _qr_base64(checkin_url)
 
     context = {
         'session': session,
         'records': records,
         'checkin_url': checkin_url,
+        'qr_data': qr_data,
         'approved_count': records.filter(status='VERIFIED').count(),
         'pending_count': records.filter(status='PENDING').count(),
         'rejected_count': records.filter(status='REJECTED').count(),

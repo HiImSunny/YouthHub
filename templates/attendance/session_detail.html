@@ -17,16 +17,14 @@
 
                 {% if session.status == 'OPEN' %}
                 <a href="{% url 'attendance:session_qr' pk=session.pk %}" target="_blank"
-                    class="w-full aspect-square border-3 border-black bg-white mb-4 p-6 flex items-center justify-center hover:bg-bg-light transition-all">
-                    <span class="material-symbols-outlined text-[80px] text-slate-400">qr_code_2</span>
+                    class="w-full aspect-square border-3 border-black bg-white mb-4 flex items-center justify-center hover:opacity-80 transition-all p-2">
+                    <img src="{{ qr_data }}" alt="QR Code" class="w-full h-full object-contain mix-blend-multiply">
                 </a>
                 {% endif %}
 
                 <p class="text-xl font-black uppercase">{{ session.name }}</p>
-                <p class="text-primary text-lg font-black">{{ session.start_time|date:"H:i" }} — {{
-                    session.end_time|date:"H:i" }}</p>
-                <p class="text-xs bg-black text-white px-3 py-1 mt-3 font-black uppercase">{{ session.activity.title }}
-                </p>
+                <p class="text-primary text-lg font-black">{{ session.start_time|date:"H:i" }} — {{ session.end_time|date:"H:i" }}</p>
+                <p class="text-xs bg-black text-white px-3 py-1 mt-3 font-black uppercase">{{ session.activity.title }}</p>
             </div>
 
             <!-- Stats -->

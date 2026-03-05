@@ -1,99 +1,129 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Điểm danh - {{ session.name }}</title>
+    <title>QR ĐIỂM DANH - {{ session.name|upper }}</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Bricolage Grotesque"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        primary: '#FF6B00',
+                        secondary: '#4F46E5',
+                        'bg-light': '#FDFBF7',
+                        'accent-yellow': '#FFD800',
+                        'accent-cyan': '#00F0FF',
+                        'accent-pink': '#FF00E5',
+                    },
+                    boxShadow: {
+                        'brutal': '8px 8px 0px 0px rgba(0,0,0,1)',
+                        'brutal-lg': '16px 16px 0px 0px rgba(0,0,0,1)',
+                    },
+                    borderWidth: {
+                        '3': '3px',
+                        '4': '4px',
+                        '8': '8px',
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-        }
-
-        .gradient-bg {
-            background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #c026d3 100%);
-        }
-
-        @keyframes pulse-ring {
-            0% {
-                transform: scale(1);
-                opacity: 0.8;
-            }
-
-            100% {
-                transform: scale(1.15);
-                opacity: 0;
-            }
-        }
-
-        .pulse-ring {
-            animation: pulse-ring 2s ease-out infinite;
+            background-color: #FDFBF7;
+            background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+            background-size: 24px 24px;
         }
     </style>
 </head>
 
-<body class="gradient-bg min-h-screen flex flex-col items-center justify-center p-6">
+<body class="min-h-screen flex flex-col p-4 md:p-8">
 
-    <!-- Header -->
-    <div class="text-center mb-8">
-        <div class="flex items-center justify-center gap-3 mb-3">
-            <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-                <span class="text-white font-bold text-xl">Y</span>
-            </div>
-            <h1 class="text-2xl font-bold text-white">YouthHub</h1>
+    <!-- Top Nav -->
+    <div class="flex justify-between items-center w-full mb-6">
+        <div class="bg-black text-white px-6 py-3 border-4 border-black font-black uppercase tracking-wider text-xl shadow-brutal flex items-center">
+            <span class="mr-3 text-accent-yellow font-mono">></span> YOUTHHUB
         </div>
-        <h2 class="text-3xl font-extrabold text-white mb-1">{{ session.name }}</h2>
-        <p class="text-white/70">{{ session.activity.title }}</p>
-    </div>
-
-    <!-- QR Code Card -->
-    <div class="bg-white rounded-3xl shadow-2xl p-8 text-center max-w-sm w-full">
-        <div class="relative flex items-center justify-center mb-4">
-            <!-- Animated rings -->
-            <div class="absolute w-72 h-72 rounded-full border-2 border-primary-300/30 pulse-ring"></div>
-            <div class="absolute w-64 h-64 rounded-full border-2 border-primary-300/20 pulse-ring"
-                style="animation-delay:0.5s"></div>
-            <img src="{{ qr_data }}" alt="QR Code check-in"
-                class="w-56 h-56 rounded-2xl border-4 border-primary-100 relative z-10">
-        </div>
-
-        <div
-            class="flex items-center justify-center gap-2 text-sm font-medium text-green-600 bg-green-50 rounded-xl px-4 py-2.5 mb-4">
-            <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            Phiên đang mở – Quét để điểm danh
-        </div>
-
-        <div class="text-xs text-gray-400 break-all bg-gray-50 rounded-xl p-3 font-mono">
-            {{ checkin_url }}
-        </div>
-
-        {% if session.requires_photo %}
-        <div class="mt-4 flex items-center justify-center gap-2 text-xs text-blue-600 bg-blue-50 rounded-lg px-3 py-2">
-            <i data-lucide="camera" class="w-4 h-4"></i>
-            Yêu cầu ảnh selfie minh chứng
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Time display -->
-    <div class="mt-8 text-center">
-        <p class="text-white/60 text-sm mb-1">Thời gian điểm danh</p>
-        <p class="text-white font-semibold">{{ session.start_time|date:"H:i" }} – {{ session.end_time|date:"H:i d/m/Y"
-            }}</p>
-    </div>
-
-    <!-- Close button (for staff) -->
-    <div class="mt-6">
-        <button onclick="window.close()"
-            class="text-white/50 hover:text-white text-sm transition flex items-center gap-2">
-            <i data-lucide="x" class="w-4 h-4"></i> Đóng hiển thị
+        <button onclick="window.close()" class="bg-white border-4 border-black px-6 py-3 font-black uppercase text-xl shadow-brutal hover:bg-accent-yellow transition-colors cursor-pointer flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            ĐÓNG
         </button>
     </div>
 
-    <script>lucide.createIcons();</script>
-</body>
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col md:flex-row gap-8 items-stretch justify-center max-w-7xl mx-auto w-full">
+        
+        <!-- Left: Info Panel -->
+        <div class="flex-1 flex flex-col justify-center space-y-6">
+            <div class="bg-accent-cyan border-4 border-black p-8 shadow-brutal-lg transform -rotate-1 relative">
+                <div class="absolute -top-5 -right-5 bg-black text-white font-mono font-bold px-4 py-1 text-sm border-2 border-black rotate-3">
+                    SCAN ME
+                </div>
+                <h1 class="text-6xl lg:text-7xl font-black uppercase leading-none mb-4 break-words" style="letter-spacing: -2px;">
+                    {{ session.name }}
+                </h1>
+                <div class="bg-white border-4 border-black p-4 font-black uppercase text-2xl inline-block shadow-brutal mb-6">
+                    MÃ HOẠT ĐỘNG: {{ session.activity.code }}
+                </div>
+                <p class="text-2xl font-bold bg-black text-white p-4 uppercase border-4 border-black shadow-brutal">
+                    {{ session.activity.title }}
+                </p>
+            </div>
 
+            <div class="bg-white border-4 border-black p-6 shadow-brutal-lg flex items-center justify-between">
+                <div>
+                    <p class="text-slate-500 font-black uppercase mb-1">THỜI GIAN</p>
+                    <p class="text-4xl font-black font-mono text-primary">{{ session.start_time|date:"H:i" }} - {{ session.end_time|date:"H:i" }}</p>
+                    <p class="text-xl font-bold mt-1 text-black">{{ session.start_time|date:"d/m/Y" }}</p>
+                </div>
+                
+                {% if session.requires_photo %}
+                <div class="bg-accent-yellow border-4 border-black p-4 text-center font-black uppercase rotate-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    YÊU CẦU ẢNH
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Right: QR Code HUGE -->
+        <div class="flex-[1.5] w-full flex flex-col justify-center items-center">
+            <div class="bg-white border-8 border-black p-4 shadow-brutal-lg w-full max-w-2xl relative group">
+                <!-- Status tag -->
+                <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-accent-yellow border-4 border-black px-6 py-2 shadow-brutal font-black text-xl uppercase flex items-center z-10 whitespace-nowrap">
+                    <span class="w-4 h-4 bg-green-500 rounded-full border-2 border-black mr-3 animate-pulse"></span>
+                    PHIÊN ĐANG MỞ
+                </div>
+                
+                <!-- The QR -->
+                <div class="aspect-square w-full pb-[100%] relative bg-white overflow-hidden">
+                    <img src="{{ qr_data }}" alt="QR Code" class="absolute inset-0 w-full h-full mix-blend-multiply object-contain scale-[1.1]">
+                </div>
+
+                <!-- URL Fallback -->
+                <div class="mt-4 bg-slate-100 border-4 border-black p-3 text-center">
+                    <p class="font-bold text-sm uppercase text-slate-500 mb-1">HOẶC TRUY CẬP ĐỊA CHỈ NÀY BẰNG TRÌNH DUYỆT</p>
+                    <p class="font-mono text-lg font-black break-all text-secondary">{{ checkin_url }}</p>
+                </div>
+            </div>
+        </div>
+        
+    </main>
+</body>
 </html>
