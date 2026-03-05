@@ -2,12 +2,22 @@
 {% block title %}{% if is_edit %}SỬA{% else %}TẠO{% endif %} HOẠT ĐỘNG — YOUTHHUB{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl">
-    <h1 class="text-4xl font-black uppercase tracking-tighter mb-6">{% if is_edit %}✏️ SỬA HOẠT ĐỘNG{% else %}⚡ TẠO HOẠT
-        ĐỘNG{% endif %}</h1>
+<div class="max-w-3xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-2">{% if is_edit %}✏️ SỬA
+            HOẠT ĐỘNG{% else %}⚡ TẠO HOẠT ĐỘNG{% endif %}</h1>
+        <p
+            class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">
+            {% if is_edit %}CẬP NHẬT THÔNG TIN HOẠT ĐỘNG{% else %}TẠO HOẠT ĐỘNG MỚI{% endif %}
+        </p>
+    </div>
 
-    <div class="bg-white border-3 border-black p-6 shadow-brutal-lg">
-        <form method="post" class="space-y-5">
+    <div class="bg-white border-3 border-black shadow-brutal-lg">
+        <div class="p-5 border-b-3 border-black bg-bg-light flex items-center gap-3">
+            <span class="material-symbols-outlined text-2xl text-primary">event</span>
+            <h2 class="font-black uppercase text-lg">THÔNG TIN HOẠT ĐỘNG</h2>
+        </div>
+        <form method="post" class="p-6 space-y-5">
             {% csrf_token %}
 
             <div class="grid grid-cols-2 gap-4">
@@ -42,7 +52,7 @@
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- CHỌN --</option>
                         {% for org in organizations %}
-                        <option value="{{ org.pk }}" {% if activity.organization_id==org.pk %}selected{% endif %}>{{ org.name }}</option>
+                        <option value="{{ org.pk }}" {% if activity.organization_id == org.pk %}selected{% endif %}>{{ org.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -52,13 +62,13 @@
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- KHÔNG XÁC ĐỊNH --</option>
                         {% for sem in semesters %}
-                        <option value="{{ sem.pk }}" {% if activity.semester_id==sem.pk %}selected{% endif %}>{{ sem.name }} ({{ sem.academic_year }})</option>
+                        <option value="{{ sem.pk }}" {% if activity.semester_id == sem.pk %}selected{% endif %}>{{ sem.name }} ({{ sem.academic_year }})</option>
                         {% endfor %}
                     </select>
                 </div>
             </div>
 
-            <div class="grid grid-cols-3 gap-4">
+            <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-black uppercase mb-2">LOẠI HOẠT ĐỘNG <span
                             class="text-accent-red">*</span></label>
@@ -66,8 +76,7 @@
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- CHỌN --</option>
                         {% for val, label in type_choices %}
-                        <option value="{{ val }}" {% if activity.activity_type==val %}selected{% endif %}>{{ label }}
-                        </option>
+                        <option value="{{ val }}" {% if activity.activity_type == val %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -77,25 +86,25 @@
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- KHÔNG XÁC ĐỊNH --</option>
                         {% for pc in point_categories %}
-                        <option value="{{ pc.pk }}" {% if activity.point_category_id==pc.pk %}selected{% endif %}>{{ pc.code }} - {{ pc.name }}</option>
+                        <option value="{{ pc.pk }}" {% if activity.point_category_id == pc.pk %}selected{% endif %}>{{ pc.code }} - {{ pc.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
-                <div>
-                    <label class="block text-sm font-black uppercase mb-2">
-                        SỐ ĐIỂM NHẬN ĐƯỢC
-                        <span class="text-slate-400 font-normal text-xs normal-case ml-1">(rèn luyện)</span>
-                    </label>
-                    <div class="relative">
-                        <input type="number" name="points" min="0" max="999" step="0.5"
-                            value="{{ activity.points|default:'0' }}"
-                            class="w-full border-3 border-black bg-white p-3 font-bold focus:ring-0 focus:border-black text-sm pr-16"
-                            placeholder="0">
-                        <span
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black uppercase text-slate-400">ĐIỂM</span>
-                    </div>
+            </div>
+
+            <div class="max-w-xs">
+                <label class="block text-sm font-black uppercase mb-2">SỐ ĐIỂM RÈN LUYỆN <span
+                        class="text-slate-400 font-normal text-xs normal-case">(điểm nhận được)</span></label>
+                <div class="relative">
+                    <input type="number" name="points" min="0" max="999" step="0.5"
+                        value="{{ activity.points|default:'0' }}"
+                        class="w-full border-3 border-black bg-white p-3 font-bold focus:ring-0 focus:border-black text-sm pr-16"
+                        placeholder="0">
+                    <span
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black uppercase text-slate-400">ĐIỂM</span>
                 </div>
             </div>
+
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -138,7 +147,7 @@
                 </div>
             </div>
 
-            <div class="flex gap-4 pt-4">
+            <div class="flex gap-4 pt-4 border-t-3 border-black">
                 <button type="submit"
                     class="flex-1 bg-primary text-white border-3 border-black p-4 font-black uppercase shadow-brutal brutal-btn transition-all">
                     {% if is_edit %}CẬP NHẬT{% else %}TẠO HOẠT ĐỘNG{% endif %}

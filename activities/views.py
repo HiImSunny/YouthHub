@@ -880,6 +880,7 @@ def point_category_create(request):
         'default_org': manageable_orgs.first() if manageable_orgs.count() == 1 else None,
         'is_admin': request.user.role == 'ADMIN',
         'POST': request.POST if request.method == 'POST' else {},
+        'is_active_default': True,  # new categories are active by default
     }
     return render(request, 'activities/point_category_form.html', context)
 
@@ -919,6 +920,7 @@ def point_category_edit(request, pk):
         'manageable_orgs': manageable_orgs,
         'is_edit': True,
         'is_admin': request.user.role == 'ADMIN',
+        'is_active_default': pc.is_active,  # carry current value for checkbox
     }
     return render(request, 'activities/point_category_form.html', context)
 

@@ -10,3 +10,9 @@ trim_trailing_whitespace = true
 
 [*.md]
 trim_trailing_whitespace = false
+
+# Django templates: do NOT trim whitespace inside {%%} template tags
+# Standard formatters break Django template syntax by removing spaces around operators
+[*.html]
+indent_size = 4
+trim_trailing_whitespace = false
