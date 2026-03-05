@@ -242,27 +242,97 @@ def organization_create(request):
     return render(request, 'core/organization_form.html', context)
 
 
-# ─── B3: Manage Staff of Child Orgs ──────────────────────────────────────────
+# ─── B4b: Edit Organization (Admin Only) ──────────────────────────────────────
+
+@admin_required
+def organization_edit(request, org_pk):
+    """Edit an existing organization. ADMIN only."""
+    org = get_object_or_404(Organization, pk=org_pk)
+
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        code = request.POST.get('code', '').strip()
+        org_type = request.POST.get('type', '')
+        parent_id = request.POST.get('parent') or None
+        description = request.POST.get('description', '').strip()
+
+        if not name or not code or not org_type:
+            messages.error(request, 'Vui long dien day du thong tin bat buoc.')
+        elif Organization.objects.filter(code__iexact=code).exclude(pk=org.pk).exists():
+            messages.error(request, 'Ma to chuc da ton tai.')
+        else:
+            org.name = name
+            org.code = code.upper()
+            org.type = org_type
+            org.parent_id = parent_id
+            org.description = description
+            org.save()
+            messages.success(request, f'Da cap nhat to chuc "{org.name}" thanh cong!')
+            return redirect('core:organizations')
+
+    context = {
+        'org': org,
+        'parent_orgs': Organization.objects.filter(status=True).exclude(pk=org.pk).order_by('type', 'name'),
+        'type_choices': Organization.OrgType.choices,
+        'is_edit': True,
+    }
+    return render(request, 'core/organization_form.html', context)
+
+
+# ─── B4c: Delete Organization (Admin Only) ─────────────────────────────────────
+
+def _delete_org_tree(org):
+    """Recursively delete an org and all its descendants."""
+    for child in org.children.all():
+        _delete_org_tree(child)
+    org.delete()
+
+
+@admin_required
+def organization_delete(request, org_pk):
+    """Delete an organization and all its children. ADMIN only."""
+    org = get_object_or_404(Organization, pk=org_pk)
+
+    if request.method == 'POST':
+        org_name = org.name
+        _delete_org_tree(org)
+        messages.success(request, f'Da xoa to chuc "{org_name}" va tat ca to chuc con.')
+        return redirect('core:organizations')
+
+    # Count children recursively for confirmation display
+    from core.permissions import get_all_child_orgs
+    children = get_all_child_orgs(org)
+    member_count = OrganizationMember.objects.filter(organization=org).count()
+
+    context = {
+        'org': org,
+        'children_count': len(children),
+        'member_count': member_count,
+    }
+    return render(request, 'core/org_confirm_delete.html', context)
+
+
+# ─── B3: Manage Members of an Org ────────────────────────────────────────────
 
 @login_required
 def org_staff_view(request, org_pk):
     """
-    B3: View and manage staff (OrganizationMember with is_officer=True) of an org.
-    - Admin: can manage any org's staff.
-    - Parent Staff: can manage staff of their child orgs.
+    B3: View and manage ALL members of an org (Officers + Students).
+    Now shows two split tables: Cán bộ and Đoàn viên/Hội viên.
     """
     org = get_object_or_404(Organization, pk=org_pk, status=True)
 
     if not can_manage_org_staff(request.user, org):
-        messages.error(request, 'Ban khong co quyen quan ly nhan su cua to chuc nay.')
+        messages.error(request, 'Ban khong co quyen quan ly thanh vien cua to chuc nay.')
         return redirect('core:organizations')
 
     from django.contrib.auth import get_user_model
+    from users.models import StudentProfile
     User = get_user_model()
 
-    members = OrganizationMember.objects.filter(
+    all_members = OrganizationMember.objects.filter(
         organization=org
-    ).select_related('user').order_by('-is_officer', 'user__full_name')
+    ).select_related('user').order_by('user__full_name')
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -289,6 +359,29 @@ def org_staff_view(request, org_pk):
             except User.DoesNotExist:
                 messages.error(request, 'Khong tim thay user hoac user khong phai Staff.')
 
+        elif action == 'add_student':
+            student_code = request.POST.get('student_code', '').strip()
+            if not student_code:
+                messages.error(request, 'Vui long nhap MSSV.')
+            else:
+                profile = StudentProfile.objects.filter(student_code__iexact=student_code).first()
+                if not profile:
+                    messages.error(request, f'Khong tim thay sinh vien co MSSV "{student_code}".')
+                else:
+                    member, created = OrganizationMember.objects.get_or_create(
+                        organization=org,
+                        user=profile.user,
+                        defaults={
+                            'position': 'Thanh vien',
+                            'is_officer': False,
+                            'joined_at': timezone.now().date(),
+                        }
+                    )
+                    if created:
+                        messages.success(request, f'Da them sinh vien "{profile.user.full_name}" vao to chuc.')
+                    else:
+                        messages.info(request, f'Sinh vien "{profile.user.full_name}" da la thanh vien roi.')
+
         elif action == 'remove_officer':
             member_id = request.POST.get('member_id')
             member = OrganizationMember.objects.filter(pk=member_id, organization=org).first()
@@ -306,18 +399,144 @@ def org_staff_view(request, org_pk):
 
         return redirect('core:org_staff', org_pk=org_pk)
 
+    # Split into two groups
+    officers = all_members.filter(is_officer=True)
+    regular_members = all_members.filter(is_officer=False)
+
     # Available staff users not yet in this org
-    existing_user_ids = members.values_list('user_id', flat=True)
+    existing_user_ids = all_members.values_list('user_id', flat=True)
     available_staff = User.objects.filter(role='STAFF', status='ACTIVE').exclude(
         pk__in=existing_user_ids
     ).order_by('full_name')
 
     context = {
         'org': org,
-        'members': members,
+        'officers': officers,
+        'regular_members': regular_members,
+        'all_members': all_members,
         'available_staff': available_staff,
     }
     return render(request, 'core/org_staff.html', context)
+
+
+# ─── B5b: Import Members into a specific Org ─────────────────────────────────
+
+@staff_required
+def import_members_to_org(request, org_pk):
+    """
+    Import students from Excel directly into a specific organization.
+    All imported students become members of THIS org, regardless of
+    what faculty/class columns say in the Excel file.
+    """
+    from django.contrib.auth import get_user_model
+    from users.models import StudentProfile
+
+    User = get_user_model()
+
+    org = get_object_or_404(Organization, pk=org_pk, status=True)
+
+    # Permission check
+    if not can_manage_org_staff(request.user, org):
+        messages.error(request, 'Ban khong co quyen import thanh vien vao to chuc nay.')
+        return redirect('core:org_staff', org_pk=org_pk)
+
+    if request.method == 'POST' and request.FILES.get('excel_file'):
+        import openpyxl
+
+        excel_file = request.FILES['excel_file']
+        default_password = request.POST.get('default_password', '').strip()
+
+        try:
+            wb = openpyxl.load_workbook(excel_file, data_only=True)
+            ws = wb.active
+        except Exception:
+            messages.error(request, 'File khong hop le. Vui long tai len file .xlsx dung dinh dang.')
+            return redirect('core:org_staff', org_pk=org_pk)
+
+        rows_ok, rows_skip, rows_error = [], [], []
+
+        for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            full_name = str(row[0]).strip() if row[0] else ''
+            student_code = str(row[1]).strip() if row[1] else ''
+            email = str(row[2]).strip() if row[2] else ''
+            # Columns D,E,F used for profile info only, not org creation
+            faculty_name = str(row[3]).strip() if len(row) > 3 and row[3] else ''
+            class_name = str(row[4]).strip() if len(row) > 4 and row[4] else ''
+            course_year = str(row[5]).strip() if len(row) > 5 and row[5] else ''
+            password_col = str(row[6]).strip() if len(row) > 6 and row[6] else ''
+
+            if not full_name and not student_code and not email:
+                continue
+
+            if not full_name or not student_code or not email:
+                rows_error.append(f'Dong {row_idx}: Thieu thong tin bat buoc (Ten/MSSV/Email).')
+                continue
+
+            # Check if user already exists
+            existing_user = None
+            profile = StudentProfile.objects.filter(student_code__iexact=student_code).first()
+            if profile:
+                existing_user = profile.user
+            elif User.objects.filter(email__iexact=email).exists():
+                rows_skip.append(f'Dong {row_idx}: Email "{email}" da ton tai nhung MSSV khong khop.')
+                continue
+
+            if existing_user:
+                # User exists: just add to org
+                member, created = OrganizationMember.objects.get_or_create(
+                    organization=org,
+                    user=existing_user,
+                    defaults={
+                        'position': 'Thanh vien',
+                        'is_officer': False,
+                        'joined_at': timezone.now().date(),
+                    }
+                )
+                if created:
+                    rows_ok.append(f'{student_code} — {full_name} (da co tai khoan, them vao to chuc)')
+                else:
+                    rows_skip.append(f'Dong {row_idx}: {student_code} da la thanh vien.')
+            else:
+                # Create new user + profile + member
+                username = student_code.lower().replace(' ', '')
+                password = password_col or default_password or student_code
+
+                try:
+                    user = User.objects.create_user(
+                        username=username,
+                        email=email,
+                        password=password,
+                        full_name=full_name,
+                        role='STUDENT',
+                        status='ACTIVE',
+                    )
+                    StudentProfile.objects.create(
+                        user=user,
+                        student_code=student_code,
+                        faculty=faculty_name,
+                        class_name=class_name,
+                        course_year=course_year,
+                    )
+                    OrganizationMember.objects.create(
+                        organization=org,
+                        user=user,
+                        position='Thanh vien',
+                        is_officer=False,
+                        joined_at=timezone.now().date(),
+                    )
+                    rows_ok.append(f'{student_code} — {full_name}')
+                except Exception as e:
+                    rows_error.append(f'Dong {row_idx}: Loi tao tai khoan — {e}')
+                    continue
+
+        if rows_ok:
+            messages.success(request, f'Import thanh cong {len(rows_ok)} sinh vien vao "{org.name}".')
+        if rows_skip:
+            messages.warning(request, f'Bo qua {len(rows_skip)} dong trung lap.')
+        if rows_error:
+            messages.error(request, f'Co {len(rows_error)} dong loi.')
+
+    return redirect('core:org_staff', org_pk=org_pk)
 
 
 # ─── B5: Import Students from Excel ──────────────────────────────────────────

@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}XÓA TỔ CHỨC — YOUTHHUB{% endblock %}
+
+{% block breadcrumb %}
+<span class="font-black uppercase text-sm">🏛 Xóa Tổ chức</span>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto">
+  <h1 class="text-4xl font-black uppercase tracking-tighter mb-6 text-accent-red">⚠ XÓA TỔ CHỨC</h1>
+
+  <div class="bg-white border-3 border-accent-red p-6 shadow-brutal-lg mb-6">
+    <div class="flex items-center gap-3 mb-4">
+      <span class="material-symbols-outlined text-accent-red text-3xl">warning</span>
+      <div>
+        <p class="font-black uppercase text-lg">{{ org.name }}</p>
+        <p class="text-xs font-bold uppercase text-primary">{{ org.get_type_display }} · {{ org.code }}</p>
+      </div>
+    </div>
+
+    <div class="border-3 border-accent-red/30 bg-accent-red/5 p-4 space-y-2">
+      <p class="font-black uppercase text-sm text-accent-red">HÀNH ĐỘNG NÀY KHÔNG THỂ HOÀN TÁC!</p>
+      <ul class="text-sm font-bold space-y-1">
+        <li>• Xóa tổ chức <strong>{{ org.name }}</strong></li>
+        {% if children_count > 0 %}
+        <li>• Xóa <strong>{{ children_count }}</strong> tổ chức con trực thuộc</li>
+        {% endif %}
+        {% if member_count > 0 %}
+        <li>• Gỡ liên kết <strong>{{ member_count }}</strong> thành viên đang thuộc tổ chức này</li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+
+  <div class="flex gap-3">
+    <form method="post" class="flex-1">
+      {% csrf_token %}
+      <button type="submit"
+        onclick="return confirm('BẠN CHẮC CHẮN MUỐN XÓA {{ org.name }} VÀ TẤT CẢ TỔ CHỨC CON?')"
+        class="w-full bg-accent-red text-white border-3 border-black p-4 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2">
+        <span class="material-symbols-outlined">delete_forever</span>
+        XÓA VĨNH VIỄN
+      </button>
+    </form>
+    <a href="{% url 'core:organizations' %}"
+      class="bg-white border-3 border-black p-4 font-black uppercase shadow-brutal-sm brutal-btn transition-all px-8 flex items-center">
+      HỦY
+    </a>
+  </div>
+</div>
+{% endblock %}

@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
-{% block title %}NHÂN SỰ - {{ org.name }} — YOUTHHUB{% endblock %}
+{% block title %}THÀNH VIÊN - {{ org.name }} — YOUTHHUB{% endblock %}
 
 {% block breadcrumb %}
-<span class="font-black uppercase text-sm">🏛 {{ org.name }} / Nhân sự</span>
+<span class="font-black uppercase text-sm">🏛 {{ org.name }} / Thành viên</span>
 {% endblock %}
 
 {% block content %}
@@ -10,7 +10,7 @@
     <!-- Header -->
     <div class="mb-6 flex items-end justify-between gap-4">
         <div>
-            <h1 class="text-4xl font-black uppercase tracking-tighter mb-1">👥 NHÂN SỰ TỔ CHỨC</h1>
+            <h1 class="text-4xl font-black uppercase tracking-tighter mb-1">👥 THÀNH VIÊN TỔ CHỨC</h1>
             <p class="text-sm font-bold uppercase tracking-[0.3em] text-primary">{{ org.get_type_display|upper }} — {{ org.name|upper }}</p>
         </div>
         <a href="{% url 'core:organizations' %}"
@@ -21,37 +21,35 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Left: Members list -->
-        <div class="lg:col-span-2">
+        <!-- Left: Members lists (2 tables) -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- ── Table 1: Cán bộ quản lý ── -->
             <div class="bg-white border-3 border-black shadow-brutal">
-                <div class="p-4 border-b-3 border-black bg-bg-light flex items-center justify-between">
-                    <h2 class="font-black uppercase text-lg">DANH SÁCH THÀNH VIÊN</h2>
-                    <span class="bg-primary text-white border-2 border-black px-3 py-1 text-xs font-black uppercase">{{ members.count }} NGƯỜI</span>
+                <div class="p-4 border-b-3 border-black bg-primary/10 flex items-center justify-between">
+                    <h2 class="font-black uppercase text-lg flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">shield_person</span>
+                        CÁN BỘ QUẢN LÝ
+                    </h2>
+                    <span class="bg-primary text-white border-2 border-black px-3 py-1 text-xs font-black uppercase">{{ officers.count }} người</span>
                 </div>
-                {% if members %}
+                {% if officers %}
                 <div class="divide-y-2 divide-black">
-                    {% for member in members %}
+                    {% for member in officers %}
                     <div class="p-4 flex items-center justify-between hover:bg-primary/5 transition-all">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 border-3 border-black flex items-center justify-center font-black text-white
-                                {% if member.is_officer %}bg-primary{% else %}bg-zinc-400{% endif %}">
+                            <div class="w-10 h-10 border-3 border-black flex items-center justify-center font-black text-white bg-primary">
                                 {{ member.user.full_name|first|upper }}
                             </div>
                             <div>
                                 <p class="font-black uppercase text-sm">{{ member.user.full_name }}</p>
                                 <p class="text-xs text-slate-500 font-bold">
                                     {{ member.position }}
-                                    {% if member.is_officer %}
-                                    <span
-                                        class="ml-1 bg-primary text-white px-1 py-0.5 text-[10px] font-black uppercase">CÁN
-                                        BỘ</span>
-                                    {% endif %}
+                                    <span class="ml-1 bg-primary text-white px-1 py-0.5 text-[10px] font-black uppercase">CÁN BỘ</span>
                                 </p>
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            {% if member.is_officer %}
-                            <!-- Remove officer role -->
                             <form method="post" class="inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="remove_officer">
@@ -62,8 +60,6 @@
                                     THU HỒI
                                 </button>
                             </form>
-                            {% endif %}
-                            <!-- Remove from org -->
                             <form method="post" class="inline">
                                 {% csrf_token %}
                                 <input type="hidden" name="action" value="remove_member">
@@ -79,19 +75,68 @@
                     {% endfor %}
                 </div>
                 {% else %}
-                <div class="p-12 text-center">
-                    <span class="material-symbols-outlined text-5xl text-slate-300 block mb-2">group_off</span>
-                    <p class="font-black uppercase text-slate-400">CHƯA CÓ THÀNH VIÊN</p>
+                <div class="p-8 text-center">
+                    <span class="material-symbols-outlined text-4xl text-slate-300 block mb-2">shield_person</span>
+                    <p class="font-black uppercase text-slate-400 text-sm">CHƯA CÓ CÁN BỘ</p>
                 </div>
                 {% endif %}
             </div>
+
+            <!-- ── Table 2: Đoàn viên / Hội viên ── -->
+            <div class="bg-white border-3 border-black shadow-brutal">
+                <div class="p-4 border-b-3 border-black bg-accent-teal/10 flex items-center justify-between">
+                    <h2 class="font-black uppercase text-lg flex items-center gap-2">
+                        <span class="material-symbols-outlined text-accent-teal">school</span>
+                        ĐOÀN VIÊN / HỘI VIÊN
+                    </h2>
+                    <span class="bg-accent-teal text-white border-2 border-black px-3 py-1 text-xs font-black uppercase">{{ regular_members.count }} người</span>
+                </div>
+                {% if regular_members %}
+                <div class="divide-y divide-slate-200 max-h-96 overflow-y-auto">
+                    {% for member in regular_members %}
+                    <div class="px-4 py-3 flex items-center justify-between hover:bg-accent-teal/5 transition-all">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 border-2 border-black flex items-center justify-center font-black text-white bg-zinc-400 text-xs">
+                                {{ member.user.full_name|first|upper }}
+                            </div>
+                            <div>
+                                <p class="font-bold text-sm">{{ member.user.full_name }}</p>
+                                <p class="text-xs text-slate-400 font-bold">{{ member.position }} · {{ member.user.email }}</p>
+                            </div>
+                        </div>
+                        <form method="post" class="inline">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="remove_member">
+                            <input type="hidden" name="member_id" value="{{ member.pk }}">
+                            <button type="submit"
+                                onclick="return confirm('Xóa {{ member.user.full_name }} khỏi tổ chức?')"
+                                class="border-2 border-black px-2 py-1 text-[10px] font-black uppercase bg-accent-red text-white brutal-btn shadow-brutal-sm">
+                                XÓA
+                            </button>
+                        </form>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-8 text-center">
+                    <span class="material-symbols-outlined text-4xl text-slate-300 block mb-2">group_off</span>
+                    <p class="font-black uppercase text-slate-400 text-sm">CHƯA CÓ THÀNH VIÊN</p>
+                </div>
+                {% endif %}
+            </div>
+
         </div>
 
-        <!-- Right: Add staff -->
-        <div>
+        <!-- Right: Action panels -->
+        <div class="space-y-4">
+
+            <!-- ── Panel 1: Thêm Cán bộ ── -->
             <div class="bg-white border-3 border-black shadow-brutal sticky top-4">
                 <div class="p-4 border-b-3 border-black bg-bg-light">
-                    <h2 class="font-black uppercase">THÊM CÁN BỘ MỚI</h2>
+                    <h2 class="font-black uppercase flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">shield_person</span>
+                        THÊM CÁN BỘ
+                    </h2>
                 </div>
                 <div class="p-4">
                     {% if available_staff %}
@@ -121,11 +166,73 @@
                         </button>
                     </form>
                     {% else %}
-                    <p class="text-sm font-bold text-slate-400 text-center py-4">Không còn Staff nào để thêm vào tổ chức
-                        này.</p>
+                    <p class="text-sm font-bold text-slate-400 text-center py-4">Không còn Staff nào để thêm.</p>
                     {% endif %}
                 </div>
             </div>
+
+            <!-- ── Panel 2: Thêm Sinh viên (bằng MSSV) ── -->
+            <div class="bg-white border-3 border-black shadow-brutal">
+                <div class="p-4 border-b-3 border-black bg-accent-teal/10">
+                    <h2 class="font-black uppercase flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm text-accent-teal">person_add</span>
+                        THÊM THÀNH VIÊN
+                    </h2>
+                </div>
+                <div class="p-4">
+                    <form method="post" class="space-y-3">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="add_student">
+                        <div>
+                            <label class="block text-xs font-black uppercase mb-1">MÃ SỐ SINH VIÊN</label>
+                            <input type="text" name="student_code" required
+                                class="w-full border-3 border-black bg-white p-2 font-bold text-sm focus:ring-0"
+                                placeholder="VD: B2011111">
+                        </div>
+                        <button type="submit"
+                            class="w-full bg-accent-teal text-white border-3 border-black p-3 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2 text-sm">
+                            <span class="material-symbols-outlined text-sm">group_add</span>
+                            THÊM VÀO TỔ CHỨC
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ── Panel 3: Import Excel ── -->
+            <div class="bg-white border-3 border-black shadow-brutal">
+                <div class="p-4 border-b-3 border-black bg-amber-50">
+                    <h2 class="font-black uppercase flex items-center gap-2 text-sm">
+                        <span class="material-symbols-outlined text-sm text-amber-600">upload_file</span>
+                        IMPORT TỪ EXCEL
+                    </h2>
+                    <p class="text-[10px] font-bold text-amber-600 mt-1">Thêm hàng loạt sinh viên vào "{{ org.name }}"</p>
+                </div>
+                <div class="p-4">
+                    <form method="post" enctype="multipart/form-data" action="{% url 'core:org_import_members' org_pk=org.pk %}" class="space-y-3">
+                        {% csrf_token %}
+                        <div>
+                            <label class="block text-xs font-black uppercase mb-1">FILE EXCEL (.xlsx)</label>
+                            <input type="file" name="excel_file" accept=".xlsx" required
+                                class="w-full border-3 border-black bg-white p-2 font-bold text-xs focus:ring-0">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black uppercase mb-1">MẬT KHẨU MẶC ĐỊNH</label>
+                            <input type="text" name="default_password"
+                                class="w-full border-3 border-black bg-white p-2 font-bold text-xs focus:ring-0"
+                                placeholder="Để trống = dùng MSSV">
+                        </div>
+                        <button type="submit"
+                            class="w-full bg-amber-500 text-white border-3 border-black p-3 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2 text-sm">
+                            <span class="material-symbols-outlined text-sm">upload</span>
+                            IMPORT
+                        </button>
+                    </form>
+                    <a href="{% url 'core:import_students_template' %}" class="mt-2 block text-center text-xs font-black uppercase text-amber-600 underline">
+                        📥 Tải file mẫu Excel
+                    </a>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>

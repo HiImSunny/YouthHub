@@ -6,8 +6,7 @@
         <div
             class="w-12 h-12 flex-shrink-0 bg-primary border-3 border-black flex items-center justify-center shadow-brutal-sm">
             <span class="material-symbols-outlined text-white text-2xl">
-                {% if org.type == 'UNION_SCHOOL' %}school{% elif org.type == 'CLUB' %}groups{% else %}apartment{% endif
-                %}
+                {% if org.type == 'UNION_SCHOOL' %}school{% elif org.type == 'CLUB' %}groups{% else %}apartment{% endif %}
             </span>
         </div>
         <div class="flex-1 min-w-0">
@@ -39,12 +38,26 @@
         <span class="ml-auto border-2 border-black px-2 py-0.5 bg-zinc-100 font-mono">{{ org.code }}</span>
     </div>
 
-    <!-- Action -->
-    {% if org.pk in manageable_org_ids %}
-    <a href="{% url 'core:org_staff' org_pk=org.pk %}"
-        class="w-full flex items-center justify-center gap-2 bg-zinc-900 text-white border-2 border-black px-3 py-2 text-xs font-black uppercase shadow-brutal-sm brutal-btn transition-all">
-        <span class="material-symbols-outlined text-sm">manage_accounts</span>
-        QUẢN LÝ NHÂN SỰ
-    </a>
-    {% endif %}
+    <!-- Actions -->
+    <div class="flex gap-2">
+        {% if org.pk in manageable_org_ids %}
+        <a href="{% url 'core:org_staff' org_pk=org.pk %}"
+            class="flex-1 flex items-center justify-center gap-2 bg-zinc-900 text-white border-2 border-black px-3 py-2 text-xs font-black uppercase shadow-brutal-sm brutal-btn transition-all">
+            <span class="material-symbols-outlined text-sm">group</span>
+            THÀNH VIÊN
+        </a>
+        {% endif %}
+        {% if is_admin %}
+        <a href="{% url 'core:org_edit' org_pk=org.pk %}"
+            class="flex items-center justify-center gap-1 bg-accent-yellow border-2 border-black px-3 py-2 text-xs font-black uppercase shadow-brutal-sm brutal-btn transition-all"
+            title="Sửa">
+            <span class="material-symbols-outlined text-sm">edit</span>
+        </a>
+        <a href="{% url 'core:org_delete' org_pk=org.pk %}"
+            class="flex items-center justify-center gap-1 bg-accent-red text-white border-2 border-black px-3 py-2 text-xs font-black uppercase shadow-brutal-sm brutal-btn transition-all"
+            title="Xóa">
+            <span class="material-symbols-outlined text-sm">delete</span>
+        </a>
+        {% endif %}
+    </div>
 </div>

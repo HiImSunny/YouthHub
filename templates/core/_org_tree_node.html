@@ -25,7 +25,15 @@ Tree node layout:
         {% if org.pk in manageable_org_ids %}
         <a href="{% url 'core:org_staff' org_pk=org.pk %}"
             class="border-2 border-primary bg-primary/20 text-primary px-3 py-1.5 text-xs font-black uppercase brutal-btn flex items-center gap-1">
-            <span class="material-symbols-outlined text-sm">manage_accounts</span>NHÂN SỰ
+            <span class="material-symbols-outlined text-sm">group</span>THÀNH VIÊN
+        </a>
+        {% endif %}
+        {% if is_admin %}
+        <a href="{% url 'core:org_edit' org_pk=org.pk %}" class="border-2 border-zinc-600 bg-accent-yellow/30 text-white px-2 py-1.5 text-xs font-black uppercase brutal-btn" title="Sửa">
+            <span class="material-symbols-outlined text-sm">edit</span>
+        </a>
+        <a href="{% url 'core:org_delete' org_pk=org.pk %}" class="border-2 border-zinc-600 bg-accent-red/30 text-white px-2 py-1.5 text-xs font-black uppercase brutal-btn" title="Xóa">
+            <span class="material-symbols-outlined text-sm">delete</span>
         </a>
         {% endif %}
     </div>
@@ -65,8 +73,12 @@ Tree node layout:
             {% if org.pk in manageable_org_ids %}
             <a href="{% url 'core:org_staff' org_pk=org.pk %}"
                 class="border-2 border-black bg-zinc-900 text-white px-3 py-1 text-[10px] font-black uppercase brutal-btn flex items-center gap-1">
-                <span class="material-symbols-outlined text-xs">manage_accounts</span>NHÂN SỰ
+                <span class="material-symbols-outlined text-xs">group</span>THÀNH VIÊN
             </a>
+            {% endif %}
+            {% if is_admin %}
+            <a href="{% url 'core:org_edit' org_pk=org.pk %}" class="border-2 border-black bg-accent-yellow px-2 py-1 text-[10px] font-black uppercase brutal-btn" title="Sửa"><span class="material-symbols-outlined text-xs">edit</span></a>
+            <a href="{% url 'core:org_delete' org_pk=org.pk %}" class="border-2 border-black bg-accent-red text-white px-2 py-1 text-[10px] font-black uppercase brutal-btn" title="Xóa"><span class="material-symbols-outlined text-xs">delete</span></a>
             {% endif %}
         </div>
 
@@ -100,8 +112,12 @@ Tree node layout:
         {% if org.pk in manageable_org_ids %}
         <a href="{% url 'core:org_staff' org_pk=org.pk %}"
             class="border-2 border-black bg-zinc-900 text-white px-2 py-0.5 text-[10px] font-black uppercase brutal-btn ml-1">
-            NHÂN SỰ
+            TV
         </a>
+        {% endif %}
+        {% if is_admin %}
+        <a href="{% url 'core:org_edit' org_pk=org.pk %}" class="border-2 border-black bg-accent-yellow px-2 py-0.5 text-[10px] font-black brutal-btn" title="Sửa"><span class="material-symbols-outlined text-xs">edit</span></a>
+        <a href="{% url 'core:org_delete' org_pk=org.pk %}" class="border-2 border-black bg-accent-red text-white px-2 py-0.5 text-[10px] font-black brutal-btn" title="Xóa"><span class="material-symbols-outlined text-xs">delete</span></a>
         {% endif %}
     </div>
     {% if org.tree_children %}
