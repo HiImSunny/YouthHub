@@ -8,10 +8,12 @@
     <span class="material-symbols-outlined text-lg">add</span> TẠO PHIÊN
 </a>
 {% endif %}
+{% if user.role == 'STUDENT' %}
 <a href="{% url 'attendance:points' %}"
     class="bg-accent-yellow border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
     <span class="material-symbols-outlined text-lg">star</span> ĐIỂM
 </a>
+{% endif %}
 {% endblock %}
 
 {% block content %}

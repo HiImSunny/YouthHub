@@ -97,6 +97,13 @@
           <span class="material-symbols-outlined text-xl">event</span> HOẠT ĐỘNG
         </a>
 
+        <!-- Student: Điểm rèn luyện -->
+        <a href="{% url 'attendance:points' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'attendance/points' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">star</span> ĐIỂM RÈN LUYỆN
+        </a>
+
 
 
         {% else %}

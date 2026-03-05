@@ -56,90 +56,88 @@
     {% if activities_data %}
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {% for item in activities_data %}
-        {% with act=item.activity %}
-        <div
-            class="bg-white border-3 border-black shadow-brutal hover:-translate-y-1 hover:shadow-brutal-lg transition-all flex flex-col">
-            <!-- Status banner -->
-            <div class="border-b-3 border-black px-4 py-2 flex items-center justify-between
-              {% if item.time_status == 'UPCOMING' %}bg-primary/10
-              {% elif item.time_status == 'ONGOING' %}bg-accent-teal/20
-              {% else %}bg-slate-100{% endif %}">
-                <span class="text-xs font-black uppercase tracking-widest
-                  {% if item.time_status == 'UPCOMING' %}text-primary
-                  {% elif item.time_status == 'ONGOING' %}text-accent-teal
-                  {% else %}text-slate-500{% endif %}">
-                    {% if item.time_status == 'ONGOING' %}⚡ {% elif item.time_status == 'UPCOMING' %}⏰ {% else %}✅ {%
-                    endif %}
-                    {{ item.time_label }}
-                </span>
-                {% if act.point_category or act.points > 0 %}
-                <div class="flex items-center gap-1.5">
-                    {% if act.point_category %}
-                    <span class="text-[10px] font-black uppercase bg-accent-yellow border border-black px-1.5 py-0.5">
-                        {{ act.point_category.code }}
-                    </span>
-                    {% endif %}
-                    {% if act.points > 0 %}
-                    <span class="text-[10px] font-black text-primary">+{{ act.points }}đ</span>
-                    {% endif %}
-                </div>
-                {% endif %}
-            </div>
+{% with act=item.activity %}
+<div class="bg-white border-3 border-black shadow-brutal hover:-translate-y-1 hover:shadow-brutal-lg transition-all flex flex-col">
 
-            <div class="p-5 flex flex-col flex-1">
-                <!-- Title -->
-                <h3 class="text-lg font-black uppercase leading-tight mb-2">
-                    <a href="{% url 'activities:detail' pk=act.pk %}" class="hover:text-primary transition-colors">
-                        {{ act.title }}
-                    </a>
-                </h3>
+    <!-- Status banner -->
+    <div class="border-b-3 border-black px-4 py-2 flex items-center justify-between
+      {% if item.time_status == 'UPCOMING' %}bg-primary/10
+      {% elif item.time_status == 'ONGOING' %}bg-accent-teal/20
+      {% else %}bg-slate-100{% endif %}">
+        <span class="text-xs font-black uppercase tracking-widest
+          {% if item.time_status == 'UPCOMING' %}text-primary
+          {% elif item.time_status == 'ONGOING' %}text-accent-teal
+          {% else %}text-slate-500{% endif %}">
+            {% if item.time_status == 'ONGOING' %}⚡
+            {% elif item.time_status == 'UPCOMING' %}⏰
+            {% else %}✅{% endif %}
+            {{ item.time_label }}
+        </span>
 
-                <!-- Meta -->
-                <div class="space-y-1.5 text-xs font-bold text-slate-500 mb-4">
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-sm">apartment</span>
-                        {{ act.organization.name|default:"—" }}
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-sm">calendar_today</span>
-                        {{ act.start_time|date:"d/m/Y H:i" }} → {{ act.end_time|date:"d/m/Y H:i" }}
-                    </div>
-                    {% if act.location %}
-                    <div class="flex items-center gap-2">
-                        <span class="material-symbols-outlined text-sm">location_on</span>
-                        {{ act.location }}
-                    </div>
-                    {% endif %}
-                </div>
-
-                <!-- Actions -->
-                <div class="mt-auto flex gap-2">
-                    <a href="{% url 'activities:detail' pk=act.pk %}"
-                        class="flex-1 text-center bg-white border-3 border-black px-3 py-2 font-black uppercase text-xs shadow-brutal-sm brutal-btn">
-                        XEM CHI TIẾT
-                    </a>
-
-                    <!-- C2: Check-in button - only show if active session exists -->
-                    {% if item.active_session %}
-                    {% if item.already_checkedin %}
-                    <span
-                        class="bg-accent-teal/20 text-accent-teal border-3 border-black px-3 py-2 font-black uppercase text-xs flex items-center gap-1">
-                        <span class="material-symbols-outlined text-sm">check_circle</span>
-                        ĐÃ ĐIỂM DANH
-                    </span>
-                    {% else %}
-                    <a href="{% url 'attendance:checkin' token=item.active_session.qr_token %}"
-                        class="bg-accent-teal text-white border-3 border-black px-3 py-2 font-black uppercase text-xs shadow-brutal brutal-btn flex items-center gap-1 animate-pulse">
-                        <span class="material-symbols-outlined text-sm">qr_code_scanner</span>
-                        ĐIỂM DANH
-                    </a>
-                    {% endif %}
-                    {% endif %}
-                </div>
-            </div>
+        {% if act.point_category or act.points > 0 %}
+        <div class="flex items-center gap-1.5">
+            {% if act.point_category %}
+            <span class="text-[10px] font-black uppercase bg-accent-yellow border border-black px-1.5 py-0.5">
+                {{ act.point_category.code }}
+            </span>
+            {% endif %}
+            {% if act.points > 0 %}
+            <span class="text-[10px] font-black text-primary">+{{ act.points }}đ</span>
+            {% endif %}
         </div>
-        {% endwith %}
-        {% endfor %}
+        {% endif %}
+    </div>
+
+    <div class="p-5 flex flex-col flex-1">
+        <h3 class="text-lg font-black uppercase leading-tight mb-2">
+            <a href="{% url 'activities:detail' pk=act.pk %}" class="hover:text-primary transition-colors">
+                {{ act.title }}
+            </a>
+        </h3>
+
+        <div class="space-y-1.5 text-xs font-bold text-slate-500 mb-4">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">apartment</span>
+                {{ act.organization.name|default:"—" }}
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">calendar_today</span>
+                {{ act.start_time|date:"d/m/Y H:i" }} → {{ act.end_time|date:"d/m/Y H:i" }}
+            </div>
+            {% if act.location %}
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-sm">location_on</span>
+                {{ act.location }}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="mt-auto flex gap-2">
+            <a href="{% url 'activities:detail' pk=act.pk %}"
+                class="flex-1 text-center bg-white border-3 border-black px-3 py-2 font-black uppercase text-xs shadow-brutal-sm brutal-btn">
+                XEM CHI TIẾT
+            </a>
+
+            {% if item.active_session %}
+                {% if item.already_checkedin %}
+                <span class="bg-accent-teal/20 text-accent-teal border-3 border-black px-3 py-2 font-black uppercase text-xs flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">check_circle</span>
+                    ĐÃ ĐIỂM DANH
+                </span>
+                {% else %}
+                <a href="{% url 'attendance:checkin' token=item.active_session.qr_token %}"
+                    class="bg-accent-teal text-white border-3 border-black px-3 py-2 font-black uppercase text-xs shadow-brutal brutal-btn flex items-center gap-1 animate-pulse">
+                    <span class="material-symbols-outlined text-sm">qr_code_scanner</span>
+                    ĐIỂM DANH
+                </a>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endwith %}
+{% endfor %}
+
     </div>
     {% else %}
     <div class="bg-white border-3 border-black p-16 text-center shadow-brutal">
