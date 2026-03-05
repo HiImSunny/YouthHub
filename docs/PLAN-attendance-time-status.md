@@ -39,9 +39,9 @@
 - **Files**:
   - `templates/attendance/session_detail.html`: Đổi các format `date:"H:i"` đi cùng ngày tháng để đỡ gây nhầm lẫn.
 
-### Phase 4: Neo Brutalism trang Check-in (Mobile View)
+### Phase 4: Neo Brutalism trang Check-in (Mọi Thiết Bị)
 
-- **Mục tiêu**: Lột xác trang `/attendance/checkin/xxx/` sang Brutalism, nơi sinh viên sẽ thấy sau khi quét QR bằng điện thoại.
+- **Mục tiêu**: Lột xác trang `/attendance/checkin/xxx/` sang Brutalism, nơi sinh viên sẽ thấy sau khi quét QR hoặc truy cập bằng máy tính.
 - **Files**:
   - `templates/attendance/checkin.html` (và `checkin_closed.html` nếu cần gom lại):
     - Đổi thành nền trắng có chấm bi hạt.

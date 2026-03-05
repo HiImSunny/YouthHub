@@ -1,156 +1,158 @@
-<!DOCTYPE html>
-<html lang="vi">
+{% extends 'base_student.html' %}
+{% block title %}ĐIỂM DANH - {{ session.name|upper }}{% endblock %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Điểm danh - {{ session.name }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-
-        .gradient-bg {
-            background: linear-gradient(135deg, #1e3a8a 0%, #7c3aed 50%, #c026d3 100%);
-        }
-
-        .fade-in {
-            animation: fadeIn 0.4s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
-</head>
-
-<body class="min-h-screen bg-gray-50">
+{% block content %}
+<div class="max-w-md mx-auto p-4 w-full">
     <!-- Header -->
-    <header class="gradient-bg text-white py-5 px-6 text-center">
-        <div class="flex items-center justify-center gap-2 mb-1">
-            <span class="font-bold text-lg">Y</span>
-            <span class="font-bold">YouthHub</span>
+    <div class="bg-black text-white px-4 py-3 border-4 border-black font-black uppercase tracking-wider text-xl shadow-brutal flex items-center mb-6">
+        <span class="mr-3 text-accent-yellow font-mono">></span> YOUTHHUB
+    </div>
+
+    <!-- Title Block -->
+    <div class="bg-primary text-black border-4 border-black p-6 shadow-brutal mb-6 transform -rotate-1">
+        <h1 class="text-3xl font-black uppercase leading-tight mb-2 break-words">
+            {{ session.name }}
+        </h1>
+        <p class="text-sm font-bold bg-white text-black px-2 py-1 uppercase border-2 border-black inline-block shadow-brutal-sm">
+            {{ session.activity.title }}
+        </p>
+    </div>
+
+    <!-- Time Banner -->
+    <div class="bg-white border-4 border-black p-4 shadow-brutal-sm mb-6 flex justify-between items-center rotate-1">
+        <div>
+            <p class="text-xs font-black uppercase text-slate-500">THỜI GIAN</p>
+            <p class="font-mono font-bold">{{ session.start_time|date:"H:i d/m" }} <br>đến {{ session.end_time|date:"H:i d/m" }}</p>
         </div>
-        <h1 class="text-xl font-bold">{{ session.name }}</h1>
-        <p class="text-sm text-white/70 mt-0.5">{{ session.activity.title }}</p>
-    </header>
+        <div class="text-center ml-2 border-l-4 border-black pl-4">
+            {% if now < session.start_time %}
+            <span class="px-2 py-1 bg-slate-300 border-2 border-black font-black text-xs uppercase block">CHƯA MỞ</span>
+            {% elif now > session.end_time %}
+            <span class="px-2 py-1 bg-accent-red text-white border-2 border-black font-black text-xs uppercase block">ĐÃ ĐÓNG</span>
+            {% else %}
+            <span class="px-2 py-1 bg-accent-yellow border-2 border-black font-black text-xs uppercase block animate-pulse">ĐANG MỞ</span>
+            {% endif %}
+        </div>
+    </div>
 
-    <main class="max-w-md mx-auto p-6 fade-in">
-        {% if existing_record %}
+    <!-- Main Content -->
+    {% if existing_record %}
         <!-- Already checked in -->
-        <div class="bg-white rounded-2xl border border-gray-200 p-8 text-center">
-            <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="check-circle" class="w-8 h-8 text-green-500"></i>
-            </div>
-            <h2 class="text-xl font-bold text-gray-900 mb-2">Đã điểm danh!</h2>
-            <p class="text-sm text-gray-500 mb-4">Bạn đã điểm danh phiên này lúc {{
-                existing_record.checkin_time|date:"H:i d/m/Y" }}</p>
-
-            <div class="px-4 py-2 rounded-lg text-sm font-medium inline-flex items-center gap-2
-        {% if existing_record.status == 'VERIFIED' %}bg-green-100 text-green-700
-        {% elif existing_record.status == 'PENDING' %}bg-yellow-100 text-yellow-700
-        {% else %}bg-red-100 text-red-700{% endif %}">
+        <div class="bg-accent-teal border-4 border-black p-6 shadow-brutal text-center">
+            <span class="material-symbols-outlined text-[60px] text-black mix-blend-overlay">check_circle</span>
+            <h2 class="text-2xl font-black text-black uppercase mt-2 mb-2">ĐÃ ĐIỂM DANH!</h2>
+            <p class="text-sm font-bold mb-4 bg-white border-2 border-black p-2 inline-block shadow-brutal-sm">Lúc {{ existing_record.checkin_time|date:"H:i d/m/Y" }}</p>
+            
+            <div class="px-4 py-2 border-4 border-black font-black text-sm uppercase flex items-center justify-center gap-2
+            {% if existing_record.status == 'VERIFIED' %}bg-green-300 text-black
+            {% elif existing_record.status == 'PENDING' %}bg-accent-yellow text-black
+            {% else %}bg-accent-red text-white{% endif %}">
                 {% if existing_record.status == 'VERIFIED' %}
-                <i data-lucide="check" class="w-4 h-4"></i> Đã được xác nhận
+                <span class="material-symbols-outlined text-lg">verified</span> ĐÃ XÁC NHẬN
                 {% elif existing_record.status == 'PENDING' %}
-                <i data-lucide="clock" class="w-4 h-4"></i> Đang chờ cán bộ duyệt
+                <span class="material-symbols-outlined text-lg">pending</span> ĐANG CHỜ DUYỆT
                 {% else %}
-                <i data-lucide="x" class="w-4 h-4"></i> Bị từ chối
+                <span class="material-symbols-outlined text-lg">cancel</span> BỊ TỪ CHỐI
                 {% endif %}
             </div>
+            
+            <div class="mt-6 text-left">
+                <a href="{% url 'students:dashboard' %}" class="block bg-black text-white font-black uppercase text-center border-4 border-black py-3 shadow-brutal brutal-btn">
+                    VỀ TRANG CHỦ
+                </a>
+            </div>
         </div>
 
-        {% else %}
-        <!-- Check-in Form -->
-        {% if user.is_authenticated %}
-        <div class="bg-white rounded-2xl border border-gray-200 p-6">
-            <div class="flex items-center gap-3 mb-5 p-3 bg-primary-50 rounded-xl">
-                <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center">
-                    <span class="text-sm font-bold text-primary-600">{{ user.full_name|first }}</span>
+    {% elif not user.is_authenticated %}
+        <!-- Not logged in -->
+        <div class="bg-white border-4 border-black p-6 shadow-brutal text-center">
+            <span class="material-symbols-outlined text-[60px] text-black">lock</span>
+            <h2 class="text-xl font-black uppercase mt-2 mb-4">CẦN ĐĂNG NHẬP</h2>
+            <p class="text-sm font-bold mb-6">Xin vui lòng đăng nhập để điểm danh.</p>
+            <a href="{% url 'users:login' %}?next={% url 'attendance:checkin' token=session.qr_token %}" class="block bg-secondary text-white border-4 border-black py-4 font-black uppercase text-lg shadow-brutal brutal-btn">
+                ĐĂNG NHẬP NGAY
+            </a>
+        </div>
+        
+    {% elif now < session.start_time %}
+        <!-- Too early -->
+        <div class="bg-slate-200 border-4 border-black p-6 shadow-brutal text-center">
+            <span class="material-symbols-outlined text-[60px] text-slate-800">pending_actions</span>
+            <h2 class="text-2xl font-black uppercase mt-2 mb-2">CHƯA TỚI GIỜ</h2>
+            <p class="font-bold border-t-2 border-black pt-2 mt-2">Vui lòng chờ đến lúc {{ session.start_time|date:"H:i d/m/Y" }} để điểm danh.</p>
+            
+            <div class="mt-6">
+                <button onclick="window.location.reload()" class="w-full bg-white text-black font-black uppercase border-4 border-black py-3 shadow-brutal brutal-btn">
+                    TẢI LẠI TRANG
+                </button>
+            </div>
+        </div>
+
+    {% elif now > session.end_time %}
+        <!-- Too late -->
+        <div class="bg-accent-red text-white border-4 border-black p-6 shadow-brutal text-center">
+            <span class="material-symbols-outlined text-[60px] mix-blend-overlay">timer_off</span>
+            <h2 class="text-2xl font-black uppercase mt-2 mb-2">ĐÃ HẾT GIỜ</h2>
+            <p class="font-bold border-t-2 border-black border-dashed pt-2 mt-2">Phiên điểm danh đã kết thúc lúc {{ session.end_time|date:"H:i d/m/Y" }}.</p>
+            
+            <div class="mt-6">
+                <a href="{% url 'students:dashboard' %}" class="block bg-black text-white font-black uppercase border-4 border-black py-3 shadow-brutal brutal-btn">
+                    VỀ TRANG CHỦ
+                </a>
+            </div>
+        </div>
+
+    {% else %}
+        <!-- Ready to check-in form -->
+        <div class="bg-white border-4 border-black p-6 shadow-brutal">
+            <div class="flex items-center gap-3 mb-6 p-3 bg-accent-cyan border-2 border-black shadow-brutal-sm">
+                <div class="w-12 h-12 bg-black flex items-center justify-center border-2 border-black">
+                    <span class="text-xl font-black text-white">{{ user.full_name|first }}</span>
                 </div>
                 <div>
-                    <p class="text-sm font-medium text-gray-900">{{ user.full_name }}</p>
-                    <p class="text-xs text-gray-500">{{ user.username }}</p>
+                    <p class="text-sm font-black uppercase text-black break-all">{{ user.full_name }}</p>
+                    <p class="text-xs font-mono font-bold text-black border-t-2 border-black w-fit mt-1">{{ user.username }}</p>
                 </div>
             </div>
 
-            <form method="post" action="{% url 'attendance:checkin_submit' token=session.qr_token %}"
-                enctype="multipart/form-data" class="space-y-4">
+            <form method="post" action="{% url 'attendance:checkin_submit' token=session.qr_token %}" enctype="multipart/form-data" class="space-y-6">
                 {% csrf_token %}
 
                 {% if session.requires_photo %}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i data-lucide="camera" class="w-4 h-4 inline mr-1 text-blue-500"></i>
-                        Ảnh selfie minh chứng <span class="text-red-500">*</span>
+                    <label class="block text-sm font-black uppercase mb-2">
+                        <span class="material-symbols-outlined align-middle mr-1 text-primary">camera_alt</span>
+                        ẢNH MINH CHỨNG <span class="text-accent-red text-xl">*</span>
                     </label>
-                    <div
-                        class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-primary-400 transition">
-                        <input type="file" name="photo" accept="image/*" capture="user" id="photo_input" class="hidden"
-                            onchange="previewPhoto(this)">
-                        <label for="photo_input" class="cursor-pointer">
-                            <i data-lucide="upload-cloud" class="w-10 h-10 text-gray-400 mx-auto mb-2"></i>
-                            <p class="text-sm text-gray-600 font-medium">Chụp ảnh hoặc chọn từ thư viện</p>
-                            <p class="text-xs text-gray-400 mt-1">JPEG, PNG, WEBP</p>
-                        </label>
-                        <img id="photo_preview" src="#" alt="Preview"
-                            class="hidden mt-4 mx-auto rounded-xl max-h-48 object-cover">
+                    <div class="border-4 border-dashed border-black bg-bg-light p-6 text-center hover:bg-slate-200 transition-colors cursor-pointer group" onclick="document.getElementById('photo_input').click()">
+                        <input type="file" name="photo" accept="image/*" capture="user" id="photo_input" class="hidden" onchange="previewPhoto(this)" required>
+                        <span class="material-symbols-outlined text-[50px] text-slate-400 group-hover:text-black mb-2">add_a_photo</span>
+                        <p class="text-sm font-black uppercase text-black">BẤM ĐỂ CHỤP ẢNH</p>
+                        <img id="photo_preview" src="#" alt="Preview" class="hidden mt-4 mx-auto border-4 border-black shadow-brutal max-h-48 object-cover">
                     </div>
                 </div>
                 {% endif %}
 
-                <button type="submit"
-                    class="w-full py-3.5 rounded-xl text-white font-semibold gradient-bg hover:opacity-90 transition shadow-lg shadow-primary-500/25 text-sm flex items-center justify-center gap-2">
-                    <i data-lucide="scan-line" class="w-5 h-5"></i>
-                    Xác nhận điểm danh
+                <button type="submit" class="w-full py-4 bg-primary text-black border-4 border-black font-black uppercase text-xl shadow-brutal brutal-btn flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined font-black">qr_code_scanner</span>
+                    XÁC NHẬN ĐIỂM DANH
                 </button>
             </form>
         </div>
+    {% endif %}
+</div>
 
-        {% else %}
-        <!-- Not logged in -->
-        <div class="bg-white rounded-2xl border border-gray-200 p-8 text-center">
-            <i data-lucide="lock" class="w-12 h-12 text-gray-300 mx-auto mb-4"></i>
-            <h2 class="text-lg font-bold text-gray-900 mb-2">Cần đăng nhập</h2>
-            <p class="text-sm text-gray-500 mb-5">Vui lòng đăng nhập để điểm danh</p>
-            <a href="{% url 'users:login' %}?next={% url 'attendance:checkin' token=session.qr_token %}"
-                class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white gradient-bg hover:opacity-90 transition font-medium text-sm">
-                <i data-lucide="log-in" class="w-4 h-4"></i> Đăng nhập
-            </a>
-        </div>
-        {% endif %}
-        {% endif %}
-
-        <div class="mt-4 text-center text-xs text-gray-400">
-            Phiên: {{ session.start_time|date:"d/m/Y H:i" }} – {{ session.end_time|date:"H:i" }}
-        </div>
-    </main>
-
-    <script>
-        lucide.createIcons();
-        function previewPhoto(input) {
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = e => {
-                    const preview = document.getElementById('photo_preview');
-                    preview.src = e.target.result;
-                    preview.classList.remove('hidden');
-                };
-                reader.readAsDataURL(input.files[0]);
-            }
+<script>
+    function previewPhoto(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => {
+                const preview = document.getElementById('photo_preview');
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(input.files[0]);
         }
-    </script>
-</body>
-
-</html>
+    }
+</script>
+{% endblock %}

@@ -86,8 +86,8 @@
             <div class="bg-white border-4 border-black p-6 shadow-brutal-lg flex items-center justify-between">
                 <div>
                     <p class="text-slate-500 font-black uppercase mb-1">THỜI GIAN</p>
-                    <p class="text-4xl font-black font-mono text-primary">{{ session.start_time|date:"H:i" }} - {{ session.end_time|date:"H:i" }}</p>
-                    <p class="text-xl font-bold mt-1 text-black">{{ session.start_time|date:"d/m/Y" }}</p>
+                    <p class="text-2xl font-black font-mono text-primary">{{ session.start_time|date:"H:i d/m/Y" }}</p>
+                    <p class="text-2xl font-black font-mono text-primary mt-1">{{ session.end_time|date:"H:i d/m/Y" }}</p>
                 </div>
                 
                 {% if session.requires_photo %}
@@ -106,10 +106,22 @@
         <div class="flex-[1.5] w-full flex flex-col justify-center items-center">
             <div class="bg-white border-8 border-black p-4 shadow-brutal-lg w-full max-w-2xl relative group">
                 <!-- Status tag -->
+                {% if now < session.start_time %}
+                <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-slate-300 text-slate-800 border-4 border-black px-6 py-2 shadow-brutal font-black text-xl uppercase flex items-center z-10 whitespace-nowrap">
+                    <span class="w-4 h-4 bg-slate-500 rounded-full border-2 border-black mr-3"></span>
+                    CHƯA BẮT ĐẦU ĐIỂM DANH
+                </div>
+                {% elif now > session.end_time %}
+                <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-accent-red text-white border-4 border-black px-6 py-2 shadow-brutal font-black text-xl uppercase flex items-center z-10 whitespace-nowrap">
+                    <span class="w-4 h-4 bg-red-900 rounded-full border-2 border-black mr-3"></span>
+                    ĐÃ KẾT THÚC ĐIỂM DANH
+                </div>
+                {% else %}
                 <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-accent-yellow border-4 border-black px-6 py-2 shadow-brutal font-black text-xl uppercase flex items-center z-10 whitespace-nowrap">
                     <span class="w-4 h-4 bg-green-500 rounded-full border-2 border-black mr-3 animate-pulse"></span>
                     PHIÊN ĐANG MỞ
                 </div>
+                {% endif %}
                 
                 <!-- The QR -->
                 <div class="aspect-square w-full pb-[100%] relative bg-white overflow-hidden">

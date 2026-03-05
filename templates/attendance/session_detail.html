@@ -23,7 +23,7 @@
                 {% endif %}
 
                 <p class="text-xl font-black uppercase">{{ session.name }}</p>
-                <p class="text-primary text-lg font-black">{{ session.start_time|date:"H:i" }} — {{ session.end_time|date:"H:i" }}</p>
+                <p class="text-primary text-lg font-black">{{ session.start_time|date:"H:i d/m/Y" }} — {{ session.end_time|date:"H:i d/m/Y" }}</p>
                 <p class="text-xs bg-black text-white px-3 py-1 mt-3 font-black uppercase">{{ session.activity.title }}</p>
             </div>
 
@@ -91,7 +91,7 @@
                                 </td>
                                 <td class="p-4 border-r-2 border-black font-black uppercase">{{
                                     rec.student.full_name|default:"—" }}</td>
-                                <td class="p-4 border-r-2 border-black text-sm font-bold">{{ rec.checkin_time|date:"H:i"
+                                <td class="p-4 border-r-2 border-black text-sm font-bold">{{ rec.checkin_time|date:"H:i d/m/Y"
                                     }}</td>
                                 <td class="p-4 border-r-2 border-black">
                                     {% if rec.photo_path %}

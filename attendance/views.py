@@ -100,6 +100,7 @@ def session_detail(request, pk):
         'approved_count': records.filter(status='VERIFIED').count(),
         'pending_count': records.filter(status='PENDING').count(),
         'rejected_count': records.filter(status='REJECTED').count(),
+        'now': timezone.now(),
     }
     return render(request, 'attendance/session_detail.html', context)
 
@@ -118,6 +119,7 @@ def session_qr(request, pk):
         'session': session,
         'qr_data': qr_data,
         'checkin_url': checkin_url,
+        'now': timezone.now(),
     })
 
 
@@ -156,6 +158,7 @@ def checkin_view(request, token):
     return render(request, 'attendance/checkin.html', {
         'session': session,
         'existing_record': existing,
+        'now': timezone.now(),
     })
 
 
@@ -169,6 +172,14 @@ def checkin_submit(request, token):
         return redirect('attendance:sessions')
 
     if request.method == 'POST':
+        now = timezone.now()
+        if now < session.start_time:
+            messages.error(request, 'Chưa tới giờ điểm danh.')
+            return redirect('attendance:checkin', token=token)
+        if now > session.end_time:
+            messages.error(request, 'Đã quá giờ điểm danh.')
+            return redirect('attendance:checkin', token=token)
+
         # Prevent duplicate
         if AttendanceRecord.objects.filter(
             attendance_session=session, student=request.user
