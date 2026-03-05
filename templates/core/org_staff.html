@@ -44,6 +44,9 @@
                             <div>
                                 <p class="font-black uppercase text-sm">{{ member.user.full_name }}</p>
                                 <p class="text-xs text-slate-500 font-bold">
+                                    {% if member.user.role == 'STUDENT' %}
+                                        {{ member.user.student_profile.student_code|default:"Chưa có MSSV" }} &middot; 
+                                    {% endif %}
                                     {{ member.position }}
                                     <span class="ml-1 bg-primary text-white px-1 py-0.5 text-[10px] font-black uppercase">CÁN BỘ</span>
                                 </p>
@@ -101,7 +104,12 @@
                             </div>
                             <div>
                                 <p class="font-bold text-sm">{{ member.user.full_name }}</p>
-                                <p class="text-xs text-slate-400 font-bold">{{ member.position }} · {{ member.user.email }}</p>
+                                <p class="text-xs text-slate-400 font-bold">
+                                    {% if member.user.role == 'STUDENT' %}
+                                        {{ member.user.student_profile.student_code|default:"Chưa có MSSV" }} &middot; 
+                                    {% endif %}
+                                    {{ member.position }} &middot; {{ member.user.email }}
+                                </p>
                             </div>
                         </div>
                         <form method="post" class="inline">
@@ -131,7 +139,7 @@
         <div class="space-y-4">
 
             <!-- ── Panel 1: Thêm Cán bộ ── -->
-            <div class="bg-white border-3 border-black shadow-brutal sticky top-4">
+            <div class="bg-white border-3 border-black shadow-brutal">
                 <div class="p-4 border-b-3 border-black bg-bg-light">
                     <h2 class="font-black uppercase flex items-center gap-2">
                         <span class="material-symbols-outlined text-sm">shield_person</span>

@@ -114,7 +114,12 @@
                         <!-- Name -->
                         <td class="p-4 border-r-2 border-black">
                             <p class="font-black uppercase text-sm">{{ u.full_name }}</p>
-                            <p class="text-xs text-slate-500">@{{ u.username }}</p>
+                            <p class="text-xs text-slate-500 font-bold">
+                                {% if u.role == 'STUDENT' %}
+                                    {{ u.student_profile.student_code|default:"Chưa có MSSV" }} &middot; 
+                                {% endif %}
+                                @{{ u.username }}
+                            </p>
                         </td>
                         <!-- Email -->
                         <td class="p-4 border-r-2 border-black text-sm font-bold text-slate-600">{{ u.email }}</td>
