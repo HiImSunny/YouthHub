@@ -1,7 +1,61 @@
-{% extends 'base_student.html' %}
-{% block title %}ĐIỂM DANH - {{ session.name|upper }}{% endblock %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ĐIỂM DANH - {{ session.name|upper }}</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Bricolage Grotesque"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    colors: {
+                        primary: '#FF6B00',
+                        secondary: '#4F46E5',
+                        'bg-light': '#FDFBF7',
+                        'accent-yellow': '#FFD800',
+                        'accent-cyan': '#00F0FF',
+                        'accent-pink': '#FF00E5',
+                        'accent-red': '#E53E3E',
+                        'accent-teal': '#38B2AC',
+                    },
+                    boxShadow: {
+                        'brutal': '8px 8px 0px 0px rgba(0,0,0,1)',
+                        'brutal-sm': '4px 4px 0px 0px rgba(0,0,0,1)',
+                    },
+                    borderWidth: {
+                        '3': '3px',
+                        '4': '4px',
+                        '8': '8px',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #FDFBF7;
+            background-image: radial-gradient(#d1d5db 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .brutal-btn:active {
+            transform: translate(4px, 4px);
+            box-shadow: 0px 0px 0px 0px rgba(0,0,0,1);
+        }
+    </style>
+</head>
 
-{% block content %}
+<body class="min-h-screen py-8">
 <div class="max-w-md mx-auto p-4 w-full">
     <!-- Header -->
     <div class="bg-black text-white px-4 py-3 border-4 border-black font-black uppercase tracking-wider text-xl shadow-brutal flex items-center mb-6">
@@ -69,7 +123,7 @@
             <span class="material-symbols-outlined text-[60px] text-black">lock</span>
             <h2 class="text-xl font-black uppercase mt-2 mb-4">CẦN ĐĂNG NHẬP</h2>
             <p class="text-sm font-bold mb-6">Xin vui lòng đăng nhập để điểm danh.</p>
-            <a href="{% url 'users:login' %}?next={% url 'attendance:checkin' token=session.qr_token %}" class="block bg-secondary text-white border-4 border-black py-4 font-black uppercase text-lg shadow-brutal brutal-btn">
+            <a href="{% url 'users:login' %}?next={% url 'attendance:checkin' token=session.qr_token %}" class="block bg-secondary text-white border-4 border-black py-4 font-black uppercase text-center text-lg shadow-brutal brutal-btn">
                 ĐĂNG NHẬP NGAY
             </a>
         </div>
@@ -96,7 +150,7 @@
             <p class="font-bold border-t-2 border-black border-dashed pt-2 mt-2">Phiên điểm danh đã kết thúc lúc {{ session.end_time|date:"H:i d/m/Y" }}.</p>
             
             <div class="mt-6">
-                <a href="{% url 'students:dashboard' %}" class="block bg-black text-white font-black uppercase border-4 border-black py-3 shadow-brutal brutal-btn">
+                <a href="{% url 'students:dashboard' %}" class="block bg-black text-white font-black uppercase text-center border-4 border-black py-3 shadow-brutal brutal-btn">
                     VỀ TRANG CHỦ
                 </a>
             </div>
@@ -133,7 +187,7 @@
                 </div>
                 {% endif %}
 
-                <button type="submit" class="w-full py-4 bg-primary text-black border-4 border-black font-black uppercase text-xl shadow-brutal brutal-btn flex items-center justify-center gap-2">
+                <button type="submit" class="w-full py-4 bg-primary text-black border-4 border-black font-black uppercase text-xl shadow-brutal brutal-btn flex items-center justify-center gap-2 transition-transform">
                     <span class="material-symbols-outlined font-black">qr_code_scanner</span>
                     XÁC NHẬN ĐIỂM DANH
                 </button>
@@ -155,4 +209,5 @@
         }
     }
 </script>
-{% endblock %}
+</body>
+</html>
