@@ -243,3 +243,20 @@ def user_change_role(request, pk):
             messages.error(request, 'Role khong hop le.')
 
     return redirect('users:management')
+
+@login_required
+def user_detail_view(request, pk):
+    """View details of a specific user. Available to STAFF and ADMIN."""
+    # Strict role check: STUDENTs generally shouldn't view arbitrary profiles
+    if request.user.role not in ['ADMIN', 'STAFF']:
+        messages.error(request, 'Bạn không có quyền xem thông tin người dùng khác.')
+        return redirect('students:dashboard' if request.user.role == 'STUDENT' else 'core:dashboard')
+
+    target_user = get_object_or_404(User, pk=pk)
+    memberships = target_user.memberships.select_related('organization').all()
+    
+    context = {
+        'target_user': target_user,
+        'memberships': memberships,
+    }
+    return render(request, 'users/user_detail.html', context)

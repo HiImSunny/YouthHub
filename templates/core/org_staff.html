@@ -42,7 +42,9 @@
                                 {{ member.user.full_name|first|upper }}
                             </div>
                             <div>
-                                <p class="font-black uppercase text-sm">{{ member.user.full_name }}</p>
+                                <a href="{% url 'users:user_detail' pk=member.user.pk %}" class="font-black uppercase text-sm hover:text-primary transition-colors hover:underline" title="Xem chi tiết">
+                                    {{ member.user.full_name }} <span class="material-symbols-outlined text-[12px] align-middle">open_in_new</span>
+                                </a>
                                 <p class="text-xs text-slate-500 font-bold">
                                     {% if member.user.role == 'STUDENT' %}
                                         {{ member.user.student_profile.student_code|default:"Chưa có MSSV" }} &middot; 
@@ -103,7 +105,9 @@
                                 {{ member.user.full_name|first|upper }}
                             </div>
                             <div>
-                                <p class="font-bold text-sm">{{ member.user.full_name }}</p>
+                                <a href="{% url 'users:user_detail' pk=member.user.pk %}" class="font-bold text-sm hover:text-accent-teal transition-colors hover:underline" title="Xem chi tiết">
+                                    {{ member.user.full_name }} <span class="material-symbols-outlined text-[10px] align-middle">open_in_new</span>
+                                </a>
                                 <p class="text-xs text-slate-400 font-bold">
                                     {% if member.user.role == 'STUDENT' %}
                                         {{ member.user.student_profile.student_code|default:"Chưa có MSSV" }} &middot; 

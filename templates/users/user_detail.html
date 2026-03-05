@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block title %}CHI TIẾT: {{ target_user.full_name|upper }} — YOUTHHUB{% endblock %}
+
+{% block breadcrumb %}
+<span class="font-black uppercase text-sm">👥 Người dùng / {{ target_user.full_name }}</span>
+{% endblock %}
+
+{% block content %}
+<div>
+    <!-- Header/Hero -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+            <h1 class="text-5xl font-black uppercase tracking-tighter leading-none mb-2">{{ target_user.full_name }}</h1>
+            <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">
+                @{{ target_user.username }}  — 
+                {% if target_user.role == 'ADMIN' %}QUẢN TRỊ VIÊN
+                {% elif target_user.role == 'STAFF' %}CÁN BỘ ĐOÀN - HỘI
+                {% else %}SINH VIÊN{% endif %}
+            </p>
+        </div>
+        <div class="flex gap-2">
+            <!-- Go Back Button -->
+            <button onclick="window.history.back()"
+                class="bg-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm">arrow_back</span>
+                QUAY LẠI
+            </button>
+            
+            <!-- Quick View Roles Tag -->
+            <span class="bg-{% if target_user.status == 'ACTIVE' %}accent-teal{% else %}accent-red{% endif %} text-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm flex items-center justify-center">
+                {{ target_user.get_status_display }}
+            </span>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Left Column: User Profile Info -->
+        <div class="lg:col-span-1 space-y-6">
+            
+            <!-- Card 1: Account Info -->
+            <div class="bg-white border-3 border-black shadow-brutal">
+                <div class="p-4 border-b-3 border-black bg-zinc-900 text-white">
+                    <h2 class="font-black uppercase flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">person</span>
+                        TÀI KHOẢN
+                    </h2>
+                </div>
+                <div class="p-5 space-y-4">
+                    <div class="flex justify-center mb-6">
+                        <div class="w-24 h-24 border-3 border-black flex items-center justify-center text-4xl font-black text-white
+                            {% if target_user.role == 'ADMIN' %}bg-zinc-900{% elif target_user.role == 'STAFF' %}bg-primary{% else %}bg-accent-teal{% endif %}">
+                            {{ target_user.full_name|first|upper }}
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase text-slate-500 mb-1">EMAIL LIÊN HỆ</p>
+                        <p class="font-bold text-sm bg-bg-light p-2 border-2 border-slate-200">{{ target_user.email }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase text-slate-500 mb-1">SỐ ĐIỆN THOẠI</p>
+                        <p class="font-bold text-sm bg-bg-light p-2 border-2 border-slate-200">{{ target_user.phone|default:"Chưa cập nhật" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase text-slate-500 mb-1">NGÀY THAM GIA</p>
+                        <p class="font-bold text-sm bg-bg-light p-2 border-2 border-slate-200">{{ target_user.created_at|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card 2: Student Profile (if applicable) -->
+            {% if target_user.role == 'STUDENT' %}
+            <div class="bg-white border-3 border-black shadow-brutal">
+                <div class="p-4 border-b-3 border-black bg-accent-yellow">
+                    <h2 class="font-black uppercase flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">school</span>
+                        HỒ SƠ SINH VIÊN
+                    </h2>
+                </div>
+                <div class="p-5 space-y-4">
+                    {% if target_user.student_profile %}
+                    <div>
+                        <p class="text-[10px] font-black uppercase text-slate-500 mb-1">MÃ SỐ SINH VIÊN (MSSV)</p>
+                        <p class="font-black text-lg bg-bg-light p-2 border-2 border-slate-200 text-primary">{{ target_user.student_profile.student_code }}</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase text-slate-500 mb-1">KHOA TRỰC THUỘC</p>
+                        <p class="font-bold text-sm bg-bg-light p-2 border-2 border-slate-200">{{ target_user.student_profile.faculty }}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <p class="text-[10px] font-black uppercase text-slate-500 mb-1">LỚP</p>
+                            <p class="font-bold text-sm bg-bg-light p-2 border-2 border-slate-200">{{ target_user.student_profile.class_name|default:"—" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black uppercase text-slate-500 mb-1">KHÓA</p>
+                            <p class="font-bold text-sm bg-bg-light p-2 border-2 border-slate-200">{{ target_user.student_profile.course_year|default:"—" }}</p>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <span class="material-symbols-outlined text-4xl text-slate-300 block mb-2">error</span>
+                        <p class="font-black uppercase text-slate-400 text-sm">HỒ SƠBỊ THIẾU</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- Right Column: Organizations -->
+        <div class="lg:col-span-2">
+            
+            <div class="bg-white border-3 border-black shadow-brutal h-full">
+                <div class="p-4 border-b-3 border-black bg-bg-light flex items-center justify-between">
+                    <h2 class="font-black uppercase flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">diversity_3</span>
+                        TỔ CHỨC ĐANG THAM GIA
+                    </h2>
+                    <span class="bg-black text-white px-2 py-1 text-xs font-black uppercase">{{ memberships.count }} TỔ CHỨC</span>
+                </div>
+                
+                {% if memberships %}
+                <div class="divide-y-2 divide-black">
+                    {% for membership in memberships %}
+                    <div class="p-5 flex items-start gap-4 hover:bg-slate-50 transition-colors">
+                        <div class="w-12 h-12 border-3 border-black shrink-0 flex items-center justify-center font-black text-xl bg-white shadow-brutal-sm">
+                            {{ membership.organization.name|first|upper }}
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-black uppercase text-lg leading-tight mb-1">
+                                <a href="{% url 'core:org_staff' pk=membership.organization.pk %}" class="hover:text-primary transition-colors hover:underline">
+                                    {{ membership.organization.name }}
+                                </a>
+                            </h3>
+                            <p class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">
+                                CẤP: {{ membership.organization.get_type_display }}
+                            </p>
+                            <div class="flex items-center gap-2">
+                                <span class="border-2 border-black px-2 py-1 text-[10px] font-black uppercase bg-bg-light inline-block shadow-sm">
+                                    CHỨC VỤ: {{ membership.position }}
+                                </span>
+                                {% if membership.is_officer %}
+                                <span class="bg-primary text-white border-2 border-black px-2 py-1 text-[10px] font-black uppercase inline-block shadow-sm">
+                                    CÁN BỘ QUẢN LÝ 🛡
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <p class="text-[10px] font-black uppercase text-slate-400 mb-1">NGÀY VÀO</p>
+                            <p class="font-bold text-sm">{{ membership.joined_at|date:"d/m/Y" }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="flex flex-col items-center justify-center h-64 text-center p-8">
+                    <span class="material-symbols-outlined text-6xl text-slate-300 block mb-4">group_off</span>
+                    <p class="font-black uppercase text-slate-400">CHƯA THAM GIA TỔ CHỨC NÀO</p>
+                    <p class="text-sm font-bold text-slate-400 mt-2">Người dùng này chưa được thêm vào tổ chức Đoàn - Hội nào trong hệ thống.</p>
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

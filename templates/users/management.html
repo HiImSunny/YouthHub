@@ -113,7 +113,9 @@
                         </td>
                         <!-- Name -->
                         <td class="p-4 border-r-2 border-black">
-                            <p class="font-black uppercase text-sm">{{ u.full_name }}</p>
+                            <a href="{% url 'users:user_detail' pk=u.pk %}" class="font-black uppercase text-sm hover:text-primary transition-colors hover:underline" title="Xem chi tiết">
+                                {{ u.full_name }} <span class="material-symbols-outlined text-[12px] align-middle">open_in_new</span>
+                            </a>
                             <p class="text-xs text-slate-500 font-bold">
                                 {% if u.role == 'STUDENT' %}
                                     {{ u.student_profile.student_code|default:"Chưa có MSSV" }} &middot; 
