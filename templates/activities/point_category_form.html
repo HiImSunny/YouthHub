@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+{% block title %}{% if is_edit %}✏️ SỬA DANH MỤC ĐIỂM{% else %}➕ TẠO DANH MỤC ĐIỂM{% endif %} — YOUTHHUB{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'activities:point_category_list' %}"
+    class="bg-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
+    <span class="material-symbols-outlined text-lg">arrow_back</span> QUAY LẠI
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Hero -->
+    <div class="mb-8">
+        <h1 class="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-2">
+            {% if is_edit %}✏️ SỬA DANH MỤC{% else %}➕ TẠO DANH MỤC{% endif %}
+        </h1>
+        <p
+            class="text-sm font-bold uppercase bg-accent-yellow text-black inline-block px-4 py-1 border-3 border-black shadow-brutal">
+            {% if is_edit %}CẬP NHẬT THÔNG TIN DANH MỤC ĐIỂM{% else %}THÊM DANH MỤC ĐIỂM RÈN LUYỆN MỚI{% endif %}
+        </p>
+    </div>
+
+    <!-- Info box for edit: org is locked -->
+    {% if is_edit %}
+    <div class="bg-slate-100 border-3 border-black p-4 mb-6 flex items-start gap-3 shadow-brutal-sm">
+        <span class="material-symbols-outlined text-slate-500 mt-0.5">lock</span>
+        <div>
+            <p class="font-black uppercase text-sm">Tổ chức không thể thay đổi</p>
+            <p class="text-sm text-slate-600 font-bold">
+                Danh mục này thuộc về:
+                <span class="bg-black text-white px-2 py-0.5 text-xs font-black uppercase ml-1">{{ pc.organization.name
+                    }}</span>
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Form -->
+    <form method="post" id="point-category-form" class="bg-white border-3 border-black shadow-brutal-lg">
+
+        {% csrf_token %}
+
+        <!-- Form header -->
+        <div class="p-5 border-b-3 border-black bg-bg-light flex items-center gap-3">
+            <span class="material-symbols-outlined text-2xl text-primary">category</span>
+            <h2 class="font-black uppercase text-lg">THÔNG TIN DANH MỤC</h2>
+        </div>
+
+        <div class="p-6 space-y-6">
+
+            <!-- Organization (only shown when creating or if admin) -->
+            {% if not is_edit %}
+            <div>
+                <label for="id_organization" class="block text-xs font-black uppercase tracking-widest mb-2">
+                    TỔ CHỨC <span class="text-red-500">*</span>
+                </label>
+                {% if manageable_orgs|length == 1 %}
+                <!-- Staff with single org: show readonly display + hidden input -->
+                <div
+                    class="w-full border-3 border-black bg-slate-100 px-4 py-4 font-bold uppercase text-sm flex items-center gap-2">
+                    <span class="material-symbols-outlined text-base text-slate-500">domain</span>
+                    {{ manageable_orgs.0.name }}
+                </div>
+                <input type="hidden" name="organization" value="{{ manageable_orgs.0.pk }}">
+                {% else %}
+                <select name="organization" id="id_organization" required
+                    class="w-full border-3 border-black bg-white py-4 px-4 font-bold uppercase text-sm focus:ring-0 focus:outline-none appearance-none">
+                    <option value="">— CHỌN TỔ CHỨC —</option>
+                    {% for org in manageable_orgs %}
+                    <option value="{{ org.pk }}" {% if POST.organization==org.pk|stringformat:"s" %}selected{% endif %}>
+                        {{ org.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+                <p class="text-xs text-slate-500 font-bold mt-1 uppercase">
+                    Danh mục điểm sẽ áp dụng cho toàn bộ tổ chức và các đơn vị trực thuộc.
+                </p>
+            </div>
+            {% endif %}
+
+            <!-- Code -->
+            <div>
+                <label for="id_code" class="block text-xs font-black uppercase tracking-widest mb-2">
+                    MÃ DANH MỤC <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="code" id="id_code" required
+                    value="{% if is_edit %}{{ pc.code }}{% else %}{{ POST.code }}{% endif %}"
+                    placeholder="VD: CTXH, VHVN, TDTT..." maxlength="50"
+                    class="w-full border-3 border-black bg-white px-4 py-4 font-black uppercase text-sm tracking-widest focus:ring-0 focus:outline-none placeholder:text-slate-300 placeholder:font-bold"
+                    style="text-transform: uppercase;">
+                <p class="text-xs text-slate-500 font-bold mt-1 uppercase">
+                    Mã ngắn gọn, viết hoa. Ví dụ: CTXH (Công tác xã hội), VHVN (Văn hóa văn nghệ).
+                </p>
+            </div>
+
+            <!-- Name -->
+            <div>
+                <label for="id_name" class="block text-xs font-black uppercase tracking-widest mb-2">
+                    TÊN DANH MỤC <span class="text-red-500">*</span>
+                </label>
+                <input type="text" name="name" id="id_name" required
+                    value="{% if is_edit %}{{ pc.name }}{% else %}{{ POST.name }}{% endif %}"
+                    placeholder="VD: Hoạt động công tác xã hội" maxlength="255"
+                    class="w-full border-3 border-black bg-white px-4 py-4 font-bold text-sm focus:ring-0 focus:outline-none placeholder:text-slate-300">
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label for="id_description" class="block text-xs font-black uppercase tracking-widest mb-2">
+                    MÔ TẢ (tùy chọn)
+                </label>
+                <textarea name="description" id="id_description" rows="3"
+                    placeholder="Mô tả ngắn về loại điểm rèn luyện này..."
+                    class="w-full border-3 border-black bg-white px-4 py-3 text-sm font-bold focus:ring-0 focus:outline-none placeholder:text-slate-300 resize-none">{% if is_edit %}{{ pc.description|default:"" }}{% else %}{{ POST.description }}{% endif %}</textarea>
+            </div>
+
+            <!-- Is Active toggle -->
+            <div class="border-3 border-black p-4 bg-bg-light flex items-center justify-between">
+                <div>
+                    <p class="font-black uppercase text-sm">KÍCH HOẠT</p>
+                    <p class="text-xs text-slate-500 font-bold uppercase mt-0.5">
+                        Tắt sẽ ẩn khỏi form tạo hoạt động mới
+                    </p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" name="is_active" id="id_is_active" class="sr-only peer" {% if is_edit %}{% if
+                        pc.is_active %}checked{% endif %}{% else %}checked{% endif %}>
+                    <div class="w-14 h-7 bg-slate-200 border-3 border-black peer-checked:bg-primary transition-all relative
+                                after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-2
+                                after:border-black after:w-5 after:h-5 after:transition-all
+                                peer-checked:after:translate-x-7"></div>
+                </label>
+            </div>
+
+        </div><!-- /p-6 -->
+
+        <!-- Form actions -->
+        <div class="p-5 border-t-3 border-black bg-bg-light flex items-center gap-3">
+            <button type="submit" id="btn-submit-form"
+                class="bg-primary text-white border-3 border-black px-8 py-3 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined">save</span>
+                {% if is_edit %}CẬP NHẬT{% else %}TẠO DANH MỤC{% endif %}
+            </button>
+            <a href="{% url 'activities:point_category_list' %}"
+                class="bg-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal-sm brutal-btn transition-all">
+                HỦY
+            </a>
+        </div>
+
+    </form>
+
+    <!-- Preview box -->
+    <div class="mt-6 bg-white border-3 border-black p-5 shadow-brutal">
+        <p class="text-xs font-black uppercase tracking-widest text-slate-500 mb-3">XEM TRƯỚC BADGE</p>
+        <div class="flex items-center gap-3">
+            <span id="preview-code"
+                class="bg-accent-yellow border-2 border-black px-3 py-1 text-sm font-black uppercase tracking-wider">
+                {% if is_edit %}{{ pc.code }}{% else %}CODE{% endif %}
+            </span>
+            <span id="preview-name" class="font-bold text-sm uppercase">
+                {% if is_edit %}{{ pc.name }}{% else %}Tên danh mục{% endif %}
+            </span>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Live preview as user types
+    document.getElementById('id_code')?.addEventListener('input', function () {
+        const val = this.value.toUpperCase() || 'CODE';
+        document.getElementById('preview-code').textContent = val;
+        this.value = val;
+    });
+    document.getElementById('id_name')?.addEventListener('input', function () {
+        document.getElementById('preview-name').textContent = this.value || 'Tên danh mục';
+    });
+</script>
+{% endblock %}

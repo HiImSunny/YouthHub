@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}🗑️ XÓA DANH MỤC ĐIỂM — YOUTHHUB{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'activities:point_category_list' %}"
+    class="bg-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
+    <span class="material-symbols-outlined text-lg">arrow_back</span> QUAY LẠI
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+
+    <!-- Hero -->
+    <div class="mb-8">
+        <h1 class="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-2">
+            🗑️ XÓA DANH MỤC
+        </h1>
+        <p
+            class="text-sm font-bold uppercase bg-red-100 text-red-700 border-3 border-black px-4 py-1 inline-block shadow-brutal">
+            XÁC NHẬN THAO TÁC KHÔNG THỂ HOÀN TÁC
+        </p>
+    </div>
+
+    <!-- Target category info -->
+    <div class="bg-white border-3 border-black p-6 mb-6 shadow-brutal flex items-start gap-4">
+        <div class="w-14 h-14 bg-accent-yellow border-3 border-black flex items-center justify-center flex-shrink-0">
+            <span class="material-symbols-outlined text-3xl">category</span>
+        </div>
+        <div class="flex-1">
+            <div class="flex items-center gap-3 mb-1 flex-wrap">
+                <span
+                    class="bg-accent-yellow border-2 border-black px-3 py-1 text-sm font-black uppercase tracking-wider">
+                    {{ pc.code }}
+                </span>
+                <span class="font-black uppercase text-lg">{{ pc.name }}</span>
+            </div>
+            <p class="text-sm text-slate-600 font-bold uppercase">
+                <span class="material-symbols-outlined text-sm align-text-bottom mr-1">domain</span>
+                {{ pc.organization.name }}
+            </p>
+            {% if pc.description %}
+            <p class="text-sm text-slate-500 mt-1">{{ pc.description }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if in_use %}
+    <!-- Soft delete warning -->
+    <div class="bg-amber-50 border-3 border-amber-400 p-5 mb-6 shadow-brutal flex gap-4">
+        <span class="material-symbols-outlined text-amber-600 text-3xl flex-shrink-0 mt-0.5">warning</span>
+        <div>
+            <p class="font-black uppercase text-amber-800 text-sm mb-1">⚠ DANH MỤC ĐANG ĐƯỢC SỬ DỤNG</p>
+            <p class="text-sm text-amber-700 font-bold mb-2">
+                Danh mục này đang được liên kết với
+                <strong>{{ activity_count }} hoạt động</strong>.
+                Để bảo vệ dữ liệu lịch sử, hệ thống sẽ <strong>ẨN</strong> danh mục thay vì xóa hoàn toàn.
+            </p>
+            <ul class="text-xs text-amber-700 font-bold uppercase space-y-1 list-none">
+                <li class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm text-green-600">check</span>
+                    Các hoạt động cũ vẫn giữ liên kết với danh mục này
+                </li>
+                <li class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm text-red-500">close</span>
+                    Danh mục sẽ không còn hiện trong form tạo hoạt động mới
+                </li>
+            </ul>
+        </div>
+    </div>
+    {% else %}
+    <!-- Hard delete warning -->
+    <div class="bg-red-50 border-3 border-red-400 p-5 mb-6 shadow-brutal flex gap-4">
+        <span class="material-symbols-outlined text-red-600 text-3xl flex-shrink-0 mt-0.5">delete_forever</span>
+        <div>
+            <p class="font-black uppercase text-red-800 text-sm mb-1">🔴 XÓA HOÀN TOÀN</p>
+            <p class="text-sm text-red-700 font-bold">
+                Danh mục này chưa được dùng bởi hoạt động nào.
+                Xác nhận sẽ xóa <strong>vĩnh viễn</strong> khỏi hệ thống.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Confirm form -->
+    <form method="post" id="form-confirm-delete">
+        {% csrf_token %}
+        <div class="bg-white border-3 border-black p-5 shadow-brutal flex flex-col sm:flex-row gap-3">
+            <button type="submit" id="btn-confirm-delete"
+                class="flex-1 {% if in_use %}bg-amber-500{% else %}bg-red-500{% endif %} text-white border-3 border-black py-4 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2 text-lg">
+                <span class="material-symbols-outlined">{% if in_use %}visibility_off{% else %}delete_forever{% endif
+                    %}</span>
+                {% if in_use %}ẨN DANH MỤC{% else %}XÓA VĨNH VIỄN{% endif %}
+            </button>
+            <a href="{% url 'activities:point_category_list' %}"
+                class="flex-1 bg-white border-3 border-black py-4 font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center justify-center gap-2 text-lg">
+                <span class="material-symbols-outlined">cancel</span>
+                HỦY BỎ
+            </a>
+        </div>
+    </form>
+
+</div>
+{% endblock %}

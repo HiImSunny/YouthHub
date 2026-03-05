@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% block title %}💎 DANH MỤC ĐIỂM — YOUTHHUB{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'activities:point_category_create' %}" id="btn-create-point-category"
+    class="bg-primary text-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
+    <span class="material-symbols-outlined text-lg">add</span> THÊM MỚI
+</a>
+{% endblock %}
+
+{% block content %}
+<div>
+    <!-- Hero -->
+    <div class="mb-8">
+        <h1 class="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-2">💎 DANH MỤC ĐIỂM</h1>
+        <p
+            class="text-sm font-bold uppercase bg-accent-yellow text-black inline-block px-4 py-1 border-3 border-black shadow-brutal">
+            QUẢN LÝ MỤC ĐIỂM RÈN LUYỆN THEO TỔ CHỨC</p>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="bg-white border-3 border-black p-6 mb-8 shadow-brutal-lg">
+        <form method="get" class="flex flex-col lg:flex-row gap-4 items-stretch">
+            <!-- Search -->
+            <div class="flex-1 relative">
+                <span
+                    class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">search</span>
+                <input type="text" name="q" value="{{ search_query }}" id="search-point-category"
+                    class="w-full pl-12 pr-4 py-4 border-3 border-black bg-white text-sm font-bold uppercase placeholder:text-slate-400 focus:ring-0 focus:outline-none"
+                    placeholder="TÌM MÃ HOẶC TÊN DANH MỤC...">
+            </div>
+
+            <!-- Admin: filter by org -->
+            {% if is_admin %}
+            <select name="org" id="filter-org"
+                class="border-3 border-black bg-white py-4 px-4 font-bold uppercase text-sm focus:ring-0">
+                <option value="">TẤT CẢ TỔ CHỨC</option>
+                {% for org in manageable_orgs %}
+                <option value="{{ org.pk }}" {% if selected_org_id==org.pk|stringformat:"s" %}selected{% endif %}>
+                    {{ org.name }}
+                </option>
+                {% endfor %}
+            </select>
+            {% endif %}
+
+            <button type="submit"
+                class="bg-primary text-white border-3 border-black font-black uppercase py-4 px-8 shadow-brutal brutal-btn transition-all">
+                LỌC
+            </button>
+            {% if search_query or selected_org_id %}
+            <a href="{% url 'activities:point_category_list' %}"
+                class="bg-white border-3 border-black font-black uppercase py-4 px-6 shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
+                <span class="material-symbols-outlined text-base">close</span> XÓA LỌC
+            </a>
+            {% endif %}
+        </form>
+    </div>
+
+    <!-- Stats strip -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white border-3 border-black p-4 shadow-brutal flex items-center gap-3">
+            <span class="material-symbols-outlined text-3xl text-primary">category</span>
+            <div>
+                <p class="text-xs font-black uppercase text-slate-500">TỔNG DANH MỤC</p>
+                <p class="text-3xl font-black">{{ categories|length }}</p>
+            </div>
+        </div>
+        <div class="bg-accent-yellow border-3 border-black p-4 shadow-brutal flex items-center gap-3">
+            <span class="material-symbols-outlined text-3xl">check_circle</span>
+            <div>
+                <p class="text-xs font-black uppercase">ĐANG HOẠT ĐỘNG</p>
+                <p class="text-3xl font-black">{% with active=categories|length %}{{ active }}{% endwith %}</p>
+            </div>
+        </div>
+        <div class="bg-white border-3 border-black p-4 shadow-brutal flex items-center gap-3">
+            <span class="material-symbols-outlined text-3xl text-accent-teal">domain</span>
+            <div>
+                <p class="text-xs font-black uppercase text-slate-500">TỔ CHỨC</p>
+                <p class="text-3xl font-black">{{ manageable_orgs|length }}</p>
+            </div>
+        </div>
+        <a href="{% url 'activities:point_category_create' %}"
+            class="bg-primary text-white border-3 border-black p-4 shadow-brutal brutal-btn transition-all flex items-center gap-3">
+            <span class="material-symbols-outlined text-3xl">add_circle</span>
+            <div>
+                <p class="text-xs font-black uppercase">THÊM DANH MỤC</p>
+                <p class="text-sm font-black">MỚI NGAY</p>
+            </div>
+        </a>
+    </div>
+
+    <!-- Table -->
+    {% if categories %}
+    <div class="bg-white border-3 border-black shadow-brutal-lg overflow-hidden">
+        <div class="p-5 border-b-3 border-black bg-bg-light flex items-center justify-between">
+            <h2 class="text-xl font-black uppercase flex items-center gap-2">
+                <span class="material-symbols-outlined">table_view</span>
+                DANH SÁCH DANH MỤC ĐIỂM
+            </h2>
+            <span class="bg-black text-white text-xs font-black uppercase px-3 py-1">{{ categories|length }} kết
+                quả</span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b-3 border-black bg-slate-100">
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">MÃ</th>
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">TÊN DANH MỤC</th>
+                        {% if is_admin %}
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">TỔ CHỨC</th>
+                        {% endif %}
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">MÔ TẢ</th>
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">TRẠNG THÁI</th>
+                        <th class="p-4 font-black uppercase text-sm">THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pc in categories %}
+                    <tr class="border-b-2 border-black hover:bg-primary/5 transition-all group">
+                        <!-- Code badge -->
+                        <td class="p-4 border-r-2 border-black">
+                            <span
+                                class="bg-accent-yellow border-2 border-black px-3 py-1 text-sm font-black uppercase tracking-wider">
+                                {{ pc.code }}
+                            </span>
+                        </td>
+                        <!-- Name -->
+                        <td class="p-4 border-r-2 border-black font-black uppercase">{{ pc.name }}</td>
+                        <!-- Org (Admin only) -->
+                        {% if is_admin %}
+                        <td class="p-4 border-r-2 border-black text-xs font-bold uppercase text-slate-500">
+                            <span class="bg-slate-100 border border-black px-2 py-0.5">{{ pc.organization.name }}</span>
+                        </td>
+                        {% endif %}
+                        <!-- Desc -->
+                        <td class="p-4 border-r-2 border-black text-sm text-slate-600 max-w-xs truncate">
+                            {{ pc.description|default:"—" }}
+                        </td>
+                        <!-- Status badge -->
+                        <td class="p-4 border-r-2 border-black">
+                            {% if pc.is_active %}
+                            <span
+                                class="bg-accent-teal/20 text-accent-teal border-2 border-accent-teal px-3 py-1 text-xs font-black uppercase">
+                                ĐANG DÙNG
+                            </span>
+                            {% else %}
+                            <span
+                                class="bg-slate-100 text-slate-500 border-2 border-slate-400 px-3 py-1 text-xs font-black uppercase">
+                                ĐÃ ẨN
+                            </span>
+                            {% endif %}
+                        </td>
+                        <!-- Actions -->
+                        <td class="p-4">
+                            <div class="flex items-center gap-2">
+                                <a href="{% url 'activities:point_category_edit' pk=pc.pk %}"
+                                    id="btn-edit-pc-{{ pc.pk }}"
+                                    class="bg-accent-yellow border-2 border-black px-3 py-1.5 text-xs font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-sm">edit</span> SỬA
+                                </a>
+                                <a href="{% url 'activities:point_category_delete' pk=pc.pk %}"
+                                    id="btn-delete-pc-{{ pc.pk }}"
+                                    class="bg-white border-2 border-black px-3 py-1.5 text-xs font-black uppercase shadow-brutal-sm brutal-btn transition-all hover:bg-red-50 flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-sm">delete</span> XÓA
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Empty state -->
+    <div class="bg-white border-3 border-black p-16 text-center shadow-brutal">
+        <span class="material-symbols-outlined text-7xl text-slate-200 block mb-4">category</span>
+        <h3 class="text-2xl font-black uppercase text-slate-400 mb-4">CHƯA CÓ DANH MỤC ĐIỂM NÀO</h3>
+        <a href="{% url 'activities:point_category_create' %}"
+            class="bg-primary text-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn transition-all inline-flex items-center gap-2">
+            <span class="material-symbols-outlined">add</span> TẠO DANH MỤC ĐẦU TIÊN
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

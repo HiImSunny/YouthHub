@@ -123,6 +123,14 @@
           <span class="material-symbols-outlined text-xl">qr_code_scanner</span> ĐIỂM DANH
         </a>
 
+        <!-- Danh mục điểm rèn luyện -->
+        <a href="{% url 'activities:point_category_list' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'point-categories' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">category</span> DANH MỤC ĐIỂM
+        </a>
+
+
         <!-- Tổ chức -->
         <a href="{% url 'core:organizations' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
