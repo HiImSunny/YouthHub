@@ -163,6 +163,13 @@
           <span class="material-symbols-outlined text-xl">bar_chart</span> THỐNG KÊ
         </a>
 
+        <!-- Import Sinh Viên — ADMIN + STAFF -->
+        <a href="{% url 'core:import_students' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'import-students' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">upload_file</span> IMPORT SV
+        </a>
+
         {% if user.role == 'ADMIN' %}
         <!-- Audit Log — ADMIN only -->
         <a href="{% url 'core:audit_log' %}"
@@ -176,13 +183,6 @@
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
           {% if 'management' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
           <span class="material-symbols-outlined text-xl">manage_accounts</span> USERS
-        </a>
-
-        <!-- Import Sinh Viên — ADMIN only -->
-        <a href="{% url 'core:import_students' %}"
-          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
-          {% if 'import-students' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
-          <span class="material-symbols-outlined text-xl">upload_file</span> IMPORT SV
         </a>
         {% endif %}
 

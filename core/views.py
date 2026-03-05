@@ -322,7 +322,7 @@ def org_staff_view(request, org_pk):
 
 # ─── B5: Import Students from Excel ──────────────────────────────────────────
 
-@admin_required
+@staff_required
 def import_students_view(request):
     """
     B5: Bulk-import student accounts from an Excel file.
@@ -348,6 +348,9 @@ def import_students_view(request):
     from users.models import StudentProfile
 
     User = get_user_model()
+
+    is_admin = request.user.role == 'ADMIN'
+    manageable_orgs = get_manageable_orgs(request.user)
 
     results = None  # will be set after processing
 
@@ -411,6 +414,12 @@ def import_students_view(request):
                     'status': True,
                 }
             )
+
+            # --- AuthZ Check for Staff ---
+            if not is_admin and faculty_org not in manageable_orgs:
+                rows_error.append(f"Dòng {row_idx}: Bạn không có quyền quản lý Khoa '{faculty_name}'. Import bị từ chối.")
+                continue
+            # -----------------------------
 
             # Class org (Chi đoàn): CLASS, parent = faculty
             class_org = None
@@ -492,7 +501,7 @@ def import_students_view(request):
     return render(request, 'core/import_students.html', context)
 
 
-@admin_required
+@staff_required
 def download_import_template(request):
     """Return an Excel template for student import."""
     import openpyxl
