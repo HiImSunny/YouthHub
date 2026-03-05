@@ -2,10 +2,11 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Count, Sum, Q
-
+from django.http import HttpResponse
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
 import json
+import io
 
 from activities.models import Activity
 from attendance.models import AttendanceRecord
@@ -317,3 +318,231 @@ def org_staff_view(request, org_pk):
         'available_staff': available_staff,
     }
     return render(request, 'core/org_staff.html', context)
+
+
+# ─── B5: Import Students from Excel ──────────────────────────────────────────
+
+@admin_required
+def import_students_view(request):
+    """
+    B5: Bulk-import student accounts from an Excel file.
+
+    Excel columns (row 1 = header, row 2+ = data):
+        A: full_name      (required)
+        B: student_code   (required, unique)
+        C: email          (required, unique)
+        D: faculty_name   (required — matched/created as UNION_FACULTY org)
+        E: class_name     (optional — matched/created as CLASS org under faculty)
+        F: course_year    (optional)
+        G: password       (optional — default: student_code)
+
+    For each row the view will:
+        1. get_or_create the UNION_SCHOOL org (first one found)
+        2. get_or_create UNION_FACULTY org with parent = school
+        3. get_or_create CLASS org with parent = faculty (if class_name provided)
+        4. create User (role=STUDENT)
+        5. create StudentProfile
+        6. add OrganizationMember for school, faculty, and class (if any)
+    """
+    from django.contrib.auth import get_user_model
+    from users.models import StudentProfile
+
+    User = get_user_model()
+
+    results = None  # will be set after processing
+
+    if request.method == 'POST' and request.FILES.get('excel_file'):
+        import openpyxl
+
+        excel_file = request.FILES['excel_file']
+        default_password = request.POST.get('default_password', '').strip()
+
+        try:
+            wb = openpyxl.load_workbook(excel_file, data_only=True)
+            ws = wb.active
+        except Exception:
+            messages.error(request, 'File không hợp lệ. Vui lòng tải lên file .xlsx đúng định dạng.')
+            return redirect('core:import_students')
+
+        # Find the school org once
+        school_org = Organization.objects.filter(
+            type=Organization.OrgType.UNION_SCHOOL, status=True
+        ).first()
+
+        rows_ok, rows_skip, rows_error = [], [], []
+
+        for row_idx, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+            # Unpack columns
+            full_name   = str(row[0]).strip() if row[0] else ''
+            student_code = str(row[1]).strip() if row[1] else ''
+            email       = str(row[2]).strip() if row[2] else ''
+            faculty_name = str(row[3]).strip() if row[3] else ''
+            class_name  = str(row[4]).strip() if row[4] else ''
+            course_year = str(row[5]).strip() if row[5] else ''
+            password_col = str(row[6]).strip() if len(row) > 6 and row[6] else ''
+
+            # Skip blank rows
+            if not full_name and not student_code and not email:
+                continue
+
+            # Validate required fields
+            if not full_name or not student_code or not email or not faculty_name:
+                rows_error.append(f'Dòng {row_idx}: Thiếu thông tin bắt buộc (Tên/MSSV/Email/Khoa).')
+                continue
+
+            # Skip duplicates
+            if User.objects.filter(email__iexact=email).exists():
+                rows_skip.append(f'Dòng {row_idx}: Email "{email}" đã tồn tại.')
+                continue
+            if StudentProfile.objects.filter(student_code__iexact=student_code).exists():
+                rows_skip.append(f'Dòng {row_idx}: MSSV "{student_code}" đã tồn tại.')
+                continue
+
+            # ── Resolve / create Organizations ────────────────────────────────
+
+            # Faculty org: UNION_FACULTY, parent = school
+            faculty_code = 'FAC-' + faculty_name.upper().replace(' ', '-')[:20]
+            faculty_org, _ = Organization.objects.get_or_create(
+                type=Organization.OrgType.UNION_FACULTY,
+                name=faculty_name,
+                defaults={
+                    'code': faculty_code,
+                    'parent': school_org,
+                    'status': True,
+                }
+            )
+
+            # Class org (Chi đoàn): CLASS, parent = faculty
+            class_org = None
+            if class_name:
+                class_code = 'CLS-' + class_name.upper().replace(' ', '-')[:20]
+                class_org, _ = Organization.objects.get_or_create(
+                    type=Organization.OrgType.CLASS,
+                    name=class_name,
+                    defaults={
+                        'code': class_code,
+                        'parent': faculty_org,
+                        'status': True,
+                    }
+                )
+
+            # ── Create User & StudentProfile ───────────────────────────────────
+            # Auto-generate username from student_code (lowercase, no spaces)
+            username = student_code.lower().replace(' ', '')
+            # Auto-generate password
+            password = password_col or default_password or student_code
+
+            try:
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    password=password,
+                    full_name=full_name,
+                    role='STUDENT',
+                    status='ACTIVE',
+                )
+                StudentProfile.objects.create(
+                    user=user,
+                    student_code=student_code,
+                    faculty=faculty_name,
+                    class_name=class_name,
+                    course_year=course_year,
+                )
+            except Exception as e:
+                rows_error.append(f'Dòng {row_idx}: Lỗi tạo tài khoản — {e}')
+                continue
+
+            # ── Add OrganizationMember ─────────────────────────────────────────
+            joined_today = timezone.now().date()
+            if school_org:
+                OrganizationMember.objects.get_or_create(
+                    organization=school_org, user=user,
+                    defaults={'position': 'Đoàn viên', 'is_officer': False, 'joined_at': joined_today}
+                )
+            OrganizationMember.objects.get_or_create(
+                organization=faculty_org, user=user,
+                defaults={'position': 'Đoàn viên', 'is_officer': False, 'joined_at': joined_today}
+            )
+            if class_org:
+                OrganizationMember.objects.get_or_create(
+                    organization=class_org, user=user,
+                    defaults={'position': 'Đoàn viên', 'is_officer': False, 'joined_at': joined_today}
+                )
+
+            rows_ok.append(f'{student_code} — {full_name} ({faculty_name})')
+
+        results = {
+            'ok': rows_ok,
+            'skip': rows_skip,
+            'error': rows_error,
+        }
+        if rows_ok:
+            messages.success(request, f'Import thành công {len(rows_ok)} sinh viên.')
+        if rows_skip:
+            messages.warning(request, f'Bỏ qua {len(rows_skip)} dòng trùng lặp.')
+        if rows_error:
+            messages.error(request, f'Có {len(rows_error)} dòng lỗi.')
+
+    context = {
+        'results': results,
+        'school_org': Organization.objects.filter(
+            type=Organization.OrgType.UNION_SCHOOL, status=True
+        ).first(),
+    }
+    return render(request, 'core/import_students.html', context)
+
+
+@admin_required
+def download_import_template(request):
+    """Return an Excel template for student import."""
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Import Sinh Vien'
+
+    headers = [
+        'Họ và Tên (*)',
+        'Mã sinh viên (*)',
+        'Email (*)',
+        'Tên Khoa (*)',
+        'Tên Lớp',
+        'Khóa học (VD: 2023)',
+        'Mật khẩu (để trống = dùng MSSV)',
+    ]
+
+    header_font = Font(bold=True, color='FFFFFF')
+    header_fill = PatternFill(start_color='FF6A00', end_color='FF6A00', fill_type='solid')
+
+    for col_idx, header in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col_idx, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center')
+
+    # Sample data rows
+    samples = [
+        ('Nguyễn Văn An', 'DNC2023001', 'an.nguyen@dnc.edu.vn', 'Khoa CNTT', 'CNTT-2023A', '2023', ''),
+        ('Trần Thị Bình', 'DNC2023002', 'binh.tran@dnc.edu.vn', 'Khoa Kinh Tế', 'KT-2023B', '2023', ''),
+        ('Lê Minh Cường', 'DNC2023003', 'cuong.le@dnc.edu.vn', 'Khoa CNTT', 'CNTT-2023A', '2023', 'mypassword'),
+    ]
+    for row_data in samples:
+        ws.append(row_data)
+
+    # Column widths
+    col_widths = [25, 18, 30, 20, 18, 18, 25]
+    for i, width in enumerate(col_widths, start=1):
+        ws.column_dimensions[ws.cell(row=1, column=i).column_letter].width = width
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+
+    response = HttpResponse(
+        buffer.read(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename="template_import_sinhvien.xlsx"'
+    return response
+

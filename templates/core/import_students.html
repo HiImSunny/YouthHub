@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+{% block title %}IMPORT SINH VIÊN — YOUTHHUB{% endblock %}
+
+{% block breadcrumb %}
+<span class="font-black uppercase text-sm">📥 Import Sinh Viên</span>
+{% endblock %}
+
+{% block header_actions %}
+<a href="{% url 'core:import_students_template' %}"
+   class="flex items-center gap-2 bg-accent-teal text-white border-3 border-black px-4 py-2 font-black uppercase text-xs shadow-brutal-sm brutal-btn">
+  <span class="material-symbols-outlined text-base">download</span>
+  TẢI FILE MẪU
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl">
+  <h1 class="text-4xl font-black uppercase tracking-tighter mb-1">📥 IMPORT SINH VIÊN</h1>
+  <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500 mb-6">ADMIN ONLY — Tạo tài khoản hàng loạt từ Excel</p>
+
+  {% if school_org %}
+  <div class="border-3 border-accent-teal bg-accent-teal/10 p-4 mb-6 flex items-center gap-3">
+    <span class="material-symbols-outlined text-accent-teal text-2xl">corporate_fare</span>
+    <div>
+      <p class="font-black uppercase text-sm text-accent-teal">TRƯỜNG ĐANG HOẠT ĐỘNG</p>
+      <p class="font-bold text-sm">{{ school_org.name }} ({{ school_org.code }})</p>
+      <p class="text-xs text-slate-500 font-bold">Sinh viên import sẽ được gán vào trường này</p>
+    </div>
+  </div>
+  {% else %}
+  <div class="border-3 border-accent-red bg-accent-red/10 p-4 mb-6 flex items-center gap-3">
+    <span class="material-symbols-outlined text-accent-red text-2xl">warning</span>
+    <div>
+      <p class="font-black uppercase text-sm text-accent-red">⚠ CHƯA CÓ ĐOÀN TRƯỜNG</p>
+      <p class="text-xs font-bold text-slate-600">Vui lòng tạo tổ chức loại "Đoàn trường" trước khi import.</p>
+      <a href="{% url 'core:org_create' %}" class="text-xs font-black uppercase underline text-primary">→ Tạo Đoàn Trường</a>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── Upload Form ── -->
+  <div class="bg-white border-3 border-black p-6 shadow-brutal-lg mb-6">
+    <h2 class="text-lg font-black uppercase mb-4 border-b-3 border-black pb-3">📂 Upload File Excel</h2>
+
+    <form method="post" enctype="multipart/form-data" class="space-y-5" id="importForm">
+      {% csrf_token %}
+
+      <div>
+        <label class="block text-sm font-black uppercase mb-2">
+          FILE EXCEL (.xlsx) <span class="text-accent-red">*</span>
+        </label>
+        <div id="dropZone"
+             class="border-3 border-dashed border-slate-400 p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-all"
+             onclick="document.getElementById('excelFile').click()">
+          <span class="material-symbols-outlined text-4xl text-slate-400 block mb-2">upload_file</span>
+          <p class="font-black uppercase text-sm text-slate-500">Kéo thả hoặc click để chọn file</p>
+          <p class="text-xs text-slate-400 font-bold mt-1">Chỉ chấp nhận .xlsx</p>
+          <p id="fileName" class="mt-3 font-black text-primary text-sm hidden"></p>
+        </div>
+        <input type="file" id="excelFile" name="excel_file" accept=".xlsx" class="hidden" required>
+      </div>
+
+      <div>
+        <label class="block text-sm font-black uppercase mb-2">MẬT KHẨU MẶC ĐỊNH (để trống = dùng MSSV)</label>
+        <input type="text" name="default_password"
+               class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
+               placeholder="Ví dụ: Youth@2026 (áp dụng cho toàn bộ nếu không có cột mật khẩu)">
+        <p class="text-xs text-slate-500 font-bold mt-1">Ưu tiên: Cột G trong file > Trường này > MSSV của sinh viên</p>
+      </div>
+
+      <div class="bg-amber-50 border-3 border-amber-400 p-4">
+        <p class="font-black uppercase text-xs text-amber-700 mb-2">📋 CẤU TRÚC FILE EXCEL (Hàng 1 = Tiêu đề)</p>
+        <div class="grid grid-cols-7 gap-1 text-xs font-bold text-center">
+          <div class="bg-primary text-white p-2">A<br>Họ tên*</div>
+          <div class="bg-primary text-white p-2">B<br>MSSV*</div>
+          <div class="bg-primary text-white p-2">C<br>Email*</div>
+          <div class="bg-primary text-white p-2">D<br>Khoa*</div>
+          <div class="bg-slate-200 p-2">E<br>Lớp</div>
+          <div class="bg-slate-200 p-2">F<br>Khóa</div>
+          <div class="bg-slate-200 p-2">G<br>Mật khẩu</div>
+        </div>
+        <p class="text-xs text-amber-600 font-bold mt-2">(*) = Bắt buộc. Tên Khoa sẽ tự động tạo tổ chức Đoàn khoa nếu chưa có.</p>
+      </div>
+
+      <div class="flex gap-3">
+        <button type="submit" id="submitBtn"
+                class="flex-1 bg-primary text-white border-3 border-black p-4 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined">upload</span>
+          IMPORT SINH VIÊN
+        </button>
+        <a href="{% url 'core:import_students_template' %}"
+           class="bg-accent-teal text-white border-3 border-black p-4 font-black uppercase shadow-brutal-sm brutal-btn transition-all px-6 flex items-center gap-2 text-sm">
+          <span class="material-symbols-outlined text-base">download</span>
+          FILE MẪU
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Results ── -->
+  {% if results %}
+  <div class="space-y-4">
+
+    {% if results.ok %}
+    <div class="bg-white border-3 border-black shadow-brutal-lg">
+      <div class="flex items-center gap-3 border-b-3 border-black p-4 bg-accent-teal/10">
+        <span class="material-symbols-outlined text-accent-teal text-2xl">check_circle</span>
+        <h3 class="font-black uppercase text-accent-teal">✅ Import thành công ({{ results.ok|length }})</h3>
+      </div>
+      <ul class="divide-y divide-slate-200 max-h-60 overflow-y-auto">
+        {% for item in results.ok %}
+        <li class="px-4 py-2 text-sm font-bold">{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if results.skip %}
+    <div class="bg-white border-3 border-black shadow-brutal-lg">
+      <div class="flex items-center gap-3 border-b-3 border-black p-4 bg-amber-50">
+        <span class="material-symbols-outlined text-amber-500 text-2xl">warning</span>
+        <h3 class="font-black uppercase text-amber-700">⚠ Bỏ qua trùng lặp ({{ results.skip|length }})</h3>
+      </div>
+      <ul class="divide-y divide-slate-200 max-h-40 overflow-y-auto">
+        {% for item in results.skip %}
+        <li class="px-4 py-2 text-xs font-bold text-slate-600">{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if results.error %}
+    <div class="bg-white border-3 border-black shadow-brutal-lg">
+      <div class="flex items-center gap-3 border-b-3 border-black p-4 bg-accent-red/10">
+        <span class="material-symbols-outlined text-accent-red text-2xl">error</span>
+        <h3 class="font-black uppercase text-accent-red">❌ Lỗi ({{ results.error|length }})</h3>
+      </div>
+      <ul class="divide-y divide-slate-200 max-h-40 overflow-y-auto">
+        {% for item in results.error %}
+        <li class="px-4 py-2 text-xs font-bold text-accent-red">{{ item }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+  // Drag & drop + file name display
+  const dropZone = document.getElementById('dropZone');
+  const fileInput = document.getElementById('excelFile');
+  const fileNameEl = document.getElementById('fileName');
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) {
+      fileNameEl.textContent = '📎 ' + fileInput.files[0].name;
+      fileNameEl.classList.remove('hidden');
+    }
+  });
+
+  ['dragenter', 'dragover'].forEach(evt => {
+    dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.add('border-primary', 'bg-primary/10'); });
+  });
+  ['dragleave', 'drop'].forEach(evt => {
+    dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.remove('border-primary', 'bg-primary/10'); });
+  });
+  dropZone.addEventListener('drop', e => {
+    const files = e.dataTransfer.files;
+    if (files.length) {
+      fileInput.files = files;
+      fileNameEl.textContent = '📎 ' + files[0].name;
+      fileNameEl.classList.remove('hidden');
+    }
+  });
+
+  // Loading state on submit
+  document.getElementById('importForm').addEventListener('submit', () => {
+    const btn = document.getElementById('submitBtn');
+    btn.textContent = '⏳ Đang xử lý...';
+    btn.disabled = true;
+  });
+</script>
+{% endblock %}
