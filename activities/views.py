@@ -404,41 +404,65 @@ def _get_activity_time_status(activity, now):
 def _get_student_visible_orgs(user):
     """
     C1: Get all org IDs a student can see activities for:
-    - Đoàn Trường (UNION_SCHOOL) → all students
-    - Đoàn Khoa / Chi đoàn their faculty belongs to (via StudentProfile.faculty)
-    - CLB / groups they are a member of (via OrganizationMember)
+
+    Priority order:
+    1. UNION_SCHOOL orgs → visible to ALL students always.
+    2. OrganizationMember records (created by Import Excel / manual assignment)
+       → the student can see activities from any org they are a member of,
+         AND activities from all ANCESTOR orgs in the chain (e.g. faculty sees school).
+    3. Fallback (if student has no OrganizationMember at all):
+       Try to match StudentProfile.faculty by name against UNION_FACULTY orgs.
+       This supports students who self-registered without being imported.
     """
     from core.models import OrganizationMember
     org_ids = set()
 
-    # 1. Đoàn Trường - public to all
-    school_orgs = Organization.objects.filter(type='UNION_SCHOOL', status=True)
-    org_ids.update(school_orgs.values_list('id', flat=True))
+    # 1. Đoàn Trường - visible to everyone
+    school_ids = Organization.objects.filter(
+        type=Organization.OrgType.UNION_SCHOOL, status=True
+    ).values_list('id', flat=True)
+    org_ids.update(school_ids)
 
-    # 2. Org matching student's faculty (via StudentProfile)
-    try:
-        profile = user.student_profile
-        faculty_name = profile.faculty
-        # Match by name containing faculty keyword
-        faculty_orgs = Organization.objects.filter(
-            status=True,
-            type__in=['UNION_FACULTY', 'CLASS'],
-            name__icontains=faculty_name,
-        )
-        org_ids.update(faculty_orgs.values_list('id', flat=True))
+    # 2. All orgs the student is a member of (primary mechanism via Import Excel)
+    member_org_ids = list(
+        OrganizationMember.objects.filter(user=user).values_list('organization_id', flat=True)
+    )
 
-        # Also include parent orgs of faculty orgs (Đoàn Trường already covered)
-        for org in faculty_orgs:
-            if org.parent:
-                org_ids.add(org.parent.id)
-    except Exception:
-        pass
+    if member_org_ids:
+        org_ids.update(member_org_ids)
 
-    # 3. Orgs the student is a member of (CLB, Chi đoàn etc.)
-    member_org_ids = OrganizationMember.objects.filter(
-        user=user
-    ).values_list('organization_id', flat=True)
-    org_ids.update(member_org_ids)
+        # Also walk up the ancestor chain for each member org so that
+        # "Sinh viên của Đoàn khoa CNTT" also sees activities from Đoàn trường
+        # (already included from step 1), but this ensures any intermediate orgs
+        # in the tree are also included.
+        member_orgs = Organization.objects.filter(id__in=member_org_ids, status=True).select_related('parent')
+        for org in member_orgs:
+            parent = org.parent
+            while parent is not None:
+                org_ids.add(parent.id)
+                parent = parent.parent
+
+    else:
+        # 3. Fallback: match by StudentProfile.faculty name (for self-registered students)
+        try:
+            profile = user.student_profile
+            faculty_name = profile.faculty
+            if faculty_name:
+                fallback_orgs = Organization.objects.filter(
+                    status=True,
+                    type__in=[
+                        Organization.OrgType.UNION_FACULTY,
+                        Organization.OrgType.CLASS,
+                    ],
+                    name__icontains=faculty_name,
+                )
+                org_ids.update(fallback_orgs.values_list('id', flat=True))
+                # Include their parent orgs too
+                for org in fallback_orgs:
+                    if org.parent:
+                        org_ids.add(org.parent.id)
+        except Exception:
+            pass
 
     return org_ids
 
