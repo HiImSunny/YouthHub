@@ -68,7 +68,7 @@
                     class="w-full border-3 border-black bg-white py-4 px-4 font-bold uppercase text-sm focus:ring-0 focus:outline-none appearance-none">
                     <option value="">— CHỌN TỔ CHỨC —</option>
                     {% for org in manageable_orgs %}
-                    <option value="{{ org.pk }}" {% if POST.organization==org.pk|stringformat:"s" %}selected{% endif %}>
+                    <option value="{{ org.pk }}" {% if POST.organization == org.pk|stringformat:"s" %}selected{% endif %}>
                         {{ org.name }}
                     </option>
                     {% endfor %}
