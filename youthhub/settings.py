@@ -135,7 +135,7 @@ OLLAMA_MODEL = env('OLLAMA_MODEL', default='qwen2.5-coder:1.5b')
 # =============================================================================
 # LOGIN / LOGOUT REDIRECTS
 # =============================================================================
-LOGIN_URL = '/auth/login/'
+LOGIN_URL = '/users/login/'
 # Role-based redirect handled in users/views.py post_login_redirect view
-LOGIN_REDIRECT_URL = '/auth/redirect/'
-LOGOUT_REDIRECT_URL = '/auth/login/'
+LOGIN_REDIRECT_URL = '/users/redirect/'
+LOGOUT_REDIRECT_URL = '/users/login/'

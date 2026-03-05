@@ -131,7 +131,7 @@
                         </div>
                         <div class="flex-1">
                             <h3 class="font-black uppercase text-lg leading-tight mb-1">
-                                <a href="{% url 'core:org_staff' pk=membership.organization.pk %}" class="hover:text-primary transition-colors hover:underline">
+                                <a href="{% url 'core:org_staff' org_pk=membership.organization.pk %}" class="hover:text-primary transition-colors hover:underline">
                                     {{ membership.organization.name }}
                                 </a>
                             </h3>
