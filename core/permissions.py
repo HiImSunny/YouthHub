@@ -153,3 +153,50 @@ def can_manage_org_staff(user, org):
 def can_create_org(user):
     """Only admin can create orgs."""
     return user.role == 'ADMIN'
+
+
+# ─── Point Category Permission Helpers ────────────────────────────────────────
+
+def get_root_org(org):
+    """
+    Walk up the parent chain to find the root (top-level) organization.
+    PointCategory is managed at the root (UNION_SCHOOL) level.
+    """
+    current = org
+    while current.parent is not None:
+        current = current.parent
+    return current
+
+
+def get_point_category_orgs(user):
+    """
+    Return the set of root Organizations whose PointCategories
+    this user is allowed to manage.
+    - ADMIN: all root orgs
+    - STAFF: root org of any org they are officer of
+    - STUDENT: none
+    """
+    if user.role == 'ADMIN':
+        return Organization.objects.filter(status=True, parent__isnull=True)
+    if user.role == 'STUDENT':
+        return Organization.objects.none()
+    # STAFF: collect root orgs of their officer orgs
+    officer_orgs = get_officer_orgs(user)
+    root_ids = {get_root_org(o).id for o in officer_orgs}
+    return Organization.objects.filter(id__in=root_ids, status=True)
+
+
+def can_manage_point_category(user, point_category):
+    """
+    Check if user can create/edit/delete a specific PointCategory.
+    - ADMIN: always yes
+    - STAFF: only if the PointCategory's org is their root org
+    - STUDENT: no
+    """
+    if user.role == 'ADMIN':
+        return True
+    if user.role == 'STUDENT':
+        return False
+    manageable_orgs = get_point_category_orgs(user)
+    return manageable_orgs.filter(pk=point_category.organization_id).exists()
+

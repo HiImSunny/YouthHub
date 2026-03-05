@@ -7,8 +7,13 @@ class PointCategory(models.Model):
     Categories for training/activity points.
     Maps to table: point_categories
     """
+    organization = models.ForeignKey(
+        'core.Organization',
+        on_delete=models.CASCADE,
+        related_name='point_categories',
+    )
     name = models.CharField(max_length=255)
-    code = models.CharField(max_length=50, unique=True)
+    code = models.CharField(max_length=50)
     description = models.TextField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -18,10 +23,17 @@ class PointCategory(models.Model):
         db_table = 'point_categories'
         verbose_name = 'Mục điểm rèn luyện'
         verbose_name_plural = 'Mục điểm rèn luyện'
-        ordering = ['code']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['organization', 'code'],
+                name='unique_org_point_category',
+            )
+        ]
+        ordering = ['organization', 'code']
 
     def __str__(self):
-        return f"{self.code} - {self.name}"
+        return f"[{self.organization.code}] {self.code} - {self.name}"
+
 
 
 

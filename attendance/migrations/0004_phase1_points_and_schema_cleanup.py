@@ -8,7 +8,8 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('activities', '0004_phase1_points_and_schema_cleanup'),
+        ('activities', '0003_point_category_with_org'),
+
         ('attendance', '0003_add_activity_and_approved_at_to_record'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]

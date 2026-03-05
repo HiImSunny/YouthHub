@@ -22,4 +22,9 @@ urlpatterns = [
     path('<int:activity_pk>/budget/submit/', views.budget_submit, name='budget_submit'),
     path('<int:activity_pk>/budget/approve/', views.budget_approve, name='budget_approve'),
     path('<int:activity_pk>/budget/reject/', views.budget_reject, name='budget_reject'),
+    # Point Category CRUD
+    path('point-categories/', views.point_category_list, name='point_category_list'),
+    path('point-categories/create/', views.point_category_create, name='point_category_create'),
+    path('point-categories/<int:pk>/edit/', views.point_category_edit, name='point_category_edit'),
+    path('point-categories/<int:pk>/delete/', views.point_category_delete, name='point_category_delete'),
 ]
