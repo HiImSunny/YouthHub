@@ -90,7 +90,7 @@ def activity_create(request):
     B1: Staff can only select orgs they are officer of.
     """
     if request.user.role == 'STUDENT':
-        messages.error(request, 'Ban khong co quyen tao hoat dong.')
+        messages.error(request, 'Bạn không có quyền tạo hoạt động.')
         return redirect('activities:list')
 
     # B1: Get only the orgs this user can create activities for
@@ -102,7 +102,7 @@ def activity_create(request):
 
         # B1: Verify the submitted org is actually allowed
         if not org or not can_create_activity(request.user, org):
-            messages.error(request, 'Ban khong co quyen tao hoat dong cho to chuc nay.')
+            messages.error(request, 'Bạn không có quyền tạo hoạt động cho tổ chức này.')
             return render(request, 'activities/form.html', {
                 'organizations': allowed_orgs,
                 'semesters': Semester.objects.all().order_by('-start_date'),
@@ -135,7 +135,7 @@ def activity_create(request):
             status=Activity.ActivityStatus.DRAFT,
         )
         activity.save()
-        messages.success(request, f'Da tao hoat dong "{activity.title}" thanh cong!')
+        messages.success(request, f'Đã tạo hoạt động "{activity.title}" thành công!')
         return redirect('activities:detail', pk=activity.pk)
 
     context = {
@@ -156,12 +156,12 @@ def activity_edit(request, pk):
     activity = get_object_or_404(Activity, pk=pk)
 
     if activity.status != 'DRAFT':
-        messages.error(request, 'Chi co the chinh sua hoat dong o trang thai Nhap.')
+        messages.error(request, 'Chỉ có thể chỉnh sửa hoạt động ở trạng thái Nháp.')
         return redirect('activities:detail', pk=pk)
 
     # B1: Check edit permission
     if not can_edit_activity(request.user, activity):
-        messages.error(request, 'Ban khong co quyen chinh sua hoat dong nay.')
+        messages.error(request, 'Bạn không có quyền chỉnh sửa hoạt động này.')
         return redirect('activities:detail', pk=pk)
 
     # B1: Staff only sees their own orgs, Admin sees all
@@ -173,7 +173,7 @@ def activity_edit(request, pk):
 
         # B1: Verify the submitted org is actually allowed
         if not org or not can_create_activity(request.user, org):
-            messages.error(request, 'Ban khong co quyen gan hoat dong cho to chuc nay.')
+            messages.error(request, 'Bạn không có quyền gán hoạt động cho tổ chức này.')
             return render(request, 'activities/form.html', {
                 'activity': activity,
                 'organizations': allowed_orgs,
@@ -203,7 +203,7 @@ def activity_edit(request, pk):
         activity.points = request.POST.get('points') or 0
         activity.max_participants = max_p
         activity.save()
-        messages.success(request, 'Da cap nhat hoat dong thanh cong!')
+        messages.success(request, 'Đã cập nhật hoạt động thành công!')
         return redirect('activities:detail', pk=pk)
 
     context = {
@@ -226,17 +226,17 @@ def activity_delete(request, pk):
     activity = get_object_or_404(Activity, pk=pk)
 
     if activity.status != 'DRAFT':
-        messages.error(request, 'Chi co the xoa hoat dong o trang thai Nhap.')
+        messages.error(request, 'Chỉ có thể xóa hoạt động ở trạng thái Nháp.')
         return redirect('activities:detail', pk=pk)
 
     if not can_edit_activity(request.user, activity):
-        messages.error(request, 'Ban khong co quyen xoa hoat dong nay.')
+        messages.error(request, 'Bạn không có quyền xóa hoạt động này.')
         return redirect('activities:detail', pk=pk)
 
     if request.method == 'POST':
         title = activity.title
         activity.delete()
-        messages.success(request, f'Da xoa hoat dong "{title}".')
+        messages.success(request, f'Đã xóa hoạt động "{title}".')
         return redirect('activities:list')
 
     return render(request, 'activities/confirm_delete.html', {'activity': activity})
@@ -261,9 +261,9 @@ def activity_approve(request, pk):
             if can_edit_activity(request.user, activity):
                 activity.status = Activity.ActivityStatus.PENDING
                 activity.save()
-                messages.success(request, 'Da gui hoat dong de phe duyet.')
+                messages.success(request, 'Đã gửi hoạt động để phê duyệt.')
             else:
-                messages.error(request, 'Ban khong co quyen gui hoat dong nay.')
+                messages.error(request, 'Bạn không có quyền gửi hoạt động này.')
 
         elif action == 'approve' and activity.status == 'PENDING':
             # B2: Only parent staff or admin can approve
@@ -272,9 +272,9 @@ def activity_approve(request, pk):
                 activity.approved_by = request.user
                 activity.approved_at = timezone.now()
                 activity.save()
-                messages.success(request, 'Da phe duyet hoat dong thanh cong!')
+                messages.success(request, 'Đã phê duyệt hoạt động thành công!')
             else:
-                messages.error(request, 'Ban khong co quyen phe duyet hoat dong nay.')
+                messages.error(request, 'Bạn không có quyền phê duyệt hoạt động này.')
 
     return redirect('activities:detail', pk=pk)
 
@@ -292,9 +292,9 @@ def activity_reject(request, pk):
         if can_approve_activity(request.user, activity):
             activity.status = Activity.ActivityStatus.DRAFT
             activity.save()
-            messages.success(request, 'Da tu choi. Hoat dong quay ve trang thai Nhap.')
+            messages.success(request, 'Đã từ chối. Hoạt động quay về trạng thái Nháp.')
         else:
-            messages.error(request, 'Ban khong co quyen tu choi hoat dong nay.')
+            messages.error(request, 'Bạn không có quyền từ chối hoạt động này.')
 
     return redirect('activities:detail', pk=pk)
 
@@ -307,7 +307,7 @@ def activity_pending_list(request):
     Admin: sees all pending activities.
     """
     if request.user.role == 'STUDENT':
-        messages.error(request, 'Ban khong co quyen xem danh sach phe duyet.')
+        messages.error(request, 'Bạn không có quyền xem danh sách phê duyệt.')
         return redirect('activities:list')
 
     if request.user.role == 'ADMIN':
@@ -336,7 +336,7 @@ def activity_register(request, pk):
     activity = get_object_or_404(Activity, pk=pk)
 
     if activity.status != 'APPROVED':
-        messages.error(request, 'Chi co the dang ky hoat dong da duoc phe duyet.')
+        messages.error(request, 'Chỉ có thể đăng ký hoạt động đã được phê duyệt.')
         return redirect('activities:detail', pk=pk)
 
     if request.method == 'POST':
@@ -346,7 +346,7 @@ def activity_register(request, pk):
             if current_count >= activity.max_participants:
                 messages.error(
                     request,
-                    f'Hoat dong da du so luong dang ky toi da ({activity.max_participants} nguoi). Rat tiec ban khong the dang ky luc nay.'
+                    f'Hoạt động đã đủ số lượng đăng ký tối đa ({activity.max_participants} người). Rất tiếc bạn không thể đăng ký tham gia lúc này.'
                 )
                 return redirect('activities:detail', pk=pk)
 
@@ -359,11 +359,11 @@ def activity_register(request, pk):
             # Re-register (was previously canceled) - check slot again counted above
             reg.status = 'REGISTERED'
             reg.save()
-            messages.success(request, 'Dang ky tham gia thanh cong!')
+            messages.success(request, 'Đăng ký tham gia thành công!')
         elif created:
-            messages.success(request, 'Dang ky tham gia thanh cong!')
+            messages.success(request, 'Đăng ký tham gia thành công!')
         else:
-            messages.info(request, 'Ban da dang ky hoat dong nay roi.')
+            messages.info(request, 'Bạn đã đăng ký hoạt động này rồi.')
 
     return redirect('activities:detail', pk=pk)
 
@@ -380,9 +380,9 @@ def activity_cancel_registration(request, pk):
         if reg:
             reg.status = 'CANCELED'
             reg.save()
-            messages.success(request, 'Da huy dang ky tham gia.')
+            messages.success(request, 'Đã huỷ đăng ký tham gia.')
         else:
-            messages.error(request, 'Khong tim thay dang ky cua ban.')
+            messages.error(request, 'Không tìm thấy đăng ký của bạn.')
 
     return redirect('activities:detail', pk=pk)
 
@@ -622,7 +622,7 @@ def budget_detail(request, activity_pk):
     activity = get_object_or_404(Activity, pk=activity_pk)
 
     if request.user.role == 'STUDENT':
-        messages.error(request, 'Sinh vien khong co quyen xem ngan sach.')
+        messages.error(request, 'Sinh viên không có quyền xem ngân sách.')
         return redirect('activities:detail', pk=activity_pk)
 
     from .models import Budget, BudgetItem
@@ -643,12 +643,12 @@ def budget_create(request, activity_pk):
     activity = get_object_or_404(Activity, pk=activity_pk)
 
     if not _can_manage_budget(request.user, activity):
-        messages.error(request, 'Ban khong co quyen quan ly ngan sach hoat dong nay.')
+        messages.error(request, 'Bạn không có quyền quản lý ngân sách hoạt động này.')
         return redirect('activities:detail', pk=activity_pk)
 
     from .models import Budget
     if Budget.objects.filter(activity=activity).exists():
-        messages.info(request, 'Hoat dong nay da co ngan sach.')
+        messages.info(request, 'Hoạt động này đã có ngân sách.')
         return redirect('activities:budget_detail', activity_pk=activity_pk)
 
     if request.method == 'POST':
@@ -662,10 +662,10 @@ def budget_create(request, activity_pk):
                 description=description,
                 status='DRAFT',
             )
-            messages.success(request, 'Da tao du tru ngan sach!')
+            messages.success(request, 'Đã tạo dự trù ngân sách!')
             return redirect('activities:budget_detail', activity_pk=activity_pk)
         except Exception as e:
-            messages.error(request, f'Loi: {e}')
+            messages.error(request, f'Lỗi: {e}')
 
     return render(request, 'activities/budget_form.html', {'activity': activity})
 
@@ -676,14 +676,14 @@ def budget_add_item(request, activity_pk):
     activity = get_object_or_404(Activity, pk=activity_pk)
 
     if not _can_manage_budget(request.user, activity):
-        messages.error(request, 'Ban khong co quyen.')
+        messages.error(request, 'Bạn không có quyền.')
         return redirect('activities:budget_detail', activity_pk=activity_pk)
 
     from .models import Budget, BudgetItem
     budget = get_object_or_404(Budget, activity=activity)
 
     if budget.status != 'DRAFT':
-        messages.error(request, 'Chi co the them hang muc khi ngan sach con o trang thai Nhap.')
+        messages.error(request, 'Chỉ có thể thêm hạng mục khi ngân sách còn ở trạng thái Nháp.')
         return redirect('activities:budget_detail', activity_pk=activity_pk)
 
     if request.method == 'POST':
@@ -705,11 +705,11 @@ def budget_add_item(request, activity_pk):
                 total = sum(item.amount for item in budget.items.all())
                 budget.total_amount = total
                 budget.save(update_fields=['total_amount'])
-                messages.success(request, f'Da them hang muc "{name}".')
+                messages.success(request, f'Đã thêm hạng mục "{name}".')
             except Exception as e:
-                messages.error(request, f'Loi: {e}')
+                messages.error(request, f'Lỗi: {e}')
         else:
-            messages.error(request, 'Ten va so tien la bat buoc.')
+            messages.error(request, 'Tên và số tiền là bắt buộc.')
 
     return redirect('activities:budget_detail', activity_pk=activity_pk)
 
@@ -720,14 +720,14 @@ def budget_delete_item(request, activity_pk, item_pk):
     activity = get_object_or_404(Activity, pk=activity_pk)
 
     if not _can_manage_budget(request.user, activity):
-        messages.error(request, 'Ban khong co quyen.')
+        messages.error(request, 'Bạn không có quyền.')
         return redirect('activities:budget_detail', activity_pk=activity_pk)
 
     from .models import Budget, BudgetItem
     budget = get_object_or_404(Budget, activity=activity)
 
     if budget.status != 'DRAFT':
-        messages.error(request, 'Khong the xoa hang muc khi ngan sach da gui duyet.')
+        messages.error(request, 'Không thể xóa hạng mục khi ngân sách đã gửi duyệt.')
         return redirect('activities:budget_detail', activity_pk=activity_pk)
 
     if request.method == 'POST':
@@ -738,7 +738,7 @@ def budget_delete_item(request, activity_pk, item_pk):
             total = sum(i.amount for i in budget.items.all())
             budget.total_amount = total
             budget.save(update_fields=['total_amount'])
-            messages.success(request, 'Da xoa hang muc.')
+            messages.success(request, 'Đã xóa hạng mục.')
 
     return redirect('activities:budget_detail', activity_pk=activity_pk)
 
@@ -749,7 +749,7 @@ def budget_submit(request, activity_pk):
     activity = get_object_or_404(Activity, pk=activity_pk)
 
     if not _can_manage_budget(request.user, activity):
-        messages.error(request, 'Ban khong co quyen.')
+        messages.error(request, 'Bạn không có quyền.')
         return redirect('activities:budget_detail', activity_pk=activity_pk)
 
     from .models import Budget
@@ -758,13 +758,13 @@ def budget_submit(request, activity_pk):
     if request.method == 'POST':
         if budget.status == 'DRAFT':
             if not budget.items.exists():
-                messages.error(request, 'Ngan sach phai co it nhat 1 hang muc truoc khi gui duyet.')
+                messages.error(request, 'Ngân sách phải có ít nhất 1 hạng mục trước khi gửi duyệt.')
             else:
                 budget.status = 'PENDING'
                 budget.save(update_fields=['status'])
-                messages.success(request, 'Da gui ngan sach de phe duyet!')
+                messages.success(request, 'Đã gửi ngân sách để phê duyệt!')
         else:
-            messages.error(request, 'Ngan sach khong o trang thai Nhap.')
+            messages.error(request, 'Ngân sách không ở trạng thái Nháp.')
 
     return redirect('activities:budget_detail', activity_pk=activity_pk)
 
@@ -775,7 +775,7 @@ def budget_approve(request, activity_pk):
     activity = get_object_or_404(Activity, pk=activity_pk)
 
     if not _can_approve_budget(request.user, activity):
-        messages.error(request, 'Ban khong co quyen phe duyet ngan sach nay.')
+        messages.error(request, 'Bạn không có quyền phê duyệt ngân sách này.')
         return redirect('activities:budget_detail', activity_pk=activity_pk)
 
     from .models import Budget

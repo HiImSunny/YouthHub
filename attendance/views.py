@@ -56,7 +56,7 @@ def sessions_view(request):
 def session_create(request):
     """Create a new attendance session (STAFF/ADMIN only)."""
     if request.user.role == 'STUDENT':
-        messages.error(request, 'Ban khong co quyen tao phien diem danh.')
+        messages.error(request, 'Bạn không có quyền tạo phiên điểm danh.')
         return redirect('attendance:sessions')
 
     if request.method == 'POST':
@@ -74,7 +74,7 @@ def session_create(request):
             status=AttendanceSession.SessionStatus.OPEN,
         )
         session.save()
-        messages.success(request, f'Phien diem danh "{session.name}" da duoc tao!')
+        messages.success(request, f'Phiên điểm danh "{session.name}" đã được tạo!')
         return redirect('attendance:session_detail', pk=session.pk)
 
     activities = Activity.objects.filter(status__in=['APPROVED', 'ONGOING']).order_by('-start_time')
@@ -124,13 +124,13 @@ def session_close(request, pk):
     """Close a session (no more check-ins)."""
     session = get_object_or_404(AttendanceSession, pk=pk)
     if request.user.role == 'STUDENT':
-        messages.error(request, 'Ban khong co quyen dong phien diem danh.')
+        messages.error(request, 'Bạn không có quyền đóng phiên điểm danh.')
         return redirect('attendance:session_detail', pk=pk)
 
     if request.method == 'POST':
         session.status = AttendanceSession.SessionStatus.CLOSED
         session.save()
-        messages.success(request, f'Phien "{session.name}" da duoc dong.')
+        messages.success(request, f'Phiên "{session.name}" đã được đóng.')
     return redirect('attendance:session_detail', pk=pk)
 
 
@@ -163,7 +163,7 @@ def checkin_submit(request, token):
     session = get_object_or_404(AttendanceSession, qr_token=token)
 
     if session.status != AttendanceSession.SessionStatus.OPEN:
-        messages.error(request, 'Phien diem danh da dong.')
+        messages.error(request, 'Phiên điểm danh đã đóng.')
         return redirect('attendance:sessions')
 
     if request.method == 'POST':
@@ -171,7 +171,7 @@ def checkin_submit(request, token):
         if AttendanceRecord.objects.filter(
             attendance_session=session, student=request.user
         ).exists():
-            messages.info(request, 'Ban da diem danh truoc do roi.')
+            messages.info(request, 'Bạn đã điểm danh trước đó rồi.')
             return redirect('attendance:checkin', token=token)
 
         # Determine status
@@ -197,9 +197,9 @@ def checkin_submit(request, token):
 
         if not needs_photo:
             _grant_points(request.user, session.activity)
-            messages.success(request, 'Diem danh thanh cong! Diem ren luyen da duoc ghi nhan.')
+            messages.success(request, 'Điểm danh thành công! Điểm rèn luyện đã được ghi nhận.')
         else:
-            messages.success(request, 'Da nop anh minh chung! Cho can bo xac nhan.')
+            messages.success(request, 'Đã nộp ảnh minh chứng! Chờ cán bộ xác nhận.')
 
     return redirect('attendance:checkin', token=token)
 
@@ -212,7 +212,7 @@ def records_list(request, session_pk):
     """List all records in a session for staff review."""
     session = get_object_or_404(AttendanceSession, pk=session_pk)
     if request.user.role == 'STUDENT':
-        messages.error(request, 'Ban khong co quyen xem danh sach nay.')
+        messages.error(request, 'Bạn không có quyền xem danh sách này.')
         return redirect('attendance:sessions')
 
     records = session.records.select_related('student', 'verified_by').order_by('status', '-checkin_time')
@@ -228,7 +228,7 @@ def record_approve(request, pk):
     """Approve a PENDING record and grant points."""
     record = get_object_or_404(AttendanceRecord, pk=pk)
     if request.user.role == 'STUDENT':
-        messages.error(request, 'Ban khong co quyen duyet diem danh.')
+        messages.error(request, 'Bạn không có quyền duyệt điểm danh.')
         return redirect('attendance:sessions')
 
     if request.method == 'POST' and record.status == 'PENDING':
@@ -238,7 +238,7 @@ def record_approve(request, pk):
 
         if record.student:
             _grant_points(record.student, record.activity)
-            messages.success(request, f'Da duyet diem danh cho {record.student.full_name}.')
+            messages.success(request, f'Đã duyệt điểm danh cho {record.student.full_name}.')
 
     return redirect('attendance:records_list', session_pk=record.attendance_session_id)
 
@@ -248,13 +248,13 @@ def record_reject(request, pk):
     """Reject a PENDING record."""
     record = get_object_or_404(AttendanceRecord, pk=pk)
     if request.user.role == 'STUDENT':
-        messages.error(request, 'Ban khong co quyen tu choi diem danh.')
+        messages.error(request, 'Bạn không có quyền từ chối điểm danh.')
         return redirect('attendance:sessions')
 
     if request.method == 'POST' and record.status == 'PENDING':
         record.status = AttendanceRecord.RecordStatus.REJECTED
         record.save()
-        messages.success(request, 'Da tu choi bản ghi diem danh.')
+        messages.success(request, 'Đã từ chối bản ghi điểm danh.')
 
     return redirect('attendance:records_list', session_pk=record.attendance_session_id)
 

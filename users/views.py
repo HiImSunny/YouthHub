@@ -27,7 +27,7 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             if user.status == 'LOCKED':
-                messages.error(request, 'Tai khoan da bi khoa. Vui long lien he Admin.')
+                messages.error(request, 'Tài khoản đã bị khóa. Vui lòng liên hệ Admin.')
             else:
                 login(request, user)
                 # Honour 'next' param if provided, otherwise use role-based redirect
@@ -36,7 +36,7 @@ def login_view(request):
                     return redirect(next_url)
                 return redirect('users:post_login_redirect')
         else:
-            messages.error(request, 'Sai ten dang nhap/email hoac mat khau.')
+            messages.error(request, 'Sai tên đăng nhập/email hoặc mật khẩu.')
 
     return render(request, 'users/login.html')
 
@@ -61,26 +61,26 @@ def register_view(request):
         # Validation
         errors = []
         if not username:
-            errors.append('Username khong duoc de trong.')
+            errors.append('Username không được để trống.')
         if not email:
-            errors.append('Email khong duoc de trong.')
+            errors.append('Email không được để trống.')
         if not full_name:
-            errors.append('Ho ten khong duoc de trong.')
+            errors.append('Họ tên không được để trống.')
         if not student_code:
-            errors.append('Ma sinh vien khong duoc de trong.')
+            errors.append('Mã sinh viên không được để trống.')
         if not faculty:
-            errors.append('Khoa khong duoc de trong.')
+            errors.append('Khoa không được để trống.')
         if len(password) < 6:
-            errors.append('Mat khau phai it nhat 6 ky tu.')
+            errors.append('Mật khẩu phải ít nhất 6 ký tự.')
         if password != password2:
-            errors.append('Mat khau xac nhan khong khop.')
+            errors.append('Mật khẩu xác nhận không khớp.')
 
         if User.objects.filter(username__iexact=username).exists():
-            errors.append('Username da ton tai.')
+            errors.append('Username đã tồn tại.')
         if User.objects.filter(email__iexact=email).exists():
-            errors.append('Email da duoc su dung.')
+            errors.append('Email đã được sử dụng.')
         if StudentProfile.objects.filter(student_code__iexact=student_code).exists():
-            errors.append('Ma sinh vien da ton tai.')
+            errors.append('Mã sinh viên đã tồn tại.')
 
         if errors:
             for e in errors:
@@ -104,10 +104,10 @@ def register_view(request):
                 faculty=faculty,
                 class_name=class_name,
             )
-            messages.success(request, 'Dang ky thanh cong! Hay dang nhap.')
+            messages.success(request, 'Đăng ký thành công! Hãy đăng nhập.')
             return redirect('users:login')
         except IntegrityError:
-            messages.error(request, 'Loi tao tai khoan. Vui long thu lai.')
+            messages.error(request, 'Lỗi tạo tài khoản. Vui lòng thử lại.')
 
     return render(request, 'users/register.html')
 
@@ -115,7 +115,7 @@ def register_view(request):
 def logout_view(request):
     """Handle user logout."""
     logout(request)
-    messages.success(request, 'Da dang xuat thanh cong.')
+    messages.success(request, 'Đã đăng xuất thành công.')
     return redirect('users:login')
 
 
@@ -137,7 +137,7 @@ def profile_view(request):
         user.full_name = request.POST.get('full_name', user.full_name)
         user.phone = request.POST.get('phone', user.phone)
         user.save(update_fields=['full_name', 'phone', 'updated_at'])
-        messages.success(request, 'Cap nhat thong tin thanh cong!')
+        messages.success(request, 'Cập nhật thông tin thành công!')
         return redirect('users:profile')
 
     return render(request, 'users/profile.html')
@@ -152,16 +152,16 @@ def change_password_view(request):
         confirm_password = request.POST.get('confirm_password', '')
 
         if not request.user.check_password(current_password):
-            messages.error(request, 'Mat khau hien tai khong dung.')
+            messages.error(request, 'Mật khẩu hiện tại không đúng.')
         elif len(new_password) < 6:
-            messages.error(request, 'Mat khau moi phai it nhat 6 ky tu.')
+            messages.error(request, 'Mật khẩu mới phải ít nhất 6 ký tự.')
         elif new_password != confirm_password:
-            messages.error(request, 'Mat khau xac nhan khong khop.')
+            messages.error(request, 'Mật khẩu xác nhận không khớp.')
         else:
             request.user.set_password(new_password)
             request.user.save()
             update_session_auth_hash(request, request.user)
-            messages.success(request, 'Doi mat khau thanh cong!')
+            messages.success(request, 'Đổi mật khẩu thành công!')
             return redirect('users:profile')
 
     return render(request, 'users/change_password.html')
@@ -209,18 +209,18 @@ def user_toggle_status(request, pk):
     target_user = get_object_or_404(User, pk=pk)
 
     if target_user == request.user:
-        messages.error(request, 'Ban khong the khoa chinh tai khoan cua minh.')
+        messages.error(request, 'Bạn không thể khóa chính tài khoản của mình.')
         return redirect('users:management')
 
     if request.method == 'POST':
         if target_user.status == 'ACTIVE':
             target_user.status = 'LOCKED'
             target_user.is_active = False
-            msg = 'Da khoa tai khoan.'
+            msg = 'Đã khóa tài khoản.'
         else:
             target_user.status = 'ACTIVE'
             target_user.is_active = True
-            msg = 'Da mo khoa tai khoan.'
+            msg = 'Đã mở khóa tài khoản.'
         target_user.save(update_fields=['status', 'is_active', 'updated_at'])
         messages.success(request, msg)
 
@@ -238,9 +238,9 @@ def user_change_role(request, pk):
         if new_role in valid_roles:
             target_user.role = new_role
             target_user.save(update_fields=['role', 'updated_at'])
-            messages.success(request, 'Da doi quyen thanh cong.')
+            messages.success(request, 'Đã đổi quyền thành công.')
         else:
-            messages.error(request, 'Role khong hop le.')
+            messages.error(request, 'Role không hợp lệ.')
 
     return redirect('users:management')
 

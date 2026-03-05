@@ -16,7 +16,7 @@ from .ollama_service import (
 def _staff_only(request):
     """Return redirect response if user is STUDENT, else None."""
     if request.user.role == 'STUDENT':
-        messages.error(request, 'Sinh vien khong co quyen truy cap trang nay.')
+        messages.error(request, 'Sinh viên không có quyền truy cập trang này.')
         return redirect('students:dashboard')
     return None
 

@@ -236,12 +236,15 @@
       {% if messages %}
       <div class="px-6 pt-4 space-y-2">
         {% for message in messages %}
-        <div class="border-3 border-black p-4 font-bold uppercase text-sm shadow-brutal-sm
+        <div class="border-3 border-black p-4 font-bold uppercase text-sm shadow-brutal-sm flex justify-between items-center
         {% if message.tags == 'success' %}bg-accent-teal/20 text-accent-teal
         {% elif message.tags == 'error' %}bg-accent-red/20 text-accent-red
         {% elif message.tags == 'info' %}bg-primary/20 text-primary
         {% else %}bg-accent-yellow/20 text-slate-900{% endif %}">
-          {{ message }}
+          <span>{{ message }}</span>
+          <button onclick="this.parentElement.remove()" class="hover:opacity-75 flex items-center justify-center ml-4 cursor-pointer">
+            <span class="material-symbols-outlined text-lg leading-none">close</span>
+          </button>
         </div>
         {% endfor %}
       </div>

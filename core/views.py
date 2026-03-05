@@ -220,9 +220,9 @@ def organization_create(request):
         description = request.POST.get('description', '').strip()
 
         if not name or not code or not org_type:
-            messages.error(request, 'Vui long dien day du thong tin bat buoc.')
+            messages.error(request, 'Vui lòng điền đầy đủ thông tin bắt buộc.')
         elif Organization.objects.filter(code__iexact=code).exists():
-            messages.error(request, 'Ma to chuc da ton tai.')
+            messages.error(request, 'Mã tổ chức đã tồn tại.')
         else:
             org = Organization.objects.create(
                 name=name,
@@ -232,7 +232,7 @@ def organization_create(request):
                 description=description,
                 status=True,
             )
-            messages.success(request, f'Da tao to chuc "{org.name}" thanh cong!')
+            messages.success(request, f'Đã tạo tổ chức "{org.name}" thành công!')
             return redirect('core:organizations')
 
     context = {
@@ -257,9 +257,9 @@ def organization_edit(request, org_pk):
         description = request.POST.get('description', '').strip()
 
         if not name or not code or not org_type:
-            messages.error(request, 'Vui long dien day du thong tin bat buoc.')
+            messages.error(request, 'Vui lòng điền đầy đủ thông tin bắt buộc.')
         elif Organization.objects.filter(code__iexact=code).exclude(pk=org.pk).exists():
-            messages.error(request, 'Ma to chuc da ton tai.')
+            messages.error(request, 'Mã tổ chức đã tồn tại.')
         else:
             org.name = name
             org.code = code.upper()
@@ -267,7 +267,7 @@ def organization_edit(request, org_pk):
             org.parent_id = parent_id
             org.description = description
             org.save()
-            messages.success(request, f'Da cap nhat to chuc "{org.name}" thanh cong!')
+            messages.success(request, f'Đã cập nhật tổ chức "{org.name}" thành công!')
             return redirect('core:organizations')
 
     context = {
@@ -296,7 +296,7 @@ def organization_delete(request, org_pk):
     if request.method == 'POST':
         org_name = org.name
         _delete_org_tree(org)
-        messages.success(request, f'Da xoa to chuc "{org_name}" va tat ca to chuc con.')
+        messages.success(request, f'Đã xóa tổ chức "{org_name}" và tất cả tổ chức con.')
         return redirect('core:organizations')
 
     # Count children recursively for confirmation display
@@ -323,7 +323,7 @@ def org_staff_view(request, org_pk):
     org = get_object_or_404(Organization, pk=org_pk, status=True)
 
     if not can_manage_org_staff(request.user, org):
-        messages.error(request, 'Ban khong co quyen quan ly thanh vien cua to chuc nay.')
+        messages.error(request, 'Bạn không có quyền quản lý thành viên của tổ chức này.')
         return redirect('core:organizations')
 
     from django.contrib.auth import get_user_model
@@ -355,18 +355,18 @@ def org_staff_view(request, org_pk):
                     member.is_officer = True
                     member.position = position
                     member.save(update_fields=['is_officer', 'position'])
-                messages.success(request, f'Da them "{target_user.full_name}" lam can bo.')
+                messages.success(request, f'Đã thêm "{target_user.full_name}" làm cán bộ.')
             except User.DoesNotExist:
-                messages.error(request, 'Khong tim thay user hoac user khong phai Staff.')
+                messages.error(request, 'Không tìm thấy user hoặc user không phải Staff.')
 
         elif action == 'add_student':
             student_code = request.POST.get('student_code', '').strip()
             if not student_code:
-                messages.error(request, 'Vui long nhap MSSV.')
+                messages.error(request, 'Vui lòng nhập MSSV.')
             else:
                 profile = StudentProfile.objects.filter(student_code__iexact=student_code).first()
                 if not profile:
-                    messages.error(request, f'Khong tim thay sinh vien co MSSV "{student_code}".')
+                    messages.error(request, f'Không tìm thấy sinh viên có MSSV "{student_code}".')
                 else:
                     member, created = OrganizationMember.objects.get_or_create(
                         organization=org,
@@ -378,9 +378,9 @@ def org_staff_view(request, org_pk):
                         }
                     )
                     if created:
-                        messages.success(request, f'Da them sinh vien "{profile.user.full_name}" vao to chuc.')
+                        messages.success(request, f'Đã thêm sinh viên "{profile.user.full_name}" vào tổ chức.')
                     else:
-                        messages.info(request, f'Sinh vien "{profile.user.full_name}" da la thanh vien roi.')
+                        messages.info(request, f'Sinh viên "{profile.user.full_name}" đã là thành viên rồi.')
 
         elif action == 'remove_officer':
             member_id = request.POST.get('member_id')
@@ -388,14 +388,14 @@ def org_staff_view(request, org_pk):
             if member:
                 member.is_officer = False
                 member.save(update_fields=['is_officer'])
-                messages.success(request, f'Da xoa quyen can bo khoi "{member.user.full_name}".')
+                messages.success(request, f'Đã xoá quyền cán bộ khỏi "{member.user.full_name}".')
 
         elif action == 'remove_member':
             member_id = request.POST.get('member_id')
             member = OrganizationMember.objects.filter(pk=member_id, organization=org).first()
             if member:
                 member.delete()
-                messages.success(request, 'Da xoa thanh vien khoi to chuc.')
+                messages.success(request, 'Đã xoá thành viên khỏi tổ chức.')
 
         return redirect('core:org_staff', org_pk=org_pk)
 
@@ -437,7 +437,7 @@ def import_members_to_org(request, org_pk):
 
     # Permission check
     if not can_manage_org_staff(request.user, org):
-        messages.error(request, 'Ban khong co quyen import thanh vien vao to chuc nay.')
+        messages.error(request, 'Bạn không có quyền import thành viên vào tổ chức này.')
         return redirect('core:org_staff', org_pk=org_pk)
 
     if request.method == 'POST' and request.FILES.get('excel_file'):
@@ -450,7 +450,7 @@ def import_members_to_org(request, org_pk):
             wb = openpyxl.load_workbook(excel_file, data_only=True)
             ws = wb.active
         except Exception:
-            messages.error(request, 'File khong hop le. Vui long tai len file .xlsx dung dinh dang.')
+            messages.error(request, 'File không hợp lệ. Vui lòng tải lên file .xlsx đúng định dạng.')
             return redirect('core:org_staff', org_pk=org_pk)
 
         rows_ok, rows_skip, rows_error = [], [], []
@@ -530,11 +530,11 @@ def import_members_to_org(request, org_pk):
                     continue
 
         if rows_ok:
-            messages.success(request, f'Import thanh cong {len(rows_ok)} sinh vien vao "{org.name}".')
+            messages.success(request, f'Import thành công {len(rows_ok)} sinh viên vào "{org.name}".')
         if rows_skip:
-            messages.warning(request, f'Bo qua {len(rows_skip)} dong trung lap.')
+            messages.warning(request, f'Bỏ qua {len(rows_skip)} dòng trùng lặp.')
         if rows_error:
-            messages.error(request, f'Co {len(rows_error)} dong loi.')
+            messages.error(request, f'Có {len(rows_error)} dòng lỗi.')
 
     return redirect('core:org_staff', org_pk=org_pk)
 
