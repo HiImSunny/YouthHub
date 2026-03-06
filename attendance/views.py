@@ -320,7 +320,9 @@ def checkin_submit(request, token):
             # Attempt to link to an existing user if they have the same student_code
             from django.contrib.auth import get_user_model
             User = get_user_model()
-            student_instance = User.objects.filter(student_code=student_code).first()
+            student_instance = User.objects.filter(
+                Q(student_profile__student_code=student_code) | Q(username=student_code)
+            ).first()
 
         # Determine status
         needs_photo = session.requires_photo
@@ -368,9 +370,13 @@ def records_list(request, session_pk):
         return redirect('attendance:sessions')
 
     records = session.records.select_related('student', 'verified_by').order_by('status', '-checkin_time')
+    
+    pending_count = sum(1 for r in records if r.status == 'PENDING')
+    
     return render(request, 'attendance/records_list.html', {
         'session': session,
         'records': records,
+        'pending_count': pending_count,
     })
 
 @login_required

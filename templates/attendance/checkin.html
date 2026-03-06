@@ -62,6 +62,23 @@
         <span class="mr-3 text-accent-yellow font-mono">></span> YOUTHHUB
     </div>
 
+    <!-- Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="border-4 border-black p-4 mb-6 shadow-brutal font-black uppercase flex items-center gap-3
+                {% if message.tags == 'error' %}bg-accent-red text-white
+                {% elif message.tags == 'success' %}bg-accent-teal text-black
+                {% else %}bg-accent-yellow text-black{% endif %}">
+                <span class="material-symbols-outlined">
+                    {% if message.tags == 'error' %}error
+                    {% elif message.tags == 'success' %}check_circle
+                    {% else %}info{% endif %}
+                </span>
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
     <!-- Title Block -->
     <div class="bg-primary text-black border-4 border-black p-6 shadow-brutal mb-6 transform -rotate-1">
         <h1 class="text-3xl font-black uppercase leading-tight mb-2 break-words">

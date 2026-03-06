@@ -97,9 +97,6 @@
                 </a>
                 {% endif %}
                 {% endif %}
-                <a href="{% url 'attendance:records_list' session_pk=session.pk %}"
-                    class="w-full block bg-white border-3 border-black p-4 text-center font-black uppercase shadow-brutal-sm brutal-btn transition-all">XEM
-                    & DUYỆT DANH SÁCH</a>
             </div>
         </div>
 
@@ -108,6 +105,10 @@
             <div class="bg-white border-3 border-black shadow-brutal overflow-hidden">
                 <div class="p-6 border-b-4 border-black bg-bg-light flex justify-between items-center">
                     <h2 class="text-2xl font-black uppercase">STUDENT LOG</h2>
+                    <a href="{% url 'attendance:records_list' session_pk=session.pk %}"
+                        class="bg-primary text-black border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all inline-flex items-center gap-1">
+                        <span class="material-symbols-outlined text-base">fact_check</span> XEM & DUYỆT
+                    </a>
                 </div>
                 {% if records %}
                 <div class="overflow-x-auto">
