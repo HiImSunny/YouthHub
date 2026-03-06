@@ -105,6 +105,15 @@ TIME_ZONE = 'Asia/Ho_Chi_Minh'
 USE_I18N = True
 USE_TZ = True
 
+# Custom date/time formats
+DATE_FORMAT = 'd/m/Y'
+DATETIME_FORMAT = 'H:i d/m/Y'
+SHORT_DATE_FORMAT = 'd/m/Y'
+SHORT_DATETIME_FORMAT = 'H:i d/m/Y'
+
+DATE_INPUT_FORMATS = ['%d/%m/%Y', '%Y-%m-%d']
+DATETIME_INPUT_FORMATS = ['%d/%m/%Y %H:%M:%S', '%d/%m/%Y %H:%M', '%Y-%m-%dT%H:%M']
+
 # =============================================================================
 # STATIC & MEDIA FILES
 # =============================================================================

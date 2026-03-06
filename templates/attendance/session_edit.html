@@ -2,7 +2,7 @@
 {% block title %}SỬA PHIÊN - {{ session.name|upper }} — YOUTHHUB{% endblock %}
 
 {% block content %}
-<div class="max-w-xl">
+<div class="max-w-xl mx-auto">
     <div class="flex items-center gap-4 mb-6">
         <h1 class="text-4xl font-black uppercase tracking-tighter">✏️ SỬA PHIÊN ĐIỂM DANH</h1>
     </div>
@@ -79,12 +79,44 @@
     </div>
 </div>
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const activitySelect = document.getElementById('id_activity');
         const startTimeInput = document.getElementById('id_start_time');
         const endTimeInput = document.getElementById('id_end_time');
         const warningText = document.getElementById('end_time_warning');
+
+        let endTimePicker = flatpickr(endTimeInput, {
+            enableTime: true,
+            dateFormat: "Y-m-d\\TH:i",
+            altInput: true,
+            altFormat: "d/m/Y H:i",
+            time_24hr: true,
+            locale: "vn",
+            onChange: function() {
+                checkEndTime();
+            }
+        });
+
+        let startTimePicker = flatpickr(startTimeInput, {
+            enableTime: true,
+            dateFormat: "Y-m-d\\TH:i",
+            altInput: true,
+            altFormat: "d/m/Y H:i",
+            time_24hr: true,
+            locale: "vn",
+            onChange: function(selectedDates, dateStr) {
+                if (dateStr) {
+                    endTimePicker.set('minDate', dateStr);
+                } else {
+                    endTimePicker.clear('minDate');
+                }
+            }
+        });
 
         function checkEndTime() {
             const selectedOption = activitySelect.options[activitySelect.selectedIndex];
@@ -107,32 +139,34 @@
             const actEnd = selectedOption.getAttribute('data-end');
 
             if (actStart) {
-                // Ràng buộc min cho start_time là thời gian diễn ra hoạt động
-                startTimeInput.min = actStart;
-                
-                // Autofill nếu chưa chọn thời gian trước đó
+                startTimePicker.set('minDate', actStart);
                 if (!startTimeInput.value) {
-                    startTimeInput.value = actStart;
+                    startTimePicker.setDate(actStart);
                 }
             } else {
-                startTimeInput.removeAttribute('min');
+                startTimePicker.clear('minDate');
             }
 
             if (actEnd && !endTimeInput.value) {
-                endTimeInput.value = actEnd;
+                endTimePicker.setDate(actEnd);
+            }
+
+            if (startTimeInput.value) {
+                endTimePicker.set('minDate', startTimeInput.value);
             }
 
             checkEndTime();
         });
 
-        endTimeInput.addEventListener('change', checkEndTime);
-        
         // Initial check and setup
         if (activitySelect.value) {
             const selectedOption = activitySelect.options[activitySelect.selectedIndex];
             const actStart = selectedOption.getAttribute('data-start');
             if (actStart) {
-                startTimeInput.min = actStart;
+                startTimePicker.set('minDate', actStart);
+            }
+            if (startTimeInput.value) {
+                endTimePicker.set('minDate', startTimeInput.value);
             }
             checkEndTime();
         }
