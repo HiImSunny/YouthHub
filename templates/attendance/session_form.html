@@ -20,11 +20,11 @@
             <div>
                 <label class="block text-sm font-black uppercase mb-2">HOẠT ĐỘNG <span
                         class="text-accent-red">*</span></label>
-                <select name="activity" required
+                <select name="activity" id="id_activity" required
                     class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
-                    <option value="">-- CHỌN HOẠT ĐỘNG --</option>
+                    <option value="" data-start="" data-end="">-- CHỌN HOẠT ĐỘNG --</option>
                     {% for act in activities %}
-                    <option value="{{ act.pk }}">{{ act.title }} ({{ act.start_time|date:"d/m/Y" }})</option>
+                    <option value="{{ act.pk }}" data-start="{{ act.start_time|date:'Y-m-d\TH:i' }}" data-end="{{ act.end_time|date:'Y-m-d\TH:i' }}">{{ act.title }} ({{ act.start_time|date:"d/m/Y" }})</option>
                     {% endfor %}
                 </select>
             </div>
@@ -33,14 +33,15 @@
                 <div>
                     <label class="block text-sm font-black uppercase mb-2">GIỜ BẮT ĐẦU <span
                             class="text-accent-red">*</span></label>
-                    <input type="datetime-local" name="start_time" required
+                    <input type="datetime-local" name="start_time" id="id_start_time" required
                         class="w-full border-3 border-black bg-white p-3 font-bold focus:ring-0 focus:border-black text-sm">
                 </div>
                 <div>
                     <label class="block text-sm font-black uppercase mb-2">GIỜ KẾT THÚC <span
                             class="text-accent-red">*</span></label>
-                    <input type="datetime-local" name="end_time" required
+                    <input type="datetime-local" name="end_time" id="id_end_time" required
                         class="w-full border-3 border-black bg-white p-3 font-bold focus:ring-0 focus:border-black text-sm">
+                    <p id="end_time_warning" class="hidden text-xs text-accent-yellow font-bold mt-2 bg-black p-2 uppercase">Lưu ý: Thời gian kết thúc này diễn ra sau khi sự kiện đã kết thúc.</p>
                 </div>
             </div>
 
@@ -65,4 +66,54 @@
         </form>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const activitySelect = document.getElementById('id_activity');
+        const startTimeInput = document.getElementById('id_start_time');
+        const endTimeInput = document.getElementById('id_end_time');
+        const warningText = document.getElementById('end_time_warning');
+
+        function checkEndTime() {
+            const selectedOption = activitySelect.options[activitySelect.selectedIndex];
+            const actEnd = selectedOption.getAttribute('data-end');
+            
+            if (actEnd && endTimeInput.value) {
+                if (endTimeInput.value > actEnd) {
+                    warningText.classList.remove('hidden');
+                } else {
+                    warningText.classList.add('hidden');
+                }
+            } else {
+                warningText.classList.add('hidden');
+            }
+        }
+
+        activitySelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const actStart = selectedOption.getAttribute('data-start');
+            const actEnd = selectedOption.getAttribute('data-end');
+
+            if (actStart) {
+                // Ràng buộc min cho start_time là thời gian diễn ra hoạt động
+                startTimeInput.min = actStart;
+                
+                // Autofill nếu chưa chọn thời gian trước đó
+                if (!startTimeInput.value) {
+                    startTimeInput.value = actStart;
+                }
+            } else {
+                startTimeInput.removeAttribute('min');
+            }
+
+            if (actEnd && !endTimeInput.value) {
+                endTimeInput.value = actEnd;
+            }
+
+            checkEndTime();
+        });
+
+        endTimeInput.addEventListener('change', checkEndTime);
+    });
+</script>
 {% endblock %}

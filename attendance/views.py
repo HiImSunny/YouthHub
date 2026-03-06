@@ -64,14 +64,40 @@ def session_create(request):
 
     if request.method == 'POST':
         activity_id = request.POST.get('activity')
-        start_time = request.POST.get('start_time')
-        end_time = request.POST.get('end_time')
+        start_time_str = request.POST.get('start_time')
+        end_time_str = request.POST.get('end_time')
+
+        # Convert to datetime for validation
+        from django.utils.dateparse import parse_datetime
+        from datetime import timedelta
+        
+        start_time_dt = parse_datetime(start_time_str)
+        end_time_dt = parse_datetime(end_time_str)
+        activity = get_object_or_404(Activity, pk=activity_id)
+
+        # Basic validations
+        if not start_time_dt or not end_time_dt:
+            messages.error(request, 'Định dạng thời gian không hợp lệ.')
+            return redirect('attendance:session_create')
+
+        if end_time_dt <= start_time_dt:
+            messages.error(request, 'Thời gian kết thúc phải diễn ra sau thời gian bắt đầu.')
+            return redirect('attendance:session_create')
+
+        # Business logic validation
+        if start_time_dt < activity.start_time:
+            messages.error(request, 'Thời gian bắt đầu phiên không được trước khi sự kiện diễn ra.')
+            return redirect('attendance:session_create')
+
+        if end_time_dt > activity.end_time + timedelta(hours=24):
+            messages.error(request, 'Không thể kéo dài phiên quá 24 giờ sau khi sự kiện kết thúc.')
+            return redirect('attendance:session_create')
 
         session = AttendanceSession(
-            activity_id=activity_id,
+            activity=activity,
             name=request.POST.get('name'),
-            start_time=start_time,
-            end_time=end_time,
+            start_time=start_time_str,
+            end_time=end_time_str,
             requires_photo=request.POST.get('requires_photo') == 'on',
             qr_token=uuid.uuid4().hex,
             status=AttendanceSession.SessionStatus.OPEN,
@@ -118,10 +144,40 @@ def session_edit(request, pk):
     session = get_object_or_404(AttendanceSession, pk=pk)
 
     if request.method == 'POST':
-        session.activity_id = request.POST.get('activity')
+        activity_id = request.POST.get('activity')
+        start_time_str = request.POST.get('start_time')
+        end_time_str = request.POST.get('end_time')
+
+        # Convert to datetime for validation
+        from django.utils.dateparse import parse_datetime
+        from datetime import timedelta
+        
+        start_time_dt = parse_datetime(start_time_str)
+        end_time_dt = parse_datetime(end_time_str)
+        activity = get_object_or_404(Activity, pk=activity_id)
+
+        # Basic validations
+        if not start_time_dt or not end_time_dt:
+            messages.error(request, 'Định dạng thời gian không hợp lệ.')
+            return redirect('attendance:session_edit', pk=session.pk)
+
+        if end_time_dt <= start_time_dt:
+            messages.error(request, 'Thời gian kết thúc phải diễn ra sau thời gian bắt đầu.')
+            return redirect('attendance:session_edit', pk=session.pk)
+
+        # Business logic validation
+        if start_time_dt < activity.start_time:
+            messages.error(request, 'Thời gian bắt đầu phiên không được trước khi sự kiện diễn ra.')
+            return redirect('attendance:session_edit', pk=session.pk)
+
+        if end_time_dt > activity.end_time + timedelta(hours=24):
+            messages.error(request, 'Không thể kéo dài phiên quá 24 giờ sau khi sự kiện kết thúc.')
+            return redirect('attendance:session_edit', pk=session.pk)
+
+        session.activity = activity
         session.name = request.POST.get('name')
-        session.start_time = request.POST.get('start_time')
-        session.end_time = request.POST.get('end_time')
+        session.start_time = start_time_str
+        session.end_time = end_time_str
         session.requires_photo = request.POST.get('requires_photo') == 'on'
         
         # If admin edits, we assume they are re-opening or extending it
