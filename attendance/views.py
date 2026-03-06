@@ -368,8 +368,11 @@ def checkin_submit(request, token):
 
         if not needs_photo:
             if student_instance:
-                _grant_points(student_instance, session.activity)
-                messages.success(request, 'Điểm danh thành công! Điểm rèn luyện đã được ghi nhận.')
+                awarded = _check_and_auto_award(student_instance, session.activity)
+                if awarded:
+                    messages.success(request, 'Điểm danh thành công! Đã đủ số phiên và được cấp điểm rèn luyện.')
+                else:
+                    messages.success(request, 'Điểm danh thành công!')
             else:
                 messages.success(request, 'Điểm danh tư cách Khách thành công! (Cần liên kết tài khoản để nhận điểm).')
         else:
@@ -430,8 +433,11 @@ def record_approve(request, pk):
         record.save()
 
         if record.student:
-            _grant_points(record.student, record.activity)
-            messages.success(request, f'Đã duyệt điểm danh cho {record.student.full_name}.')
+            awarded = _check_and_auto_award(record.student, record.activity, awarded_by=request.user)
+            if awarded:
+                messages.success(request, f'Đã duyệt điểm danh cho {record.student.full_name} và cấp điểm rèn luyện do đã đủ số phiên.')
+            else:
+                messages.success(request, f'Đã duyệt điểm danh cho {record.student.full_name}.')
 
     return redirect('attendance:records_list', session_pk=record.attendance_session_id)
 
@@ -451,6 +457,38 @@ def record_reject(request, pk):
 
     return redirect('attendance:records_list', session_pk=record.attendance_session_id)
 
+
+@login_required
+@transaction.atomic
+def records_bulk_approve(request, session_pk):
+    """Approve all PENDING records in a specific session."""
+    session = get_object_or_404(AttendanceSession, pk=session_pk)
+    if request.user.role == 'STUDENT':
+        messages.error(request, 'Bạn không có quyền duyệt điểm danh.')
+        return redirect('attendance:sessions')
+
+    if request.method == 'POST':
+        pending_records = session.records.filter(status='PENDING').select_related('student')
+        count = 0
+        from django.utils import timezone as tz
+        now = tz.now()
+
+        for record in pending_records:
+            record.status = AttendanceRecord.RecordStatus.VERIFIED
+            record.verified_by = request.user
+            record.approved_at = now
+            record.save()
+            count += 1
+
+            if record.student:
+                _check_and_auto_award(record.student, session.activity, awarded_by=request.user)
+
+        if count > 0:
+            messages.success(request, f'Đã duyệt thành công {count} bản ghi chờ xác nhận.')
+        else:
+            messages.warning(request, 'Không có bản ghi nào đang chờ xác nhận.')
+
+    return redirect('attendance:records_list', session_pk=session_pk)
 
 # ────────────────────────────────────────────────────────────
 # POINTS VIEW
@@ -594,6 +632,25 @@ def _grant_points(student, activity, awarded_by=None):
     )
 
 
+def _check_and_auto_award(student, activity, awarded_by=None):
+    """
+    Check if the student has VERIFIED records for all sessions in the activity.
+    If so, auto-award points.
+    """
+    total_sessions = activity.sessions.count()
+    if total_sessions == 0:
+        return False
+        
+    verified_count = student.attendance_records.filter(
+        attendance_session__activity=activity,
+        status='VERIFIED'
+    ).values('attendance_session').distinct().count()
+
+    if verified_count >= total_sessions:
+        awarded, _ = _do_award_student(student, activity, awarded_by=awarded_by)
+        return awarded
+    return False
+
 # ────────────────────────────────────────────────────────────
 # PHASE 4: Award Points — Individual + Bulk
 # ────────────────────────────────────────────────────────────
@@ -680,6 +737,45 @@ def award_student_points(request, activity_pk, student_pk):
             request,
             f'{student.full_name} đã được cấp điểm trước đó — bỏ qua.'
         )
+
+    return redirect('attendance:activity_verify', activity_pk=activity_pk)
+
+
+@login_required
+@transaction.atomic
+def award_revoke_student_points(request, activity_pk, student_pk):
+    """
+    Revoke points from a specific student for this activity.
+    """
+    if request.user.role == 'STUDENT':
+        messages.error(request, 'Bạn không có quyền hủy điểm.')
+        return redirect('activities:detail', pk=activity_pk)
+
+    if request.method != 'POST':
+        return redirect('attendance:activity_verify', activity_pk=activity_pk)
+
+    activity = get_object_or_404(Activity, pk=activity_pk)
+
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    student = get_object_or_404(User, pk=student_pk)
+
+    deleted_count, _ = ActivityPoint.objects.filter(
+        student=student, 
+        activity=activity
+    ).delete()
+
+    from activities.models import ActivityRegistration
+    ActivityRegistration.objects.filter(
+        activity=activity,
+        student=student,
+        status='POINT_AWARDED',
+    ).update(status='ATTENDED')
+
+    if deleted_count > 0:
+        messages.success(request, f'Đã hủy cấp điểm rèn luyện cho {student.full_name}.')
+    else:
+        messages.warning(request, f'{student.full_name} chưa được cấp điểm.')
 
     return redirect('attendance:activity_verify', activity_pk=activity_pk)
 

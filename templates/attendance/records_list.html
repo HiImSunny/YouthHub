@@ -20,9 +20,23 @@
         {% if records %}
         
         {% if session.requires_photo and pending_count > 0 %}
-        <div class="px-6 py-4 bg-accent-yellow border-b-4 border-black flex justify-between items-center">
-            <h3 class="font-black text-xl uppercase">DUYỆT NHANH ẢNH MINH CHỨNG ({{ pending_count }})</h3>
-            <span class="material-symbols-outlined">photo_library</span>
+        <div class="px-6 py-4 bg-accent-yellow border-b-4 border-black flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-2xl">photo_library</span>
+                <div>
+                    <h3 class="font-black text-xl uppercase leading-none mb-1">DUYỆT CHI TIẾT ẢNH ({{ pending_count }})</h3>
+                    <p class="text-xs font-bold text-black/60 uppercase">Duyệt từng người hoặc duyệt tất cả cùng lúc</p>
+                </div>
+            </div>
+            <form method="post" action="{% url 'attendance:records_bulk_approve' session_pk=session.pk %}"
+                onsubmit="return confirm('Bạn có chắc chắn muốn duyệt TẤT CẢ {{ pending_count }} bản ghi đang chờ không?')">
+                {% csrf_token %}
+                <button type="submit"
+                    class="bg-black text-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn flex items-center gap-2 whitespace-nowrap">
+                    <span class="material-symbols-outlined">done_all</span>
+                    DUYỆT TẤT CẢ
+                </button>
+            </form>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6 bg-slate-100">
             {% for rec in records %}

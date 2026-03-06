@@ -22,6 +22,7 @@ urlpatterns = [
     path('records/<int:session_pk>/', views.records_list, name='records_list'),
     path('records/<int:pk>/approve/', views.record_approve, name='record_approve'),
     path('records/<int:pk>/reject/', views.record_reject, name='record_reject'),
+    path('records/<int:session_pk>/bulk-approve/', views.records_bulk_approve, name='records_bulk_approve'),
 
     # Points
     path('points/', views.points_view, name='points'),
@@ -31,5 +32,6 @@ urlpatterns = [
 
     # Phase 4: Award points (individual + bulk)
     path('activity/<int:activity_pk>/award/<int:student_pk>/', views.award_student_points, name='award_student'),
+    path('activity/<int:activity_pk>/award/<int:student_pk>/revoke/', views.award_revoke_student_points, name='award_revoke'),
     path('activity/<int:activity_pk>/award/bulk/', views.award_bulk_points, name='award_bulk'),
 ]

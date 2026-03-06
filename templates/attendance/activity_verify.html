@@ -182,14 +182,17 @@
                         {% for cell in row.cells %}
                         <td class="p-3 border-r-2 border-black text-center">
                             {% if cell.is_verified %}
-                            <span class="material-symbols-outlined text-accent-teal text-2xl"
-                                title="Đã xác nhận">check_circle</span>
+                            <div class="h-8 w-8 rounded-full bg-accent-teal/10 flex items-center justify-center mx-auto" title="Đã xác nhận">
+                                <span class="material-symbols-outlined text-accent-teal text-xl">check_circle</span>
+                            </div>
                             {% elif cell.is_checked %}
-                            <span class="material-symbols-outlined text-primary text-2xl"
-                                title="Chờ xác nhận (có ảnh)">pending</span>
+                            <div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center mx-auto" title="Chờ xác nhận (có ảnh)">
+                                <span class="material-symbols-outlined text-primary text-xl">pending</span>
+                            </div>
                             {% else %}
-                            <span class="material-symbols-outlined text-slate-200 text-2xl"
-                                title="Chưa điểm danh">cancel</span>
+                            <div class="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center mx-auto" title="Chưa điểm danh">
+                                <span class="material-symbols-outlined text-slate-300 text-xl">cancel</span>
+                            </div>
                             {% endif %}
                             {% if cell.record and cell.record.checkin_time %}
                             <div class="text-[10px] font-bold text-slate-400 mt-0.5">{{ cell.record.checkin_time|date:"H:i" }}</div>
@@ -211,19 +214,26 @@
                                 {% elif row.checked_count > 0 %}text-primary
                                 {% else %}text-slate-300
                                 {% endif %}">
-                                {% if row.is_fully_attended %}ĐỦ PHIÊN{% elif row.checked_count > 0 %}THIẾU{% else
-                                %}VẮNG{% endif %}
+                                {% if row.is_fully_attended %}ĐỦ PHIÊN{% elif row.checked_count > 0 %}THIẾU{% else %}VẮNG{% endif %}
                             </div>
                         </td>
 
                         <!-- Action button -->
                         <td class="p-3 text-center">
                             {% if row.already_awarded %}
-                            <span
-                                class="inline-flex items-center gap-1 px-3 py-2 bg-accent-teal/10 border-2 border-accent-teal text-accent-teal text-xs font-black uppercase">
-                                <span class="material-symbols-outlined text-sm">verified</span>
-                                ĐÃ CẤP ĐIỂM
-                            </span>
+                            <div class="flex items-center justify-center gap-1">
+                                <span class="inline-flex items-center gap-1 px-3 py-2 bg-accent-teal/10 border-2 border-accent-teal text-accent-teal text-xs font-black uppercase">
+                                    <span class="material-symbols-outlined text-sm">verified</span>
+                                    ĐÃ CẤP ĐIỂM
+                                </span>
+                                <form method="post" action="{% url 'attendance:award_revoke' activity_pk=activity.pk student_pk=row.student.pk %}"
+                                    onsubmit="return confirm('HỦY điểm rèn luyện của {{ row.student.full_name }}?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="px-2 py-2 bg-slate-100 border-2 border-black text-slate-600 hover:bg-black hover:text-white transition-colors" title="Hủy cấp điểm">
+                                        <span class="material-symbols-outlined text-sm block">delete</span>
+                                    </button>
+                                </form>
+                            </div>
                             {% else %}
                             <form method="post"
                                 action="{% url 'attendance:award_student' activity_pk=activity.pk student_pk=row.student.pk %}"
@@ -231,7 +241,7 @@
                                 {% csrf_token %}
                                 <button type="submit"
                                     class="inline-flex items-center gap-1 px-3 py-2 border-3 border-black font-black uppercase text-xs shadow-brutal-sm brutal-btn transition-all
-                                    {% if row.is_fully_attended %}bg-primary text-white{% else %}bg-white text-slate-700 hover:bg-primary/10{% endif %}">
+                                    {% if row.is_fully_attended %}bg-primary text-white{% else %}bg-white text-slate-700 hover:bg-primary/10 hover:text-primary{% endif %}">
                                     <span class="material-symbols-outlined text-sm">stars</span>
                                     CẤP ĐIỂM
                                 </button>
@@ -270,14 +280,23 @@
 
     <!-- Legend -->
     <div class="flex items-center gap-6 mt-4 text-xs font-bold uppercase text-slate-500">
-        <div class="flex items-center gap-1.5">
-            <span class="material-symbols-outlined text-accent-teal text-lg">check_circle</span> Đã xác nhận (VERIFIED)
+        <div class="flex items-center gap-2">
+            <div class="h-6 w-6 rounded-full bg-accent-teal/10 flex items-center justify-center">
+                <span class="material-symbols-outlined text-accent-teal text-sm">check_circle</span>
+            </div>
+            Đã xác nhận (VERIFIED)
         </div>
-        <div class="flex items-center gap-1.5">
-            <span class="material-symbols-outlined text-primary text-lg">pending</span> Chờ xác nhận (có ảnh)
+        <div class="flex items-center gap-2">
+            <div class="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center">
+                <span class="material-symbols-outlined text-primary text-sm">pending</span>
+            </div>
+            Chờ xác nhận (có ảnh)
         </div>
-        <div class="flex items-center gap-1.5">
-            <span class="material-symbols-outlined text-slate-200 text-lg">cancel</span> Chưa điểm danh
+        <div class="flex items-center gap-2">
+            <div class="h-6 w-6 rounded-full bg-slate-100 flex items-center justify-center">
+                <span class="material-symbols-outlined text-slate-300 text-sm">cancel</span>
+            </div>
+            Chưa điểm danh
         </div>
     </div>
     {% endif %}
