@@ -21,7 +21,7 @@
     <nav class="flex items-center gap-2 text-sm font-bold uppercase mb-6 text-slate-500">
         <a href="{% url 'activities:list' %}" class="hover:text-primary">HOẠT ĐỘNG</a>
         <span class="material-symbols-outlined text-base">chevron_right</span>
-        <span class="text-slate-900">{{ activity.title }}</span>
+        <a href="{% url 'activities:detail' pk=activity.pk %}" class="hover:text-primary">{{ activity.title|truncatechars:25|upper }}</a>
         <span class="material-symbols-outlined text-base">chevron_right</span>
         <span class="text-slate-900">ĐIỂM DANH</span>
     </nav>
