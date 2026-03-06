@@ -29,8 +29,8 @@
             {% if rec.status == 'PENDING' %}
             <div class="bg-white border-4 border-black shadow-brutal flex flex-col hover:-translate-y-1 transition-transform">
                 {% if rec.photo_path %}
-                <a href="{{ rec.photo_path }}" target="_blank" class="block h-48 border-b-4 border-black relative group overflow-hidden bg-slate-200">
-                    <img src="{{ rec.photo_path }}" class="w-full h-full object-cover" alt="Minh chứng">
+                <a href="/media/{{ rec.photo_path }}" target="_blank" class="block h-48 border-b-4 border-black relative group overflow-hidden bg-slate-200">
+                    <img src="/media/{{ rec.photo_path }}" class="w-full h-full object-cover" alt="Minh chứng">
                     <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <span class="material-symbols-outlined text-white text-4xl">zoom_in</span>
                     </div>
@@ -94,7 +94,7 @@
                         <td class="p-4 border-r-2 border-black text-sm font-bold">{{ rec.checkin_time|date:"H:i d/m" }}</td>
                         <td class="p-4 border-r-2 border-black">
                             {% if rec.photo_path %}
-                            <a href="{{ rec.photo_path }}" target="_blank"
+                            <a href="/media/{{ rec.photo_path }}" target="_blank"
                                 class="text-xs font-black text-primary uppercase hover:underline flex items-center gap-1">
                                 <span class="material-symbols-outlined text-sm">image</span> XEM
                             </a>

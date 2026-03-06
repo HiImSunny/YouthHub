@@ -131,10 +131,9 @@
                                 <td class="p-4 border-r-2 border-black text-sm font-bold">{{ rec.checkin_time|date:"H:i d/m/Y" }}</td>
                                 <td class="p-4 border-r-2 border-black">
                                     {% if rec.photo_path %}
-                                    <div class="w-10 h-10 border-3 border-black bg-slate-200">
-                                        <span
-                                            class="material-symbols-outlined text-lg text-accent-teal w-full h-full flex items-center justify-center">image</span>
-                                    </div>
+                                    <a href="/media/{{ rec.photo_path }}" target="_blank" class="w-10 h-10 border-3 border-black bg-slate-200 block hover:bg-white transition-colors group">
+                                        <span class="material-symbols-outlined text-lg text-primary w-full h-full flex items-center justify-center group-hover:scale-110 transition-transform">image</span>
+                                    </a>
                                     {% else %}<span class="text-xs font-bold text-slate-400">—</span>{% endif %}
                                 </td>
                                 <td class="p-4">
