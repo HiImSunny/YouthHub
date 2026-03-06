@@ -127,10 +127,15 @@
                 {% endif %}
 
                 {% if user.role != 'STUDENT' and activity.status not in 'DRAFT,CANCELED' %}
+                <a href="{% url 'attendance:activity_sessions' activity_pk=activity.pk %}"
+                    class="w-full block bg-primary text-white border-3 border-black p-4 text-center font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">qr_code_scanner</span>
+                    QUẢN LÝ ĐIỂM DANH
+                </a>
                 <a href="{% url 'attendance:activity_verify' activity_pk=activity.pk %}"
                     class="w-full block bg-accent-yellow border-3 border-black p-4 text-center font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2">
                     <span class="material-symbols-outlined">fact_check</span>
-                    DUYỆT ĐIỂM DANH
+                    CHẤM ĐIỂM RÈN LUYỆN
                 </a>
                 {% endif %}
 

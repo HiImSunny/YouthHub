@@ -57,14 +57,36 @@ def sessions_view(request):
 
 
 @login_required
-def session_create(request):
-    """Create a new attendance session (STAFF/ADMIN only)."""
+def activity_sessions_list(request, activity_pk):
+    """List attendance sessions scoped to a specific activity."""
+    activity = get_object_or_404(Activity, pk=activity_pk)
+    qs = AttendanceSession.objects.filter(activity=activity).order_by('-created_at')
+    
+    # Students see only open sessions if they are registered
+    if request.user.role == 'STUDENT':
+        is_registered = request.user.registrations.filter(activity=activity).exists()
+        if not is_registered:
+            messages.error(request, "Bạn chưa đăng ký hoạt động này.")
+            return redirect('activities:list')
+        qs = qs.filter(status=AttendanceSession.SessionStatus.OPEN)
+        
+    context = {
+        'activity': activity,
+        'sessions': qs,
+        'now': timezone.now(),
+    }
+    return render(request, 'attendance/activity_sessions.html', context)
+
+
+@login_required
+def session_create(request, activity_pk):
+    """Create a new attendance session scoped to an activity (STAFF/ADMIN only)."""
+    activity = get_object_or_404(Activity, pk=activity_pk)
     if request.user.role == 'STUDENT':
         messages.error(request, 'Bạn không có quyền tạo phiên điểm danh.')
-        return redirect('attendance:sessions')
+        return redirect('attendance:activity_sessions', activity_pk=activity.pk)
 
     if request.method == 'POST':
-        activity_id = request.POST.get('activity')
         start_time_str = request.POST.get('start_time')
         end_time_str = request.POST.get('end_time')
 
@@ -81,26 +103,24 @@ def session_create(request):
             start_time_dt = timezone.make_aware(start_time_dt)
         if end_time_dt and timezone.is_naive(end_time_dt):
             end_time_dt = timezone.make_aware(end_time_dt)
-            
-        activity = get_object_or_404(Activity, pk=activity_id)
 
         # Basic validations
         if not start_time_dt or not end_time_dt:
             messages.error(request, 'Định dạng thời gian không hợp lệ.')
-            return redirect('attendance:session_create')
+            return redirect('attendance:session_create', activity_pk=activity.pk)
 
         if end_time_dt <= start_time_dt:
             messages.error(request, 'Thời gian kết thúc phải diễn ra sau thời gian bắt đầu.')
-            return redirect('attendance:session_create')
+            return redirect('attendance:session_create', activity_pk=activity.pk)
 
         # Business logic validation
         if start_time_dt < activity.start_time:
             messages.error(request, 'Thời gian bắt đầu phiên không được trước khi sự kiện diễn ra.')
-            return redirect('attendance:session_create')
+            return redirect('attendance:session_create', activity_pk=activity.pk)
 
         if end_time_dt > activity.end_time + timedelta(hours=24):
             messages.error(request, 'Không thể kéo dài phiên quá 24 giờ sau khi sự kiện kết thúc.')
-            return redirect('attendance:session_create')
+            return redirect('attendance:session_create', activity_pk=activity.pk)
 
         session = AttendanceSession(
             activity=activity,
@@ -115,8 +135,7 @@ def session_create(request):
         messages.success(request, f'Phiên điểm danh "{session.name}" đã được tạo!')
         return redirect('attendance:session_detail', pk=session.pk)
 
-    activities = Activity.objects.filter(status__in=['APPROVED', 'ONGOING']).order_by('-start_time')
-    return render(request, 'attendance/session_form.html', {'activities': activities})
+    return render(request, 'attendance/session_form.html', {'activity': activity})
 
 
 @login_required

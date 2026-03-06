@@ -17,16 +17,13 @@
                     placeholder="VD: ĐIỂM DANH KHAI MẠC">
             </div>
 
-            <div>
-                <label class="block text-sm font-black uppercase mb-2">HOẠT ĐỘNG <span
-                        class="text-accent-red">*</span></label>
-                <select name="activity" id="id_activity" required
-                    class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
-                    <option value="" data-start="" data-end="">-- CHỌN HOẠT ĐỘNG --</option>
-                    {% for act in activities %}
-                    <option value="{{ act.pk }}" data-start="{{ act.start_time|date:'Y-m-d\TH:i' }}" data-end="{{ act.end_time|date:'Y-m-d\TH:i' }}">{{ act.title }} ({{ act.start_time|date:"d/m/Y" }})</option>
-                    {% endfor %}
-                </select>
+            <div class="bg-slate-100 border-3 border-black p-4 mb-4">
+                <p class="text-xs font-black uppercase text-slate-500 mb-1">THUỘC HOẠT ĐỘNG</p>
+                <p class="font-black uppercase text-base">{{ activity.title }}</p>
+                <p class="text-xs font-bold mt-1 text-slate-600">
+                    <span class="material-symbols-outlined text-sm align-middle">schedule</span>
+                    {{ activity.start_time|date:"d/m/Y H:i" }} - {{ activity.end_time|date:"d/m/Y H:i" }}
+                </p>
             </div>
 
             <div class="grid grid-cols-2 gap-4">
@@ -73,10 +70,12 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const activitySelect = document.getElementById('id_activity');
         const startTimeInput = document.getElementById('id_start_time');
         const endTimeInput = document.getElementById('id_end_time');
-        const warningText = document.getElementById('end_time_warning');
+        const endTimeWarning = document.getElementById('end_time_warning');
+
+        const activityStartStr = "{{ activity.start_time|date:'Y-m-d\\TH:i' }}";
+        const activityEndStr = "{{ activity.end_time|date:'Y-m-d\\TH:i' }}";
 
         let endTimePicker = flatpickr(endTimeInput, {
             enableTime: true,
@@ -86,7 +85,7 @@
             time_24hr: true,
             locale: "vn",
             onChange: function() {
-                checkEndTime();
+                updateDateConstraints();
             }
         });
 
@@ -103,48 +102,46 @@
                 } else {
                     endTimePicker.clear('minDate');
                 }
+                updateDateConstraints();
             }
         });
 
-        function checkEndTime() {
-            const selectedOption = activitySelect.options[activitySelect.selectedIndex];
-            const actEnd = selectedOption.getAttribute('data-end');
-            
-            if (actEnd && endTimeInput.value) {
-                if (endTimeInput.value > actEnd) {
-                    warningText.classList.remove('hidden');
+        function updateDateConstraints() {
+            if (activityStartStr && !startTimeInput.value) {
+                startTimePicker.setDate(activityStartStr);
+                endTimePicker.set('minDate', activityStartStr);
+            }
+            if (activityEndStr && !endTimeInput.value) {
+                endTimePicker.setDate(activityEndStr);
+            }
+
+            if (endTimeInput.value && activityEndStr) {
+                if (endTimeInput.value > activityEndStr) {
+                    let endDt = new Date(endTimeInput.value);
+                    let actEndDt = new Date(activityEndStr);
+                    let diffHours = (endDt - actEndDt) / (1000 * 60 * 60);
+
+                    if (diffHours > 24) {
+                        endTimeWarning.textContent = "Không thể điểm danh quá 24h sau sự kiện!";
+                        endTimeWarning.classList.remove('text-accent-yellow', 'hidden');
+                        endTimeWarning.classList.add('text-accent-red', 'block');
+                        endTimeInput.setCustomValidity("Quá 24h sau sự kiện");
+                    } else {
+                        endTimeWarning.textContent = "Lưu ý: Thời gian kết thúc này diễn ra sau khi sự kiện đã kết thúc.";
+                        endTimeWarning.classList.remove('text-accent-red', 'hidden');
+                        endTimeWarning.classList.add('text-accent-yellow', 'block');
+                        endTimeInput.setCustomValidity("");
+                    }
                 } else {
-                    warningText.classList.add('hidden');
+                    endTimeWarning.classList.add('hidden');
+                    endTimeWarning.classList.remove('block');
+                    endTimeInput.setCustomValidity("");
                 }
-            } else {
-                warningText.classList.add('hidden');
             }
         }
 
-        activitySelect.addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const actStart = selectedOption.getAttribute('data-start');
-            const actEnd = selectedOption.getAttribute('data-end');
-
-            if (actStart) {
-                startTimePicker.set('minDate', actStart);
-                if (!startTimeInput.value) {
-                    startTimePicker.setDate(actStart);
-                }
-            } else {
-                startTimePicker.clear('minDate');
-            }
-
-            if (actEnd && !endTimeInput.value) {
-                endTimePicker.setDate(actEnd);
-            }
-
-            if (startTimeInput.value) {
-                endTimePicker.set('minDate', startTimeInput.value);
-            }
-
-            checkEndTime();
-        });
+        // Initialize values
+        updateDateConstraints();
     });
 </script>
 {% endblock %}
