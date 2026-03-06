@@ -7,8 +7,7 @@
     <nav class="flex items-center gap-2 text-sm font-bold uppercase mb-6 text-slate-500">
         <a href="{% url 'activities:list' %}" class="hover:text-primary">HOẠT ĐỘNG</a>
         <span class="material-symbols-outlined text-base">chevron_right</span>
-        <a href="{% url 'activities:detail' pk=activity.pk %}" class="hover:text-primary">{{
-            activity.title|truncatechars:25|upper }}</a>
+        <a href="{% url 'activities:detail' pk=activity.pk %}" class="hover:text-primary">{{ activity.title|truncatechars:25|upper }}</a>
         <span class="material-symbols-outlined text-base">chevron_right</span>
         <span class="text-slate-900">DUYỆT ĐIỂM DANH</span>
     </nav>
@@ -38,8 +37,7 @@
         <div class="flex-1">
             {% if activity.point_category %}
             <div class="mt-2 flex items-center gap-2">
-                <span class="bg-accent-yellow border-2 border-black px-2 py-0.5 text-xs font-black uppercase">{{
-                    activity.point_category.code }}</span>
+                <span class="bg-accent-yellow border-2 border-black px-2 py-0.5 text-xs font-black uppercase">{{ activity.point_category.code }}</span>
                 <span class="text-xs font-bold text-slate-500">{{ activity.point_category.name }}</span>
                 {% if activity.points > 0 %}
                 <span class="text-sm font-black text-primary">+{{ activity.points }} điểm rèn luyện</span>
@@ -122,8 +120,7 @@
                 <span class="material-symbols-outlined">table_chart</span>
                 BẢNG ĐIỂM DANH
             </h2>
-            <span class="text-xs font-bold text-slate-500 uppercase">{{ student_rows|length }} sinh viên × {{
-                sessions|length }} phiên</span>
+            <span class="text-xs font-bold text-slate-500 uppercase">{{ student_rows|length }} sinh viên × {{ sessions|length }} phiên</span>
         </div>
 
         <div class="overflow-x-auto">
@@ -143,8 +140,7 @@
                         <th class="p-3 font-black uppercase text-xs border-r-2 border-black text-center whitespace-nowrap"
                             style="min-width:100px">
                             <div>{{ session.name|upper }}</div>
-                            <div class="text-[10px] font-bold text-slate-400 normal-case mt-0.5">{{
-                                session.start_time|date:"d/m H:i" }}</div>
+                            <div class="text-[10px] font-bold text-slate-400 normal-case mt-0.5">{{ session.start_time|date:"d/m H:i" }}</div>
                         </th>
                         {% endfor %}
 
@@ -170,8 +166,7 @@
                         <!-- Name -->
                         <td class="p-4 border-r-2 border-black">
                             <p class="font-black uppercase text-sm leading-tight">{{ row.student.full_name }}</p>
-                            {% if row.student.email %}<p class="text-[10px] text-slate-400 font-bold">{{
-                                row.student.email }}</p>{% endif %}
+                            {% if row.student.email %}<p class="text-[10px] text-slate-400 font-bold">{{ row.student.email }}</p>{% endif %}
                         </td>
 
                         <!-- Student code -->
@@ -197,8 +192,7 @@
                                 title="Chưa điểm danh">cancel</span>
                             {% endif %}
                             {% if cell.record and cell.record.checkin_time %}
-                            <div class="text-[10px] font-bold text-slate-400 mt-0.5">{{
-                                cell.record.checkin_time|date:"H:i" }}</div>
+                            <div class="text-[10px] font-bold text-slate-400 mt-0.5">{{ cell.record.checkin_time|date:"H:i" }}</div>
                             {% endif %}
                         </td>
                         {% endfor %}
