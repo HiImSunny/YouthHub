@@ -13,15 +13,29 @@
         <span class="text-slate-900">DUYỆT ĐIỂM DANH</span>
     </nav>
 
+    <div class="mb-4 border-l-8 border-black pl-6">
+        <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-2">QUẢN LÝ ĐIỂM DANH</h1>
+        <p class="text-lg font-bold uppercase text-primary">{{ activity.title }}</p>
+    </div>
+
+    <!-- Sub-Navigation Tabs -->
+    <div class="flex border-b-4 border-black mb-8 overflow-x-auto whitespace-nowrap">
+        <a href="{% url 'attendance:activity_sessions' activity_pk=activity.pk %}" 
+           class="px-6 py-3 font-black uppercase text-sm border-r-4 border-black border-t-4 border-l-4 transition-colors flex items-center gap-2
+           {% if active_tab == 'sessions' %}bg-primary text-white border-primary{% else %}bg-slate-100 hover:bg-slate-200 text-slate-600 border-black{% endif %}">
+           <span class="material-symbols-outlined text-lg">view_list</span> CÁC PHIÊN ĐIỂM DANH
+        </a>
+        <a href="{% url 'attendance:activity_verify' activity_pk=activity.pk %}" 
+           class="px-6 py-3 font-black uppercase text-sm border-r-4 border-black border-t-4 transition-colors flex items-center gap-2
+           {% if active_tab == 'verify' %}bg-primary text-white border-primary{% else %}bg-slate-100 hover:bg-slate-200 text-slate-600 border-black{% endif %}">
+           <span class="material-symbols-outlined text-lg">fact_check</span> TỔNG HỢP & CHẤM ĐIỂM
+        </a>
+    </div>
+
     <!-- Header + Stats bar -->
     <div class="flex flex-col lg:flex-row lg:items-start gap-6 mb-8">
-        <!-- Title block -->
+        <!-- Point category info -->
         <div class="flex-1">
-            <h1 class="text-4xl font-black uppercase tracking-tighter leading-none mb-1">
-                <span class="material-symbols-outlined text-3xl align-middle text-accent-yellow">fact_check</span>
-                DUYỆT ĐIỂM DANH
-            </h1>
-            <p class="text-sm font-bold uppercase tracking-widest text-slate-500 mt-1">{{ activity.title }}</p>
             {% if activity.point_category %}
             <div class="mt-2 flex items-center gap-2">
                 <span class="bg-accent-yellow border-2 border-black px-2 py-0.5 text-xs font-black uppercase">{{

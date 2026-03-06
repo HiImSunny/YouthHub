@@ -74,6 +74,7 @@ def activity_sessions_list(request, activity_pk):
         'activity': activity,
         'sessions': qs,
         'now': timezone.now(),
+        'active_tab': 'sessions',
     }
     return render(request, 'attendance/activity_sessions.html', context)
 
@@ -569,6 +570,7 @@ def activity_attendance_verify(request, activity_pk):
         'total_students': len(student_rows),
         'fully_attended_count': sum(1 for r in student_rows if r['is_fully_attended']),
         'awarded_count': sum(1 for r in student_rows if r['already_awarded']),
+        'active_tab': 'verify',
     }
     return render(request, 'attendance/activity_verify.html', context)
 
