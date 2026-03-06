@@ -3,10 +3,16 @@
 
 {% block header_actions %}
 {% if user.role == 'ADMIN' or user.role == 'STAFF' %}
-<a href="{% url 'activities:create' %}"
-    class="bg-primary text-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
-    <span class="material-symbols-outlined text-lg">add</span> TẠO MỚI
-</a>
+<div class="flex items-center gap-3">
+    <a href="{% url 'activities:pending_list' %}"
+        class="bg-accent-yellow text-black border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
+        <span class="material-symbols-outlined text-lg">pending_actions</span> CHỜ DUYỆT
+    </a>
+    <a href="{% url 'activities:create' %}"
+        class="bg-primary text-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
+        <span class="material-symbols-outlined text-lg">add</span> TẠO MỚI
+    </a>
+</div>
 {% endif %}
 {% endblock %}
 

@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}TRUNG TÂM PHÊ DUYỆT — YOUTHHUB{% endblock %}
+
+{% block content %}
+<div>
+    <!-- Hero -->
+    <div class="mb-8 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <div>
+                <h1 class="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-2">⏳ CHỜ DUYỆT</h1>
+                <p
+                    class="text-sm font-bold uppercase bg-accent-yellow text-black inline-block px-4 py-1 border-3 border-black shadow-brutal">
+                    TRUNG TÂM PHÊ DUYỆT TỔNG HỢP</p>
+            </div>
+        </div>
+        <a href="{% url 'core:dashboard' %}"
+            class="bg-white border-3 border-black w-12 h-12 flex items-center justify-center shadow-brutal-sm brutal-btn hover:-translate-x-1 transition-all">
+            <span class="material-symbols-outlined text-2xl">arrow_back</span>
+        </a>
+    </div>
+
+    <!-- Alert Bar if none -->
+    {% if pending_activites_count == 0 and pending_attendance_count == 0 %}
+    <div class="bg-accent-teal/20 text-accent-teal border-3 border-black p-4 mb-8 font-black uppercase italic shadow-brutal-sm flex items-center gap-3">
+        <span class="material-symbols-outlined">check_circle</span>
+        Tuyệt vời! Hiện không có mục nào đang tồn đọng cần phê duyệt.
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <!-- Hoạt động Pending -->
+        <a href="{% url 'activities:pending_list' %}"
+            class="bg-white border-3 border-black p-6 shadow-brutal hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all flex flex-col items-center justify-center min-h-[250px] relative group block cursor-pointer">
+            <div class="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+            
+            <div class="w-20 h-20 border-3 border-black rounded-full flex items-center justify-center bg-bg-light shadow-brutal-sm mb-4 group-hover:bg-primary group-hover:text-white transition-all">
+                <span class="material-symbols-outlined text-4xl">event_available</span>
+            </div>
+            
+            <h2 class="text-2xl font-black uppercase text-center mb-2">HOẠT ĐỘNG</h2>
+            <p class="text-sm font-bold uppercase text-slate-500 text-center mb-6 border-b-2 border-slate-300 pb-2">Hồ sơ chờ phê duyệt</p>
+            
+            <div class="flex items-center gap-2">
+                <span class="text-6xl font-black {% if pending_activites_count > 0 %}text-accent-red{% else %}text-slate-900{% endif %}">
+                    {{ pending_activites_count|default:"0" }}
+                </span>
+                <span class="text-lg font-black uppercase text-slate-500 self-end mb-2">Mục</span>
+            </div>
+            
+            {% if pending_activites_count > 0 %}
+            <div class="absolute top-0 right-0 -m-3 bg-accent-red text-white w-10 h-10 border-3 border-black flex items-center justify-center font-black animate-pulse shadow-brutal-sm rounded-full text-xl z-10">!</div>
+            {% endif %}
+        </a>
+        
+        <!-- Điểm danh Pending -->
+        <a href="{% url 'attendance:pending_sessions' %}"
+            class="bg-white border-3 border-black p-6 shadow-brutal hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all flex flex-col items-center justify-center min-h-[250px] relative group block cursor-pointer">
+            <div class="absolute inset-0 bg-accent-teal/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+            
+            <div class="w-20 h-20 border-3 border-black rounded-full flex items-center justify-center bg-bg-light shadow-brutal-sm mb-4 group-hover:bg-accent-teal group-hover:text-white transition-all">
+                <span class="material-symbols-outlined text-4xl">fact_check</span>
+            </div>
+            
+            <h2 class="text-2xl font-black uppercase text-center mb-2">DUYỆT ĐIỂM DANH</h2>
+            <p class="text-sm font-bold uppercase text-slate-500 text-center mb-6 border-b-2 border-slate-300 pb-2">Minh chứng cần duyệt</p>
+            
+            <div class="flex items-center gap-2">
+                <span class="text-6xl font-black {% if pending_attendance_count > 0 %}text-accent-red{% else %}text-slate-900{% endif %}">
+                    {{ pending_attendance_count|default:"0" }}
+                </span>
+                <span class="text-lg font-black uppercase text-slate-500 self-end mb-2">Mục</span>
+            </div>
+            
+            {% if pending_attendance_count > 0 %}
+            <div class="absolute top-0 right-0 -m-3 bg-accent-red text-white w-10 h-10 border-3 border-black flex items-center justify-center font-black animate-pulse shadow-brutal-sm rounded-full text-xl z-10">!</div>
+            {% endif %}
+        </a>
+    </div>
+</div>
+{% endblock %}

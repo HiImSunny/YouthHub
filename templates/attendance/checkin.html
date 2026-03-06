@@ -117,17 +117,7 @@
             </div>
         </div>
 
-    {% elif not user.is_authenticated %}
-        <!-- Not logged in -->
-        <div class="bg-white border-4 border-black p-6 shadow-brutal text-center">
-            <span class="material-symbols-outlined text-[60px] text-black">lock</span>
-            <h2 class="text-xl font-black uppercase mt-2 mb-4">CẦN ĐĂNG NHẬP</h2>
-            <p class="text-sm font-bold mb-6">Xin vui lòng đăng nhập để điểm danh.</p>
-            <a href="{% url 'users:login' %}?next={% url 'attendance:checkin' token=session.qr_token %}" class="block bg-secondary text-white border-4 border-black py-4 font-black uppercase text-center text-lg shadow-brutal brutal-btn">
-                ĐĂNG NHẬP NGAY
-            </a>
-        </div>
-        
+
     {% elif now < session.start_time %}
         <!-- Too early -->
         <div class="bg-slate-200 border-4 border-black p-6 shadow-brutal text-center">
@@ -159,18 +149,42 @@
     {% else %}
         <!-- Ready to check-in form -->
         <div class="bg-white border-4 border-black p-6 shadow-brutal">
+            {% if user.is_authenticated %}
             <div class="flex items-center gap-3 mb-6 p-3 bg-accent-cyan border-2 border-black shadow-brutal-sm">
                 <div class="w-12 h-12 bg-black flex items-center justify-center border-2 border-black">
                     <span class="text-xl font-black text-white">{{ user.full_name|first }}</span>
                 </div>
                 <div>
                     <p class="text-sm font-black uppercase text-black break-all">{{ user.full_name }}</p>
-                    <p class="text-xs font-mono font-bold text-black border-t-2 border-black w-fit mt-1">{{ user.username }}</p>
+                    <p class="text-xs font-mono font-bold text-black border-t-2 border-black w-fit mt-1">{{ user.student_code|default:user.username }}</p>
                 </div>
             </div>
+            {% else %}
+            <div class="bg-accent-yellow/30 border-l-4 border-accent-yellow p-4 mb-6">
+                <p class="text-sm font-bold text-black">
+                    <span class="material-symbols-outlined align-middle mr-1 text-accent-yellow">info</span>
+                    Bạn đang điểm danh với tư cách Khách. Vui lòng nhập đúng MSSV để sau này được cộng điểm.
+                </p>
+                <a href="{% url 'users:login' %}?next={% url 'attendance:checkin' token=session.qr_token %}" class="text-xs font-black uppercase underline hover:text-primary mt-2 block">HOẶC ĐĂNG NHẬP NGAY</a>
+            </div>
+            {% endif %}
 
             <form method="post" action="{% url 'attendance:checkin_submit' token=session.qr_token %}" enctype="multipart/form-data" class="space-y-6">
                 {% csrf_token %}
+
+                {% if not user.is_authenticated %}
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-black uppercase mb-1">Mã Số Sinh Viên <span class="text-accent-red">*</span></label>
+                        <input type="text" name="student_code" required class="w-full border-4 border-black p-3 font-mono text-black uppercase shadow-brutal-sm focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all placeholder:text-slate-300" placeholder="VD: SV001">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-black uppercase mb-1">Họ và Tên <span class="text-accent-red">*</span></label>
+                        <input type="text" name="student_name" required class="w-full border-4 border-black p-3 font-bold text-black uppercase shadow-brutal-sm focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all placeholder:text-slate-300" placeholder="Nguyễn Văn A">
+                    </div>
+                </div>
+                {% endif %}
+
 
                 {% if session.requires_photo %}
                 <div>

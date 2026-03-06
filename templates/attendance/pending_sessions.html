@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% block title %}DUYỆT ĐIỂM DANH — YOUTHHUB{% endblock %}
+
+{% block content %}
+<div>
+    <!-- Hero -->
+    <div class="mb-8 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <div>
+                <h1 class="text-5xl md:text-7xl font-black uppercase tracking-tighter leading-none mb-2">📸 DUYỆT ẢNH</h1>
+                <p
+                    class="text-sm font-bold uppercase bg-accent-yellow text-black inline-block px-4 py-1 border-3 border-black shadow-brutal">
+                    DANH SÁCH PHIÊN CẦN DUYỆT</p>
+            </div>
+        </div>
+        <a href="{% url 'core:unified_pending' %}"
+            class="bg-white border-3 border-black w-12 h-12 flex items-center justify-center shadow-brutal-sm brutal-btn hover:-translate-x-1 transition-all">
+            <span class="material-symbols-outlined text-2xl">arrow_back</span>
+        </a>
+    </div>
+
+    {% if sessions %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for session in sessions %}
+        <div
+            class="bg-white border-3 border-black shadow-brutal hover:-translate-y-1 hover:shadow-brutal-lg transition-all relative block">
+            <div class="p-6 border-b-3 border-black flex items-center justify-between bg-bg-light">
+                <span class="px-3 py-1 border-3 border-black text-xs font-black uppercase bg-white shadow-brutal-sm">
+                    {{ session.activity.title|truncatechars:20 }}
+                </span>
+                {% if session.pending_count > 0 %}
+                <span class="px-2 py-1 text-xs font-black uppercase text-accent-red flex items-center gap-1 border-2 border-accent-red bg-accent-red/10">
+                    <span class="material-symbols-outlined text-base">warning</span> {{ session.pending_count }} CHỜ
+                </span>
+                {% endif %}
+            </div>
+            <div class="p-6">
+                <h3 class="text-xl font-black uppercase mb-1">{{ session.name }}</h3>
+                <div class="text-xs font-bold uppercase text-slate-500 mb-6">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="material-symbols-outlined text-base">calendar_today</span>
+                        <span>{{ session.start_time|date:"d/m/Y" }}</span>
+                    </div>
+                </div>
+                <a href="{% url 'attendance:records_list' session_pk=session.pk %}"
+                    class="block w-full bg-accent-yellow text-black border-3 border-black py-3 text-center font-black uppercase text-sm shadow-brutal-sm brutal-btn transition-all">XEM
+                    DANH SÁCH DUYỆT</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white border-3 border-black p-16 text-center shadow-brutal">
+        <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">fact_check</span>
+        <h3 class="text-2xl font-black uppercase text-slate-400">KHÔNG CÓ YÊU CẦU NÀO</h3>
+        <p class="text-black font-bold mt-2">Tất cả các bản ghi điểm danh đều đã được đánh giá.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

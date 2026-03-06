@@ -17,6 +17,7 @@ urlpatterns = [
     path('checkin/<str:token>/submit/', views.checkin_submit, name='checkin_submit'),
 
     # Records management (staff side)
+    path('records/pending/', views.pending_sessions_view, name='pending_sessions'),
     path('records/<int:session_pk>/', views.records_list, name='records_list'),
     path('records/<int:pk>/approve/', views.record_approve, name='record_approve'),
     path('records/<int:pk>/reject/', views.record_reject, name='record_reject'),

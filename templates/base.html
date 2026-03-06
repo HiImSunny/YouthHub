@@ -156,12 +156,6 @@
         <div class="border-t border-zinc-700 my-2"></div>
         <p class="text-[10px] uppercase tracking-[0.25em] text-zinc-500 px-4 py-1 font-bold">QUẢN TRỊ</p>
 
-        <!-- Chờ duyệt -->
-        <a href="{% url 'activities:pending_list' %}"
-          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
-          {% if 'pending' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
-          <span class="material-symbols-outlined text-xl">pending_actions</span> CHỜ DUYỆT
-        </a>
 
         <!-- Thống kê -->
         <a href="{% url 'core:statistics' %}"

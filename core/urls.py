@@ -15,4 +15,5 @@ urlpatterns = [
     path('audit-log/', views.audit_log_view, name='audit_log'),
     path('import-students/', views.import_students_view, name='import_students'),
     path('import-students/template/', views.download_import_template, name='import_students_template'),
+    path('pending/', views.unified_pending_view, name='unified_pending'),
 ]

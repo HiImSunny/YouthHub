@@ -6,8 +6,7 @@
     <nav class="flex items-center gap-2 text-sm font-bold uppercase mb-6 text-slate-500">
         <a href="{% url 'attendance:sessions' %}" class="hover:text-primary">ĐIỂM DANH</a>
         <span class="material-symbols-outlined text-base">chevron_right</span>
-        <a href="{% url 'attendance:session_detail' pk=session.pk %}" class="hover:text-primary">{{ session.name|upper
-            }}</a>
+        <a href="{% url 'attendance:session_detail' pk=session.pk %}" class="hover:text-primary">{{ session.name|upper }}</a>
         <span class="material-symbols-outlined text-base">chevron_right</span>
         <span class="text-slate-900">DUYỆT</span>
     </nav>
@@ -36,11 +35,9 @@
                     {% for rec in records %}
                     <tr class="border-b-2 border-black hover:bg-primary/5">
                         <td class="p-4 border-r-2 border-black text-slate-400 font-mono">{{ forloop.counter }}</td>
-                        <td class="p-4 border-r-2 border-black font-black uppercase">{{
-                            rec.student.full_name|default:"—" }}</td>
+                        <td class="p-4 border-r-2 border-black font-black uppercase">{{ rec.student.full_name|default:rec.entered_student_name|default:"KHÁCH" }}</td>
                         <td class="p-4 border-r-2 border-black font-mono text-sm">{{ rec.entered_student_code }}</td>
-                        <td class="p-4 border-r-2 border-black text-sm font-bold">{{ rec.checkin_time|date:"H:i d/m" }}
-                        </td>
+                        <td class="p-4 border-r-2 border-black text-sm font-bold">{{ rec.checkin_time|date:"H:i d/m" }}</td>
                         <td class="p-4 border-r-2 border-black">
                             {% if rec.photo_path %}
                             <a href="{{ rec.photo_path }}" target="_blank"
@@ -73,8 +70,7 @@
                                 </form>
                             </div>
                             {% elif rec.status == 'VERIFIED' %}
-                            <span class="text-xs text-slate-400 font-bold uppercase">BỞI {{
-                                rec.verified_by.full_name|default:"—" }}</span>
+                            <span class="text-xs text-slate-400 font-bold uppercase">BỞI {{ rec.verified_by.full_name|default:"—" }}</span>
                             {% else %}<span class="text-xs text-slate-400">—</span>{% endif %}
                         </td>
                     </tr>

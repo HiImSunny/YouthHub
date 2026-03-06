@@ -10,6 +10,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from activities.models import Activity
+from django.db.models import Count, Q
 from .models import ActivityPoint, AttendanceRecord, AttendanceSession
 
 
@@ -70,9 +71,17 @@ def session_create(request):
         # Convert to datetime for validation
         from django.utils.dateparse import parse_datetime
         from datetime import timedelta
+        from django.utils import timezone
         
         start_time_dt = parse_datetime(start_time_str)
         end_time_dt = parse_datetime(end_time_str)
+        
+        # Make timezone-aware if parsed successfully and naive
+        if start_time_dt and timezone.is_naive(start_time_dt):
+            start_time_dt = timezone.make_aware(start_time_dt)
+        if end_time_dt and timezone.is_naive(end_time_dt):
+            end_time_dt = timezone.make_aware(end_time_dt)
+            
         activity = get_object_or_404(Activity, pk=activity_id)
 
         # Basic validations
@@ -151,9 +160,17 @@ def session_edit(request, pk):
         # Convert to datetime for validation
         from django.utils.dateparse import parse_datetime
         from datetime import timedelta
+        from django.utils import timezone
         
         start_time_dt = parse_datetime(start_time_str)
         end_time_dt = parse_datetime(end_time_str)
+        
+        # Make timezone-aware if parsed successfully and naive
+        if start_time_dt and timezone.is_naive(start_time_dt):
+            start_time_dt = timezone.make_aware(start_time_dt)
+        if end_time_dt and timezone.is_naive(end_time_dt):
+            end_time_dt = timezone.make_aware(end_time_dt)
+            
         activity = get_object_or_404(Activity, pk=activity_id)
 
         # Basic validations
@@ -252,14 +269,15 @@ def checkin_view(request, token):
     })
 
 
-@login_required
 def checkin_submit(request, token):
-    """Process student check-in submission."""
+    """Process student check-in submission (both authenticated and guests)."""
     session = get_object_or_404(AttendanceSession, qr_token=token)
 
     if session.status != AttendanceSession.SessionStatus.OPEN:
         messages.error(request, 'Phiên điểm danh đã đóng.')
-        return redirect('attendance:sessions')
+        if request.user.is_authenticated:
+            return redirect('attendance:sessions')
+        return redirect('attendance:checkin', token=token)
 
     if request.method == 'POST':
         now = timezone.now()
@@ -270,12 +288,39 @@ def checkin_submit(request, token):
             messages.error(request, 'Đã quá giờ điểm danh.')
             return redirect('attendance:checkin', token=token)
 
-        # Prevent duplicate
-        if AttendanceRecord.objects.filter(
-            attendance_session=session, student=request.user
-        ).exists():
-            messages.info(request, 'Bạn đã điểm danh trước đó rồi.')
-            return redirect('attendance:checkin', token=token)
+        student_instance = None
+        student_code = None
+        student_name = None
+
+        if request.user.is_authenticated:
+            student_instance = request.user
+            student_code = getattr(student_instance, 'student_code', student_instance.username)
+            student_name = student_instance.full_name
+            # Prevent duplicate for authenticated users
+            if AttendanceRecord.objects.filter(
+                attendance_session=session, student=student_instance
+            ).exists():
+                messages.info(request, 'Bạn đã điểm danh trước đó rồi.')
+                return redirect('attendance:checkin', token=token)
+        else:
+            student_code = request.POST.get('student_code', '').strip()
+            student_name = request.POST.get('student_name', '').strip()
+
+            if not student_code or not student_name:
+                messages.error(request, 'Vui lòng nhập đầy đủ MSSV và Tên.')
+                return redirect('attendance:checkin', token=token)
+
+            # Prevent duplicate for guests based on student_code
+            if AttendanceRecord.objects.filter(
+                attendance_session=session, entered_student_code=student_code
+            ).exists():
+                messages.info(request, 'MSSV này đã được điểm danh trong phiên này rồi.')
+                return redirect('attendance:checkin', token=token)
+
+            # Attempt to link to an existing user if they have the same student_code
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            student_instance = User.objects.filter(student_code=student_code).first()
 
         # Determine status
         needs_photo = session.requires_photo
@@ -283,8 +328,9 @@ def checkin_submit(request, token):
 
         record = AttendanceRecord(
             attendance_session=session,
-            student=request.user,
-            entered_student_code=getattr(request.user, 'student_code', request.user.username),
+            student=student_instance,
+            entered_student_code=student_code,
+            entered_student_name=student_name,
             status=record_status,
         )
 
@@ -299,8 +345,11 @@ def checkin_submit(request, token):
         record.save()
 
         if not needs_photo:
-            _grant_points(request.user, session.activity)
-            messages.success(request, 'Điểm danh thành công! Điểm rèn luyện đã được ghi nhận.')
+            if student_instance:
+                _grant_points(student_instance, session.activity)
+                messages.success(request, 'Điểm danh thành công! Điểm rèn luyện đã được ghi nhận.')
+            else:
+                messages.success(request, 'Điểm danh tư cách Khách thành công! (Cần liên kết tài khoản để nhận điểm).')
         else:
             messages.success(request, 'Đã nộp ảnh minh chứng! Chờ cán bộ xác nhận.')
 
@@ -323,6 +372,21 @@ def records_list(request, session_pk):
         'session': session,
         'records': records,
     })
+
+@login_required
+def pending_sessions_view(request):
+    """List all sessions that have pending attendance records."""
+    if request.user.role == 'STUDENT':
+        messages.error(request, 'Bạn không truy cập được.')
+        return redirect('core:dashboard')
+
+    sessions = AttendanceSession.objects.annotate(
+        pending_count=Count('records', filter=Q(records__status='PENDING'))
+    ).filter(
+        pending_count__gt=0
+    ).select_related('activity').order_by('-created_at')
+
+    return render(request, 'attendance/pending_sessions.html', {'sessions': sessions})
 
 
 @login_required

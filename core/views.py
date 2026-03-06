@@ -34,6 +34,20 @@ def dashboard_view(request):
     return render(request, 'core/dashboard.html', context)
 
 
+@staff_required
+def unified_pending_view(request):
+    """Unified center for all pending approvals across the system."""
+    pending_activities_count = Activity.objects.filter(status='PENDING').count()
+    pending_attendance_count = AttendanceRecord.objects.filter(status='PENDING').count()
+    
+    # Ready for future pending points or other modules.
+    
+    context = {
+        'pending_activites_count': pending_activities_count,
+        'pending_attendance_count': pending_attendance_count,
+    }
+    return render(request, 'core/unified_pending.html', context)
+
 @login_required
 def organizations_view(request):
     """

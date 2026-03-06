@@ -66,6 +66,7 @@ class AttendanceRecord(models.Model):
         related_name='attendance_records',
     )
     entered_student_code = models.CharField(max_length=20)
+    entered_student_name = models.CharField(max_length=150, blank=True, null=True)
     checkin_time = models.DateTimeField(auto_now_add=True)
     photo_path = models.CharField(max_length=500, blank=True, null=True)
     verified_by = models.ForeignKey(
