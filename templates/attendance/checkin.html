@@ -62,21 +62,29 @@
         <span class="mr-3 text-accent-yellow font-mono">></span> YOUTHHUB
     </div>
 
-    <!-- Messages -->
+    <!-- Messages (Toast Style) -->
     {% if messages %}
+    <div class="fixed top-6 left-0 right-0 z-50 flex flex-col items-center gap-4 px-4 pointer-events-none">
         {% for message in messages %}
-            <div class="border-4 border-black p-4 mb-6 shadow-brutal font-black uppercase flex items-center gap-3
+            <div class="pointer-events-auto w-full max-w-md border-4 border-black p-4 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] font-black uppercase flex items-center gap-3 animate-[slideDown_0.3s_ease-out]
                 {% if message.tags == 'error' %}bg-accent-red text-white
                 {% elif message.tags == 'success' %}bg-accent-teal text-black
                 {% else %}bg-accent-yellow text-black{% endif %}">
-                <span class="material-symbols-outlined">
+                <span class="material-symbols-outlined text-4xl">
                     {% if message.tags == 'error' %}error
                     {% elif message.tags == 'success' %}check_circle
                     {% else %}info{% endif %}
                 </span>
-                {{ message }}
+                <span class="leading-tight">{{ message }}</span>
             </div>
         {% endfor %}
+    </div>
+    <style>
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
     {% endif %}
 
     <!-- Title Block -->
@@ -177,12 +185,13 @@
                 </div>
             </div>
             {% else %}
-            <div class="bg-accent-yellow/30 border-l-4 border-accent-yellow p-4 mb-6">
-                <p class="text-sm font-bold text-black">
-                    <span class="material-symbols-outlined align-middle mr-1 text-accent-yellow">info</span>
-                    Bạn đang điểm danh với tư cách Khách. Vui lòng nhập đúng MSSV để sau này được cộng điểm.
+            <div class="bg-accent-yellow border-4 border-black p-4 mb-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transform -rotate-1 relative">
+                <div class="absolute -top-3 -right-3 bg-white border-4 border-black w-10 h-10 flex items-center justify-center font-black animate-bounce rounded-full shadow-[2px_2px_0_0_rgba(0,0,0,1)] text-xl">?</div>
+                <h3 class="font-black uppercase mb-2 flex items-center gap-2 text-lg"><span class="material-symbols-outlined font-black">person_outline</span> TƯ CÁCH KHÁCH</h3>
+                <p class="text-sm font-bold text-black border-t-4 border-black pt-2 border-dashed">
+                    Bạn chưa đăng nhập. Nhập đúng MSSV của bạn để sau này đối chiếu cộng điểm.
                 </p>
-                <a href="{% url 'users:login' %}?next={% url 'attendance:checkin' token=session.qr_token %}" class="text-xs font-black uppercase underline hover:text-primary mt-2 block">HOẶC ĐĂNG NHẬP NGAY</a>
+                <a href="{% url 'users:login' %}?next={% url 'attendance:checkin' token=session.qr_token %}" class="inline-block bg-black text-white text-xs font-black uppercase px-4 py-2 border-2 border-black mt-4 hover:bg-primary hover:text-black transition-colors hover:-translate-y-1 hover:-translate-x-1 hover:shadow-brutal-sm">ĐĂNG NHẬP NGAY &rarr;</a>
             </div>
             {% endif %}
 
@@ -190,14 +199,16 @@
                 {% csrf_token %}
 
                 {% if not user.is_authenticated %}
-                <div class="space-y-4">
+                <div class="space-y-6 bg-slate-100 p-6 border-4 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] transform rotate-1 mb-8">
+                    <h3 class="font-black uppercase text-xl border-b-4 border-black pb-2 mb-4 bg-primary inline-block px-3 py-1 transform -skew-x-6 text-black">THÔNG TIN KHÁCH</h3>
+                    
                     <div>
-                        <label class="block text-sm font-black uppercase mb-1">Mã Số Sinh Viên <span class="text-accent-red">*</span></label>
-                        <input type="text" name="student_code" required class="w-full border-4 border-black p-3 font-mono text-black uppercase shadow-brutal-sm focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all placeholder:text-slate-300" placeholder="VD: SV001">
+                        <label class="block text-sm font-black uppercase mb-2 ml-1">Mã Số Sinh Viên <span class="text-accent-red text-lg align-top">*</span></label>
+                        <input type="text" name="student_code" required class="w-full border-4 border-black p-4 font-mono text-black text-lg uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:-translate-y-1 focus:-translate-x-1 focus:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all placeholder:text-slate-400 bg-white" placeholder="VD: SV001">
                     </div>
                     <div>
-                        <label class="block text-sm font-black uppercase mb-1">Họ và Tên <span class="text-accent-red">*</span></label>
-                        <input type="text" name="student_name" required class="w-full border-4 border-black p-3 font-bold text-black uppercase shadow-brutal-sm focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all placeholder:text-slate-300" placeholder="Nguyễn Văn A">
+                        <label class="block text-sm font-black uppercase mb-2 ml-1">Họ và Tên <span class="text-accent-red text-lg align-top">*</span></label>
+                        <input type="text" name="student_name" required class="w-full border-4 border-black p-4 font-bold text-black text-lg uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] focus:outline-none focus:-translate-y-1 focus:-translate-x-1 focus:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-all placeholder:text-slate-400 bg-white" placeholder="NGUYỄN VĂN A">
                     </div>
                 </div>
                 {% endif %}
