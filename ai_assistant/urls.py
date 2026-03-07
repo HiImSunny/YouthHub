@@ -8,6 +8,7 @@ urlpatterns = [
     path('', views.chat_view, name='chat'),
     path('generate/', views.generate_view, name='generate'),
     path('status/', views.ollama_status_api, name='status'),
+    path('suggest/', views.ai_suggest_api, name='suggest'),
 
     # Document management
     path('documents/', views.documents_list, name='documents'),

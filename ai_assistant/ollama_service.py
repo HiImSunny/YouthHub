@@ -12,8 +12,10 @@ logger = logging.getLogger(__name__)
 
 # Default Ollama configuration
 OLLAMA_BASE_URL = getattr(settings, 'OLLAMA_BASE_URL', 'http://localhost:11434')
-OLLAMA_MODEL = getattr(settings, 'OLLAMA_MODEL', 'qwen2.5-coder:1.5b')
 OLLAMA_TIMEOUT = getattr(settings, 'OLLAMA_TIMEOUT', 120)
+
+def get_default_model():
+    return getattr(settings, 'OLLAMA_MODEL', 'qwen2.5:1.5b-instruct')
 
 
 # ────────────────────────────────────────────────────────────
@@ -88,6 +90,7 @@ Soạn công văn:""",
 
 def check_ollama_status() -> dict:
     """Check if Ollama is running and the model is available."""
+    default_model = get_default_model()
     try:
         resp = requests.get(f'{OLLAMA_BASE_URL}/api/tags', timeout=5)
         if resp.status_code == 200:
@@ -96,7 +99,7 @@ def check_ollama_status() -> dict:
             return {
                 'online': True,
                 'models': models,
-                'has_model': OLLAMA_MODEL in models or any(OLLAMA_MODEL.split(':')[0] in m for m in models),
+                'has_model': default_model in models or any(default_model.split(':')[0] in m for m in models),
             }
     except requests.ConnectionError:
         pass
@@ -105,11 +108,13 @@ def check_ollama_status() -> dict:
     return {'online': False, 'models': [], 'has_model': False}
 
 
-def generate_document(doc_type: str, event_name: str, organization: str, date: str) -> dict:
+def generate_document(doc_type: str, event_name: str, organization: str, date: str, model_name: str = None) -> dict:
     """
     Generate a document using Ollama API.
     Returns dict with 'content', 'tokens_input', 'tokens_output', 'model', 'error'.
     """
+    target_model = model_name or get_default_model()
+    
     # Build prompt
     template = PROMPTS.get(doc_type, PROMPTS['KẾ HOẠCH / BÁO CÁO'])
     prompt = template.format(
@@ -122,7 +127,7 @@ def generate_document(doc_type: str, event_name: str, organization: str, date: s
         resp = requests.post(
             f'{OLLAMA_BASE_URL}/api/generate',
             json={
-                'model': OLLAMA_MODEL,
+                'model': target_model,
                 'prompt': prompt,
                 'stream': False,
                 'options': {
@@ -140,7 +145,7 @@ def generate_document(doc_type: str, event_name: str, organization: str, date: s
                 'content': data.get('response', ''),
                 'tokens_input': data.get('prompt_eval_count', 0),
                 'tokens_output': data.get('eval_count', 0),
-                'model': OLLAMA_MODEL,
+                'model': target_model,
                 'error': None,
             }
         else:

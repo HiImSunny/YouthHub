@@ -38,8 +38,14 @@
             </div>
 
             <div>
-                <label class="block text-sm font-black uppercase mb-2">MÔ TẢ</label>
-                <textarea name="description" rows="4"
+                <div class="flex items-center justify-between mb-2">
+                    <label class="block text-sm font-black uppercase">MÔ TẢ</label>
+                    <button type="button" onclick="draftWithAI()" id="aiDraftBtn"
+                        class="text-xs font-black uppercase bg-accent-teal text-white border-2 border-black px-3 py-1 shadow-brutal-sm hover:-translate-y-0.5 transition-transform flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">smart_toy</span> PHÁC THẢO BẰNG AI
+                    </button>
+                </div>
+                <textarea name="description" id="activityDesc" rows="4"
                     class="w-full border-3 border-black bg-white p-3 font-bold placeholder:text-slate-400 focus:ring-0 focus:border-black text-sm"
                     placeholder="MÔ TẢ CHI TIẾT...">{{ activity.description|default:'' }}</textarea>
             </div>
@@ -158,4 +164,53 @@
         </form>
     </div>
 </div>
+
+<script>
+    async function draftWithAI() {
+        const titleInput = document.querySelector('input[name="title"]');
+        const descInput = document.getElementById('activityDesc');
+        const btn = document.getElementById('aiDraftBtn');
+        const originalText = btn.innerHTML;
+
+        if (!titleInput.value.trim()) {
+            alert('Vui lòng nhập TÊN HOẠT ĐỘNG trước khi dùng AI phác thảo!');
+            titleInput.focus();
+            return;
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> ĐANG PHÁC THẢO...';
+        btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+        try {
+            const prompt = `Viết một đoạn mô tả cho hoạt động sinh viên có tên là: "${titleInput.value}". Mô tả ngắn gọn trong khoảng 3-4 câu, bao gồm mục đích và nội dung chính, phù hợp với phong cách trẻ trung năng động của sinh viên.`;
+            
+            const response = await fetch('{% url "ai_assistant:suggest" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ prompt: prompt })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.content) {
+                    descInput.value = data.content.trim();
+                } else if (data.error) {
+                    alert('Lỗi AI: ' + data.error);
+                }
+            } else {
+                alert('Có lỗi xảy ra khi kết nối tới AI. Vui lòng thử lại sau.');
+            }
+        } catch (error) {
+            alert('Lỗi kết nối tới AI: ' + error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
+</script>
 {% endblock %}

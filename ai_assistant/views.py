@@ -9,8 +9,13 @@ from .ollama_service import (
     check_ollama_status,
     generate_document,
     generate_fallback,
-    OLLAMA_MODEL,
+    get_default_model,
 )
+
+AVAILABLE_MODELS = [
+    {'id': 'qwen2.5:1.5b-instruct', 'name': 'Qwen 2.5 1.5B (Cơ bản - Nhanh)'},
+    {'id': 'qwen2.5:3b-instruct', 'name': 'Qwen 2.5 3B (Nâng cao - Yêu cầu GPU)'},
+]
 
 
 def _staff_only(request):
@@ -32,7 +37,8 @@ def chat_view(request):
 
     context = {
         'ollama_status': None,   # Will be fetched asynchronously by frontend
-        'ollama_model': OLLAMA_MODEL,
+        'ollama_model': get_default_model(),
+        'available_models': AVAILABLE_MODELS,
         'recent_docs': recent_docs,
         'output': '',
     }
@@ -43,7 +49,46 @@ def chat_view(request):
 def ollama_status_api(request):
     """Async endpoint: returns Ollama connection status as JSON."""
     status = check_ollama_status()
+    # Thêm default_model hiện tại vào response để update UI
+    status['current_default'] = get_default_model()
     return JsonResponse(status)
+
+
+@login_required
+@require_POST
+def ai_suggest_api(request):
+    """Ajax endpoint for quick AI suggestions"""
+    import json
+    if request.user.role == 'STUDENT':
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+        
+    try:
+        data = json.loads(request.body)
+        prompt_text = data.get('prompt', '')
+    except:
+        prompt_text = request.POST.get('prompt', '')
+        
+    if not prompt_text:
+         return JsonResponse({'error': 'No prompt provided'}, status=400)
+         
+    import requests
+    from django.conf import settings
+    
+    OLLAMA_BASE_URL = getattr(settings, 'OLLAMA_BASE_URL', 'http://localhost:11434')
+    OLLAMA_TIMEOUT = getattr(settings, 'OLLAMA_TIMEOUT', 120)
+    
+    try:
+        resp = requests.post(f'{OLLAMA_BASE_URL}/api/generate', json={
+            'model': get_default_model(),
+            'prompt': prompt_text,
+            'stream': False
+        }, timeout=OLLAMA_TIMEOUT)
+        
+        if resp.status_code == 200:
+            return JsonResponse({'content': resp.json().get('response', '')})
+        return JsonResponse({'error': f'Ollama error {resp.status_code}'}, status=500)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 @login_required
@@ -56,9 +101,10 @@ def generate_view(request):
     event_name = request.POST.get('event_name', '')
     organization = request.POST.get('organization', '')
     date = request.POST.get('date', '')
+    model_name = request.POST.get('model_name', get_default_model())
 
     # Try Ollama first
-    result = generate_document(doc_type, event_name, organization, date)
+    result = generate_document(doc_type, event_name, organization, date, model_name=model_name)
 
     if result.get('error'):
         # Fallback to template
@@ -74,14 +120,14 @@ def generate_view(request):
         title=f'{doc_type}: {event_name or "Chưa có tên"}',
         prompt=f'Type: {doc_type} | Event: {event_name} | Org: {organization} | Date: {date}',
         generated_content=content,
-        model=result.get('model', OLLAMA_MODEL),
+        model=result.get('model', model_name),
         tokens_input=result.get('tokens_input'),
         tokens_output=result.get('tokens_output'),
         status=AiDocument.DocStatus.RAW,
     )
 
     # Re-render chat page with output (status fetched async by JS)
-    status = {'online': True, 'models': [], 'has_model': True}  # optimistic after generate
+    status = {'online': True, 'models': [], 'has_model': True, 'current_default': get_default_model()}  # optimistic after generate
     recent_docs = AiDocument.objects.filter(
         created_by=request.user
     ).order_by('-created_at')[:5]
@@ -90,7 +136,8 @@ def generate_view(request):
 
     context = {
         'ollama_status': status,
-        'ollama_model': OLLAMA_MODEL,
+        'ollama_model': model_name,
+        'available_models': AVAILABLE_MODELS,
         'recent_docs': recent_docs,
         'output': content,
         'current_doc': doc,

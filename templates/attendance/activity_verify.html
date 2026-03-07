@@ -44,24 +44,40 @@
                 {% endif %}
             </div>
             {% endif %}
+            
+            <!-- AI Insights Box -->
+            <div class="mt-6 bg-white border-3 border-black shadow-brutal p-5">
+                 <div class="flex items-center justify-between">
+                      <h3 class="text-lg font-black uppercase flex items-center gap-2">
+                           <span class="material-symbols-outlined text-accent-teal">psychology</span> PHÂN TÍCH TỪ AI
+                      </h3>
+                      <button type="button" onclick="generateInsights()" id="insightBtn"
+                          class="px-4 py-2 bg-black text-white text-xs font-black uppercase shadow-brutal-sm hover:-translate-y-0.5 transition-transform flex items-center gap-2">
+                          <span class="material-symbols-outlined text-sm">auto_awesome</span> TẠO PHÂN TÍCH
+                      </button>
+                 </div>
+                 <div id="aiInsightBox" class="mt-4 hidden p-4 bg-slate-50 border-2 border-dashed border-slate-300 text-sm leading-relaxed whitespace-pre-line text-slate-700 font-medium">
+                     <!-- Generated insights will go here -->
+                 </div>
+            </div>
         </div>
 
         <!-- Stats cards -->
-        <div class="flex gap-3 flex-wrap">
+        <div class="flex gap-3 flex-wrap justify-end">
             <div class="bg-white border-3 border-black p-4 shadow-brutal text-center min-w-[100px]">
-                <p class="text-3xl font-black text-slate-900">{{ total_students }}</p>
+                <p class="text-3xl font-black text-slate-900" id="statTotal">{{ total_students }}</p>
                 <p class="text-[10px] font-black uppercase text-slate-400">TỔNG SV</p>
             </div>
             <div class="bg-white border-3 border-black p-4 shadow-brutal text-center min-w-[100px]">
-                <p class="text-3xl font-black text-accent-teal">{{ fully_attended_count }}</p>
+                <p class="text-3xl font-black text-accent-teal" id="statFully">{{ fully_attended_count }}</p>
                 <p class="text-[10px] font-black uppercase text-slate-400">ĐỦ PHIÊN</p>
             </div>
             <div class="bg-white border-3 border-black p-4 shadow-brutal text-center min-w-[100px]">
-                <p class="text-3xl font-black text-primary">{{ awarded_count }}</p>
+                <p class="text-3xl font-black text-primary" id="statAwarded">{{ awarded_count }}</p>
                 <p class="text-[10px] font-black uppercase text-slate-400">ĐÃ CẤP ĐIỂM</p>
             </div>
             <div class="bg-white border-3 border-black p-4 shadow-brutal text-center min-w-[100px]">
-                <p class="text-3xl font-black text-slate-900">{{ sessions|length }}</p>
+                <p class="text-3xl font-black text-slate-900" id="statSessions">{{ sessions|length }}</p>
                 <p class="text-[10px] font-black uppercase text-slate-400">SỐ PHIÊN</p>
             </div>
         </div>
@@ -73,7 +89,7 @@
         <span class="material-symbols-outlined text-6xl text-slate-300 block mb-4">event_busy</span>
         <h3 class="text-2xl font-black uppercase text-slate-400">CHƯA CÓ PHIÊN ĐIỂM DANH</h3>
         <p class="text-sm font-bold text-slate-300 uppercase mt-2">Tạo phiên điểm danh trước khi duyệt</p>
-        <a href="{% url 'attendance:session_create' %}"
+        <a href="{% url 'attendance:session_create' activity_pk=activity.pk %}"
             class="inline-flex items-center gap-2 mt-6 bg-primary text-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn">
             <span class="material-symbols-outlined">add</span> TẠO PHIÊN ĐIỂM DANH
         </a>
@@ -301,4 +317,52 @@
     </div>
     {% endif %}
 </div>
+
+<!-- AI Insights Script -->
+<script>
+    async function generateInsights() {
+        const btn = document.getElementById('insightBtn');
+        const originalText = btn.innerHTML;
+        const box = document.getElementById('aiInsightBox');
+        
+        const total = document.getElementById('statTotal')?.innerText || '0';
+        const fully = document.getElementById('statFully')?.innerText || '0';
+        const sessions = document.getElementById('statSessions')?.innerText || '0';
+        
+        const prompt = `Bạn là trợ lý đánh giá hoạt động. Tôi có hoạt động tên "{{ activity.title }}" với tổng cộng ${total} sinh viên đăng ký, có ${sessions} phiên điểm danh, nhưng chỉ có ${fully} sinh viên đi đầy đủ các phiên.
+Hãy viết một vài câu nhận xét ngắn gọn (khoảng 3 câu) về mức độ tham gia, tỷ lệ chuyên cần và đưa ra 1 lời khuyên thực tế để cải thiện sự tham gia của sinh viên. Viết bằng tiếng Việt, giọng văn chuyên nghiệp trực tiếp.`;
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> ĐANG PHÂN TÍCH...';
+        box.classList.remove('hidden');
+        box.innerHTML = 'AI đang suy nghĩ... <span class="animate-pulse">_</span>';
+
+        try {
+            const response = await fetch('{% url "ai_assistant:suggest" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({ prompt: prompt })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.content) {
+                    box.innerHTML = data.content.trim();
+                } else if (data.error) {
+                    box.innerHTML = '<span class="text-accent-red">Lỗi AI: ' + data.error + '</span>';
+                }
+            } else {
+                box.innerHTML = '<span class="text-accent-red">Có lỗi xảy ra khi kết nối tới AI.</span>';
+            }
+        } catch (error) {
+            box.innerHTML = '<span class="text-accent-red">Lỗi kết nối tới AI: ' + error.message + '</span>';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+</script>
 {% endblock %}

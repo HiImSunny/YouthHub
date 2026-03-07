@@ -43,6 +43,18 @@
                         </select>
                     </div>
                     <div>
+                        <label class="text-sm font-black uppercase flex items-center justify-between">
+                            <span>AI MODEL</span>
+                            <span class="text-[10px] text-slate-400 font-bold lowercase">Cấu hình tự nhận diện</span>
+                        </label>
+                        <select name="model_name" id="modelSelector"
+                            class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0 mt-1 text-primary">
+                            {% for m in available_models %}
+                            <option value="{{ m.id }}" {% if m.id == ollama_model %}selected{% endif %}>{{ m.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
                         <label class="text-sm font-black uppercase">EVENT NAME</label>
                         <input type="text" name="event_name" value="{{ form_event_name|default:'' }}"
                             class="w-full border-3 border-black bg-white p-3 font-bold uppercase placeholder:text-slate-400 focus:ring-0 text-sm mt-1"
@@ -151,9 +163,17 @@
     // Async Ollama status check — runs AFTER page is visible
     // ────────────────────────────────────────────────────────
     const STATUS_URL = '{% url "ai_assistant:status" %}';
-    const MODEL_NAME = '{{ ollama_model|upper }}';
+    
+    // Fallback: we try to grab the select's text or id
+    function getSelectedModelLabel() {
+        const sel = document.getElementById('modelSelector');
+        if (sel && sel.options[sel.selectedIndex]) {
+            return sel.options[sel.selectedIndex].text.toUpperCase();
+        }
+        return '{{ ollama_model|upper }}';
+    }
 
-    function updateStatusUI(online) {
+    function updateStatusUI(online, modelNameUpdate = null) {
         // Top badge
         const dot = document.getElementById('ollama-dot');
         const label = document.getElementById('ollama-label');
@@ -175,7 +195,7 @@
                 indicator.innerHTML = `
                     <span class="animate-ping absolute inline-flex h-full w-full bg-green-400 opacity-75"></span>
                     <span class="relative inline-flex h-3 w-3 bg-green-500"></span>`;
-                statusText.textContent = 'LLM READY: ' + MODEL_NAME;
+                statusText.textContent = 'LLM READY: ' + (modelNameUpdate || getSelectedModelLabel());
                 statusText.className = 'text-xs font-black uppercase';
             } else {
                 indicator.innerHTML = `
@@ -193,7 +213,17 @@
             });
             if (res.ok) {
                 const data = await res.json();
-                updateStatusUI(data.online === true);
+                
+                // If it's online but the user didn't pick anything else yet, 
+                // maybe update the dropdown if not selected already
+                const sel = document.getElementById('modelSelector');
+                if (data.current_default && sel) {
+                    // Check if the current value matches what the backend detects as default 
+                    // (only do this on first load ideally)
+                    // If we just generated, it preserves form state. So only force if we haven't posted.
+                }
+
+                updateStatusUI(data.online === true, null);
             } else {
                 updateStatusUI(false);
             }
@@ -201,6 +231,11 @@
             updateStatusUI(false);
         }
     }
+
+    // React to model dropdown changes
+    document.getElementById('modelSelector')?.addEventListener('change', () => {
+        updateStatusUI(true); // optimistically update the label in status bar
+    });
 
     // Run after page paint so UI never blocks
     requestAnimationFrame(() => {

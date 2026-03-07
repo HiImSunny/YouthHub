@@ -132,6 +132,19 @@
                     <span class="material-symbols-outlined">qr_code_scanner</span>
                     QUẢN LÝ ĐIỂM DANH
                 </a>
+                
+                <form method="post" action="{% url 'ai_assistant:generate' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="doc_type" value="CÔNG VĂN">
+                    <input type="hidden" name="event_name" value="Thông báo: {{ activity.title }}">
+                    <input type="hidden" name="organization" value="{{ activity.organization.name }}">
+                    <input type="hidden" name="date" value="{{ activity.start_time|date:'d/m/Y' }}">
+                    <button type="submit"
+                        class="w-full bg-accent-teal text-white border-3 border-black p-4 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2 mt-3">
+                        <span class="material-symbols-outlined">smart_toy</span>
+                        DỰ THẢO THÔNG BÁO TỪ AI
+                    </button>
+                </form>
                 {% endif %}
 
             </div>
