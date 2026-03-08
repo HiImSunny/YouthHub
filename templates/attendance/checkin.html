@@ -55,12 +55,21 @@
     </style>
 </head>
 
-<body class="min-h-screen py-8">
-<div class="max-w-md mx-auto p-4 w-full">
-    <!-- Header -->
-    <div class="bg-black text-white px-4 py-3 border-4 border-black font-black uppercase tracking-wider text-xl shadow-brutal flex items-center mb-6">
+<body class="min-h-screen pb-8">
+
+<!-- Sticky Header -->
+<div id="sticky-header" class="fixed top-0 left-0 right-0 z-40 transition-all duration-300 bg-black text-white px-4 py-3 border-b-4 border-black font-black uppercase tracking-wider shadow-brutal flex items-center justify-between">
+    <div class="flex items-center text-xl transition-all" id="header-logo">
         <span class="mr-3 text-accent-yellow font-mono">></span> YOUTHHUB
     </div>
+    <a href="/" class="text-xs md:text-sm border-2 border-white px-2 py-1 md:px-3 hover:bg-white hover:text-black transition-colors rounded-sm flex items-center shadow-[2px_2px_0_0_white] hover:shadow-none hover:translate-y-[2px] hover:translate-x-[2px] ml-2 shrink-0">
+        ← QUAY LẠI
+    </a>
+</div>
+<!-- Padding to offset sticky header -->
+<div class="h-[76px]"></div>
+
+<div class="max-w-md mx-auto px-4 w-full">
 
     <!-- Messages (Toast Style) -->
     {% if messages %}
@@ -109,7 +118,10 @@
             {% elif now > session.end_time %}
             <span class="px-2 py-1 bg-accent-red text-white border-2 border-black font-black text-xs uppercase block">ĐÃ ĐÓNG</span>
             {% else %}
-            <span class="px-2 py-1 bg-accent-yellow border-2 border-black font-black text-xs uppercase block animate-pulse">ĐANG MỞ</span>
+            <span id="status-badge" class="px-2 py-1 bg-accent-yellow border-2 border-black font-black text-xs uppercase block animate-pulse" data-end-time="{{ session.end_time|date:'c' }}">
+                ĐANG MỞ
+            </span>
+            <div id="countdown-timer" class="text-[10px] font-bold mt-1 text-slate-500 whitespace-nowrap text-center"></div>
             {% endif %}
         </div>
     </div>
@@ -216,15 +228,26 @@
 
                 {% if session.requires_photo %}
                 <div>
-                    <label class="block text-sm font-black uppercase mb-2">
+                    <label class="block text-sm font-black uppercase mb-1">
                         <span class="material-symbols-outlined align-middle mr-1 text-primary">camera_alt</span>
-                        ẢNH MINH CHỨNG <span class="text-accent-red text-xl">*</span>
+                        ẢNH MINH CHỨNG <span class="text-accent-red text-xl align-top">*</span>
                     </label>
-                    <div class="border-4 border-dashed border-black bg-bg-light p-6 text-center hover:bg-slate-200 transition-colors cursor-pointer group" onclick="document.getElementById('photo_input').click()">
-                        <input type="file" name="photo" accept="image/*" capture="user" id="photo_input" class="hidden" onchange="previewPhoto(this)" required>
-                        <span class="material-symbols-outlined text-[50px] text-slate-400 group-hover:text-black mb-2">add_a_photo</span>
-                        <p class="text-sm font-black uppercase text-black">BẤM ĐỂ CHỤP ẢNH</p>
-                        <img id="photo_preview" src="#" alt="Preview" class="hidden mt-4 mx-auto border-4 border-black shadow-brutal max-h-48 object-cover">
+                    <p class="text-xs font-bold text-slate-500 uppercase mb-3 border-l-2 border-black pl-2">Chụp ảnh có mặt bạn tại sự kiện</p>
+                    <div id="photo_dropzone" class="border-4 border-dashed border-black bg-bg-light p-6 text-center hover:bg-slate-200 transition-colors cursor-pointer group min-h-[180px] w-full flex flex-col items-center justify-center relative overflow-hidden" onclick="document.getElementById('photo_input').click()">
+                        <input type="file" name="photo" accept="image/*" capture="environment" id="photo_input" class="hidden" onchange="previewPhoto(this)" required>
+                        
+                        <!-- Initial State -->
+                        <div id="photo_placeholder" class="flex flex-col items-center justify-center z-10 p-4 transition-all">
+                            <span class="material-symbols-outlined text-[50px] text-slate-400 group-hover:text-black mb-2 transition-colors">add_a_photo</span>
+                            <p class="text-sm md:text-base font-black uppercase text-black">BẤM ĐỂ CHỤP ẢNH</p>
+                            <p class="text-xs text-slate-500 font-bold mt-1">Hoặc chọn từ thư viện</p>
+                        </div>
+
+                        <!-- Preview Image -->
+                        <img id="photo_preview" src="#" alt="Preview" class="hidden absolute inset-0 w-full h-full object-cover z-0 opacity-50 group-hover:opacity-30 transition-opacity mix-blend-multiply">
+                        <div id="photo_preview_overlay" class="hidden absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none">
+                            <span class="bg-black text-white px-3 py-1 border-2 border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">ĐỔI ẢNH KHÁC</span>
+                        </div>
                     </div>
                 </div>
                 {% endif %}
@@ -239,6 +262,7 @@
 </div>
 
 <script>
+    // Preview photo
     function previewPhoto(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();
@@ -246,10 +270,77 @@
                 const preview = document.getElementById('photo_preview');
                 preview.src = e.target.result;
                 preview.classList.remove('hidden');
+                
+                // Hide placeholder, show overlay
+                document.getElementById('photo_placeholder').classList.add('hidden', 'opacity-0');
+                document.getElementById('photo_preview_overlay').classList.remove('hidden');
+                
+                const dropzone = document.getElementById('photo_dropzone');
+                dropzone.classList.remove('border-dashed');
+                dropzone.classList.add('border-solid', 'bg-slate-100');
             };
             reader.readAsDataURL(input.files[0]);
         }
     }
+
+    // Shrink header on scroll
+    window.addEventListener('scroll', () => {
+        const header = document.getElementById('sticky-header');
+        const logo = document.getElementById('header-logo');
+        if (window.scrollY > 50) {
+            header.classList.remove('py-3', 'border-b-4');
+            header.classList.add('py-2', 'border-b-2');
+            logo.classList.remove('text-xl');
+            logo.classList.add('text-base');
+        } else {
+            header.classList.add('py-3', 'border-b-4');
+            header.classList.remove('py-2', 'border-b-2');
+            logo.classList.add('text-xl');
+            logo.classList.remove('text-base');
+        }
+    });
+
+    // Countdown Timer
+    document.addEventListener('DOMContentLoaded', () => {
+        const badge = document.getElementById('status-badge');
+        const timerText = document.getElementById('countdown-timer');
+        
+        if (badge && timerText && badge.dataset.endTime) {
+            const endTime = new Date(badge.dataset.endTime).getTime();
+            
+            function updateTimer() {
+                const now = new Date().getTime();
+                const distance = endTime - now;
+                
+                if (distance < 0) {
+                    badge.textContent = "ĐÃ ĐÓNG";
+                    badge.classList.remove('bg-accent-yellow', 'animate-pulse');
+                    badge.classList.add('bg-accent-red', 'text-white');
+                    timerText.textContent = "HẾT GIỜ !";
+                    timerText.classList.remove('text-slate-500');
+                    timerText.classList.add('text-accent-red');
+                    
+                    // Optional: reload after 5s when closed
+                    setTimeout(() => window.location.reload(), 5000);
+                    return;
+                }
+                
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                
+                let timeStr = "Còn ";
+                if (hours > 0) timeStr += hours + " giờ ";
+                if (minutes > 0 || hours > 0) timeStr += minutes + " phút ";
+                timeStr += seconds + " giây";
+                
+                timerText.textContent = timeStr;
+            }
+            
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        }
+    });
 </script>
 </body>
 </html>
