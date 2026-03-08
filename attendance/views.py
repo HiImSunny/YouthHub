@@ -36,25 +36,6 @@ def _qr_base64(data: str) -> str:
 # ────────────────────────────────────────────────────────────
 # SESSIONS
 # ────────────────────────────────────────────────────────────
-@login_required
-def sessions_view(request):
-    """List attendance sessions."""
-    if request.user.role in ('ADMIN', 'STAFF'):
-        qs = AttendanceSession.objects.select_related('activity')
-    else:
-        # Students see open sessions of activities they registered
-        registered_ids = request.user.activity_participations.values_list('activity_id', flat=True)
-        qs = AttendanceSession.objects.filter(
-            activity_id__in=registered_ids,
-            status=AttendanceSession.SessionStatus.OPEN,
-        ).select_related('activity')
-
-    context = {
-        'sessions': qs.order_by('-created_at'),
-        'now': timezone.now(),
-    }
-    return render(request, 'attendance/sessions.html', context)
-
 
 @login_required
 def activity_sessions_list(request, activity_pk):
@@ -168,7 +149,7 @@ def session_edit(request, pk):
     """Edit an existing attendance session (STAFF/ADMIN only)."""
     if request.user.role == 'STUDENT':
         messages.error(request, 'Bạn không có quyền chỉnh sửa phiên điểm danh.')
-        return redirect('attendance:sessions')
+        return redirect('activities:list')
 
     session = get_object_or_404(AttendanceSession, pk=pk)
 
@@ -296,7 +277,7 @@ def checkin_submit(request, token):
     if session.status != AttendanceSession.SessionStatus.OPEN:
         messages.error(request, 'Phiên điểm danh đã đóng.')
         if request.user.is_authenticated:
-            return redirect('attendance:sessions')
+            return redirect('activities:list')
         return redirect('attendance:checkin', token=token)
 
     if request.method == 'POST':
@@ -395,7 +376,7 @@ def records_list(request, session_pk):
     session = get_object_or_404(AttendanceSession, pk=session_pk)
     if request.user.role == 'STUDENT':
         messages.error(request, 'Bạn không có quyền xem danh sách này.')
-        return redirect('attendance:sessions')
+        return redirect('activities:list')
 
     records = session.participations.select_related('student', 'verified_by').order_by('status', '-checkin_time')
     
@@ -430,7 +411,7 @@ def record_approve(request, pk):
     record = get_object_or_404(ActivityParticipation, pk=pk)
     if request.user.role == 'STUDENT':
         messages.error(request, 'Bạn không có quyền duyệt điểm danh.')
-        return redirect('attendance:sessions')
+        return redirect('activities:list')
 
     if request.method == 'POST' and record.status == 'ATTENDED':
         record.status = 'VERIFIED'
@@ -453,7 +434,7 @@ def record_reject(request, pk):
     record = get_object_or_404(ActivityParticipation, pk=pk)
     if request.user.role == 'STUDENT':
         messages.error(request, 'Bạn không có quyền từ chối điểm danh.')
-        return redirect('attendance:sessions')
+        return redirect('activities:list')
 
     if request.method == 'POST' and record.status == 'ATTENDED':
         record.status = 'ABSENT'
@@ -470,7 +451,7 @@ def records_bulk_approve(request, session_pk):
     session = get_object_or_404(AttendanceSession, pk=session_pk)
     if request.user.role == 'STUDENT':
         messages.error(request, 'Bạn không có quyền duyệt điểm danh.')
-        return redirect('attendance:sessions')
+        return redirect('activities:list')
 
     if request.method == 'POST':
         pending_records = session.participations.filter(status='ATTENDED').select_related('student')

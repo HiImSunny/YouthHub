@@ -57,7 +57,7 @@
                     class="flex-1 bg-primary text-white border-3 border-black p-4 font-black uppercase shadow-brutal brutal-btn transition-all">
                     TẠO PHIÊN & LẤY MÃ QR
                 </button>
-                <a href="{% url 'attendance:sessions' %}"
+                <a href="{% url 'attendance:activity_sessions' activity_pk=activity.pk %}"
                     class="bg-white border-3 border-black p-4 font-black uppercase shadow-brutal-sm brutal-btn transition-all text-center px-8">HỦY</a>
             </div>
         </form>

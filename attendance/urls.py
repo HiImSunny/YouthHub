@@ -5,7 +5,6 @@ app_name = 'attendance'
 
 urlpatterns = [
     # Sessions management
-    path('', views.sessions_view, name='sessions'), # Keep this for now or redirect
     path('activity/<int:activity_pk>/sessions/', views.activity_sessions_list, name='activity_sessions'),
     path('activity/<int:activity_pk>/sessions/create/', views.session_create, name='session_create'),
     path('<int:pk>/', views.session_detail, name='session_detail'),
