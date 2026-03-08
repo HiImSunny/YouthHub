@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from .views_semester import semester_list, semester_create, semester_edit, semester_delete
+
 
 app_name = 'core'
 
@@ -16,4 +18,9 @@ urlpatterns = [
     path('import-students/', views.import_students_view, name='import_students'),
     path('import-students/template/', views.download_import_template, name='import_students_template'),
     path('pending/', views.unified_pending_view, name='unified_pending'),
+    
+    path('semesters/', semester_list, name='semesters'),
+    path('semesters/create/', semester_create, name='semester_create'),
+    path('semesters/<int:pk>/edit/', semester_edit, name='semester_edit'),
+    path('semesters/<int:pk>/delete/', semester_delete, name='semester_delete'),
 ]

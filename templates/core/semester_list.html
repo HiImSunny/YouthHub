@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}HỌC KỲ — YOUTHHUB{% endblock %}
+
+{% block header_actions %}
+{% if user.role != 'STUDENT' %}
+<a href="{% url 'core:semester_create' %}" class="bg-primary text-white border-3 border-black px-4 py-2 font-black uppercase shadow-brutal-sm brutal-btn flex items-center gap-2 text-sm">
+    <span class="material-symbols-outlined text-lg">add</span> TẠO HỌC KỲ
+</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-2">📅 HỌC KỲ</h1>
+    <p class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">QUẢN LÝ HỌC KỲ, NĂM HỌC</p>
+</div>
+
+<div class="bg-white border-3 border-black shadow-brutal-lg">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="border-b-3 border-black bg-slate-100">
+                    <th class="p-4 font-black uppercase border-r-2 border-black text-sm w-16 text-center">#</th>
+                    <th class="p-4 font-black uppercase border-r-2 border-black text-sm">HỌC KỲ - NĂM HỌC</th>
+                    <th class="p-4 font-black uppercase border-r-2 border-black text-sm">TỔ CHỨC</th>
+                    <th class="p-4 font-black uppercase border-r-2 border-black text-sm">THỜI GIAN</th>
+                    <th class="p-4 font-black uppercase border-r-2 border-black text-sm">TRẠNG THÁI</th>
+                    <th class="p-4 font-black uppercase text-sm text-center">THAO TÁC</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in semesters %}
+                <tr class="border-b-2 border-black hover:bg-primary/5 transition-all">
+                    <td class="p-4 border-r-2 border-black font-mono text-center">{{ forloop.counter }}</td>
+                    <td class="p-4 border-r-2 border-black font-black uppercase">{{ s.name }} ({{ s.academic_year }})</td>
+                    <td class="p-4 border-r-2 border-black">{{ s.organization.name }}</td>
+                    <td class="p-4 border-r-2 border-black text-sm font-bold text-slate-600">
+                        {{ s.start_date|date:"d/m/Y" }} - {{ s.end_date|date:"d/m/Y" }}
+                    </td>
+                    <td class="p-4 border-r-2 border-black text-xs font-black uppercase">
+                        {% if s.is_current %}
+                        <span class="bg-primary/20 text-primary px-2 py-1 border border-primary">ĐANG DIỄN RA</span>
+                        {% else %}
+                        <span class="bg-slate-200 text-slate-500 px-2 py-1 border border-slate-300">ĐÃ ĐÓNG</span>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <a href="{% url 'core:semester_edit' s.pk %}" class="bg-accent-yellow border-2 border-black px-3 py-1 text-xs font-black uppercase brutal-btn">SỬA</a>
+                            <form method="post" action="{% url 'core:semester_delete' s.pk %}" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" onclick="return confirm('Xác nhận xóa học kỳ này?')" class="bg-accent-red text-white border-2 border-black px-3 py-1 text-xs font-black uppercase brutal-btn">XÓA</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="p-10 text-center text-slate-400 font-bold uppercase">CHƯA CÓ HỌC KỲ NÀO ĐƯỢC TẠO</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

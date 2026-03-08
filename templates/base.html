@@ -141,6 +141,13 @@
           <span class="material-symbols-outlined text-xl">category</span> DANH MỤC ĐIỂM
         </a>
 
+        <!-- Học kỳ -->
+        <a href="{% url 'core:semesters' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'semesters' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">calendar_month</span> HỌC KỲ
+        </a>
+
 
         <!-- Tổ chức -->
         <a href="{% url 'core:organizations' %}"
