@@ -3,6 +3,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.db.models import Count, Q
+from django.core.paginator import Paginator
 
 from .models import Activity, ActivityParticipation, PointCategory
 from core.models import Organization, Semester
@@ -24,30 +25,51 @@ def activity_list(request):
         pending_attendance_count=Count(
             'participations',
             filter=Q(participations__status='ATTENDED')
+        ),
+        registered_count=Count(
+            'participations',
+            filter=Q(participations__status='REGISTERED')
         )
     )
 
-    # Filter by status
     status = request.GET.get('status')
     if status:
         qs = qs.filter(status=status)
 
-    # Filter by type
     activity_type = request.GET.get('type')
     if activity_type:
         qs = qs.filter(activity_type=activity_type)
 
-    # Search
+    org_id = request.GET.get('org')
+    if org_id:
+        qs = qs.filter(organization_id=org_id)
+
+    sem_id = request.GET.get('semester')
+    if sem_id:
+        qs = qs.filter(semester_id=sem_id)
+
     search = request.GET.get('q')
     if search:
         qs = qs.filter(title__icontains=search)
+        
+    qs = qs.order_by('-created_at')
+    
+    # Pagination (12 records per page)
+    paginator = Paginator(qs, 12)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     context = {
-        'activities': qs.order_by('-created_at'),
+        'activities': page_obj,  # Pass the Pager instead
+        'page_obj': page_obj,
         'status_choices': Activity.ActivityStatus.choices,
         'type_choices': Activity.ActivityType.choices,
+        'organizations': Organization.objects.filter(status=True).order_by('name'),
+        'semesters': Semester.objects.all().order_by('-start_date'),
         'current_status': status or '',
         'current_type': activity_type or '',
+        'current_org': org_id or '',
+        'current_semester': sem_id or '',
         'search_query': search or '',
     }
     return render(request, 'activities/list.html', context)

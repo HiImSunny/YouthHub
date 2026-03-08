@@ -44,6 +44,24 @@
                 <option value="ONGOING" {% if request.GET.status == 'ONGOING' %}selected{% endif %}>ONGOING</option>
                 <option value="DONE" {% if request.GET.status == 'DONE' %}selected{% endif %}>DONE</option>
             </select>
+            <select name="type" class="border-3 border-black bg-white py-4 px-4 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
+                <option value="">LOẠI HĐ</option>
+                {% for code, label in type_choices %}
+                <option value="{{ code }}" {% if request.GET.type == code %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            <select name="semester" class="border-3 border-black bg-white py-4 px-4 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
+                <option value="">HỌC KỲ</option>
+                {% for s in semesters %}
+                <option value="{{ s.id }}" {% if current_semester == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name|truncatechars:20 }}</option>
+                {% endfor %}
+            </select>
+            <select name="org" class="border-3 border-black bg-white py-4 px-4 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
+                <option value="">TỔ CHỨC</option>
+                {% for o in organizations %}
+                <option value="{{ o.id }}" {% if current_org == o.id|stringformat:"s" %}selected{% endif %}>{{ o.name|truncatechars:20 }}</option>
+                {% endfor %}
+            </select>
             <button type="submit"
                 class="bg-primary text-white border-3 border-black font-black uppercase py-4 px-8 shadow-brutal brutal-btn transition-all">LỌC</button>
         </form>
@@ -95,7 +113,14 @@
                     {% endif %}
                 </div>
 
-                <div class="flex gap-3 mt-auto">
+                <div class="mt-auto mb-4 border-t-2 border-black border-dashed pt-4">
+                    <p class="text-xs font-bold uppercase text-slate-500 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-sm">group</span>
+                        {{ act.registered_count }} / {{ act.max_participants|default:"∞" }} NGƯỜI ĐĂNG KÝ
+                    </p>
+                </div>
+
+                <div class="flex gap-3">
                     <a href="{% url 'activities:detail' pk=act.pk %}"
                         class="flex-1 bg-white border-3 border-black py-2 text-center font-black uppercase text-sm shadow-brutal-sm brutal-btn transition-all">CHI
                         TIẾT</a>
@@ -120,6 +145,38 @@
         </a>
         {% endif %}
     </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="mt-12 flex justify-center">
+        <nav class="inline-flex border-3 border-black shadow-brutal bg-white overflow-hidden">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.semester %}&semester={{ request.GET.semester }}{% endif %}{% if request.GET.org %}&org={{ request.GET.org }}{% endif %}" class="px-4 py-2 border-r-3 border-black bg-white hover:bg-slate-100 font-black uppercase flex items-center">
+                <span class="material-symbols-outlined text-sm mr-1">arrow_back</span> TRƯỚC
+            </a>
+            {% else %}
+            <span class="px-4 py-2 border-r-3 border-black bg-slate-100 text-slate-400 font-black uppercase flex items-center cursor-not-allowed">
+                <span class="material-symbols-outlined text-sm mr-1">arrow_back</span> TRƯỚC
+            </span>
+            {% endif %}
+
+            <div class="px-6 py-2 border-r-3 border-black font-black uppercase bg-primary text-white flex items-center">
+                TRANG {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+            </div>
+
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.semester %}&semester={{ request.GET.semester }}{% endif %}{% if request.GET.org %}&org={{ request.GET.org }}{% endif %}" class="px-4 py-2 bg-white hover:bg-slate-100 font-black uppercase flex items-center">
+                SAU <span class="material-symbols-outlined text-sm ml-1">arrow_forward</span>
+            </a>
+            {% else %}
+            <span class="px-4 py-2 bg-slate-100 text-slate-400 font-black uppercase flex items-center cursor-not-allowed">
+                SAU <span class="material-symbols-outlined text-sm ml-1">arrow_forward</span>
+            </span>
+            {% endif %}
+        </nav>
+    </div>
+    {% endif %}
+
     {% else %}
     <div class="bg-white border-3 border-black p-16 text-center shadow-brutal">
         <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">event_busy</span>
