@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
 from django.db.models import Count, Q
 
-from .models import Activity, ActivityRegistration, PointCategory
+from .models import Activity, ActivityParticipation, PointCategory
 from core.models import Organization, Semester
 from core.permissions import (
     can_create_activity, can_edit_activity, can_approve_activity,
@@ -60,12 +60,12 @@ def activity_detail(request, pk):
         Activity.objects.select_related('organization', 'created_by', 'approved_by', 'semester'),
         pk=pk,
     )
-    registrations = activity.registrations.select_related('student').order_by('-registered_at')
+    participations = activity.participations.select_related('student').order_by('-registered_at')
 
     # Check if current user is registered (only REGISTERED status, not CANCELED)
     user_registration = None
     if request.user.role == 'STUDENT':
-        user_registration = activity.registrations.filter(
+        user_registration = activity.participations.filter(
             student=request.user, status='REGISTERED'
         ).first()
 
@@ -77,9 +77,9 @@ def activity_detail(request, pk):
 
     context = {
         'activity': activity,
-        'registrations': registrations,
+        'registrations': participations,
         'user_registration': user_registration,
-        'registration_count': registrations.filter(status='REGISTERED').count(),
+        'registration_count': participations.filter(status='REGISTERED').count(),
         # B1/B2 permission flags - used in template to show/hide buttons
         'can_edit': can_edit_activity(request.user, activity),
         'can_approve': can_approve_activity(request.user, activity),
@@ -111,7 +111,7 @@ def activity_create(request):
             messages.error(request, 'Bạn không có quyền tạo hoạt động cho tổ chức này.')
             return render(request, 'activities/form.html', {
                 'organizations': allowed_orgs,
-                'semesters': Semester.objects.all().order_by('-start_date'),
+                'semesters': Semester.objects.filter(organization__in=get_point_category_orgs(request.user)).order_by('-start_date'),
                 # Load all active categories from allowed orgs for the dropdown
                 'point_categories': PointCategory.objects.filter(
                     is_active=True,
@@ -146,7 +146,7 @@ def activity_create(request):
 
     context = {
         'organizations': allowed_orgs,  # B1: filtered list
-        'semesters': Semester.objects.all().order_by('-start_date'),
+        'semesters': Semester.objects.filter(organization__in=get_point_category_orgs(request.user)).order_by('-start_date'),
         'point_categories': PointCategory.objects.filter(
             is_active=True,
             organization__in=get_point_category_orgs(request.user),
@@ -183,7 +183,7 @@ def activity_edit(request, pk):
             return render(request, 'activities/form.html', {
                 'activity': activity,
                 'organizations': allowed_orgs,
-                'semesters': Semester.objects.all().order_by('-start_date'),
+                'semesters': Semester.objects.filter(organization__in=get_point_category_orgs(request.user)).order_by('-start_date'),
                 'point_categories': PointCategory.objects.filter(
                     is_active=True,
                     organization__in=get_point_category_orgs(request.user),
@@ -215,7 +215,7 @@ def activity_edit(request, pk):
     context = {
         'activity': activity,
         'organizations': allowed_orgs,  # B1: filtered
-        'semesters': Semester.objects.all().order_by('-start_date'),
+        'semesters': Semester.objects.filter(organization__in=get_point_category_orgs(request.user)).order_by('-start_date'),
         'point_categories': PointCategory.objects.filter(
             is_active=True,
             organization__in=get_point_category_orgs(request.user),
@@ -348,7 +348,7 @@ def activity_register(request, pk):
     if request.method == 'POST':
         # Check slot limit before registering
         if activity.max_participants is not None:
-            current_count = activity.registrations.filter(status='REGISTERED').count()
+            current_count = activity.participations.filter(status='REGISTERED').count()
             if current_count >= activity.max_participants:
                 messages.error(
                     request,
@@ -356,7 +356,7 @@ def activity_register(request, pk):
                 )
                 return redirect('activities:detail', pk=pk)
 
-        reg, created = ActivityRegistration.objects.get_or_create(
+        reg, created = ActivityParticipation.objects.get_or_create(
             activity=activity,
             student=request.user,
             defaults={'status': 'REGISTERED'},
@@ -380,7 +380,7 @@ def activity_cancel_registration(request, pk):
     activity = get_object_or_404(Activity, pk=pk)
 
     if request.method == 'POST':
-        reg = ActivityRegistration.objects.filter(
+        reg = ActivityParticipation.objects.filter(
             activity=activity, student=request.user, status='REGISTERED'
         ).first()
         if reg:

@@ -8,8 +8,7 @@ from django.utils import timezone
 import json
 import io
 
-from activities.models import Activity
-from attendance.models import AttendanceRecord
+from activities.models import Activity, ActivityParticipation
 from .models import Organization, OrganizationMember, Semester, AuditLog
 from .decorators import admin_required, staff_required
 from .permissions import can_manage_org_staff, can_create_org, get_manageable_orgs
@@ -22,13 +21,16 @@ def dashboard_view(request):
     if request.user.role == 'STUDENT':
         return redirect('students:dashboard')
 
+    from .permissions import get_point_category_orgs
+
     now = timezone.now()
+    root_orgs = get_point_category_orgs(request.user)
     context = {
         'total_activities': Activity.objects.count(),
         'pending_count': Activity.objects.filter(status='PENDING').count(),
         'ongoing_count': Activity.objects.filter(status__in=['APPROVED', 'ONGOING']).count(),
         'total_organizations': Organization.objects.filter(status=True).count(),
-        'current_semester': Semester.objects.filter(is_current=True).first(),
+        'current_semester': Semester.objects.filter(is_current=True, organization__in=root_orgs).first(),
         'recent_activities': Activity.objects.select_related('organization', 'created_by').order_by('-created_at')[:7],
     }
     return render(request, 'core/dashboard.html', context)
@@ -38,7 +40,7 @@ def dashboard_view(request):
 def unified_pending_view(request):
     """Unified center for all pending approvals across the system."""
     pending_activities_count = Activity.objects.filter(status='PENDING').count()
-    pending_attendance_count = AttendanceRecord.objects.filter(status='PENDING').count()
+    pending_attendance_count = ActivityParticipation.objects.filter(status='ATTENDED').count()
     
     # Ready for future pending points or other modules.
     
@@ -139,7 +141,10 @@ def statistics_view(request):
     if semester_id:
         base_act_qs = base_act_qs.filter(semester_id=semester_id)
         
-    semesters = Semester.objects.order_by('-start_date')
+    from .permissions import get_point_category_orgs
+    root_orgs = get_point_category_orgs(request.user)
+    
+    semesters = Semester.objects.filter(organization__in=root_orgs).order_by('-start_date')
 
     # ── Activity stats by status ────────────────────────────────────────────
     status_qs = (
@@ -190,9 +195,9 @@ def statistics_view(request):
     budget_total = Budget.objects.filter(status='APPROVED', activity__in=base_act_qs).aggregate(total=Sum('total_amount'))['total'] or 0
 
     # ── Attendance stats ─────────────────────────────────────────────────────
-    att_qs = AttendanceRecord.objects.filter(status='VERIFIED')
+    att_qs = ActivityParticipation.objects.filter(status='VERIFIED')
     if semester_id:
-        att_qs = att_qs.filter(session__activity__semester_id=semester_id)
+        att_qs = att_qs.filter(activity__semester_id=semester_id)
     total_checkins = att_qs.count()
 
     # ── Organization breakdown ───────────────────────────────────────────────
@@ -609,8 +614,6 @@ def import_members_to_org(request, org_pk):
                     StudentProfile.objects.create(
                         user=user,
                         student_code=student_code,
-                        faculty=faculty_name,
-                        class_name=class_name,
                         course_year=course_year,
                     )
                     OrganizationMember.objects.create(
@@ -768,8 +771,6 @@ def import_students_view(request):
                 StudentProfile.objects.create(
                     user=user,
                     student_code=student_code,
-                    faculty=faculty_name,
-                    class_name=class_name,
                     course_year=course_year,
                 )
             except Exception as e:

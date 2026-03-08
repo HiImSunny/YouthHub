@@ -52,28 +52,15 @@
             </div>
 
             <!-- Row 3: Student code + Faculty -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                <div class="md:col-span-2">
                     <label class="block text-xs font-black uppercase mb-1 tracking-wide">MÃ SINH VIÊN *</label>
                     <input type="text" name="student_code" required value="{{ form_data.student_code|default:'' }}"
                         class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
                         placeholder="vd: NCT2100001">
                 </div>
-                <div>
-                    <label class="block text-xs font-black uppercase mb-1 tracking-wide">KHOA *</label>
-                    <input type="text" name="faculty" required value="{{ form_data.faculty|default:'' }}"
-                        class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
-                        placeholder="Công nghệ Thông tin">
-                </div>
             </div>
 
-            <!-- Row 4: Class name -->
-            <div>
-                <label class="block text-xs font-black uppercase mb-1 tracking-wide">LỚP (tùy chọn)</label>
-                <input type="text" name="class_name" value="{{ form_data.class_name|default:'' }}"
-                    class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
-                    placeholder="DHCNTT21A">
-            </div>
+
 
             <!-- Separator -->
             <div class="border-t-3 border-black my-2"></div>

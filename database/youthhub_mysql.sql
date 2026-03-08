@@ -120,6 +120,8 @@ CREATE TABLE IF NOT EXISTS `activities` (
     `status`                ENUM('DRAFT','PENDING','APPROVED','ONGOING','DONE','CANCELED') NOT NULL DEFAULT 'DRAFT',
     `created_by`            BIGINT          NOT NULL,
     `approved_by`           BIGINT          NULL,
+        `budget_info`           JSON            NULL,
+    `tasks_info`            JSON            NULL,
     `approved_at`           DATETIME        NULL,
     `created_at`            DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`            DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -128,66 +130,6 @@ CREATE TABLE IF NOT EXISTS `activities` (
     CONSTRAINT `fk_activity_point_cat`  FOREIGN KEY (`point_category_id`) REFERENCES `point_categories`(`id`)  ON DELETE SET NULL,
     CONSTRAINT `fk_activity_creator`    FOREIGN KEY (`created_by`)        REFERENCES `users`(`id`),
     CONSTRAINT `fk_activity_approver`   FOREIGN KEY (`approved_by`)       REFERENCES `users`(`id`)             ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- =============================================================================
--- 8. activity_registrations
--- =============================================================================
-CREATE TABLE IF NOT EXISTS `activity_registrations` (
-    `id`            BIGINT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `activity_id`   BIGINT          NOT NULL,
-    `student_id`    BIGINT          NOT NULL,
-    `registered_at` DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `status`        ENUM('REGISTERED','CANCELED','BANNED') NOT NULL DEFAULT 'REGISTERED',
-    CONSTRAINT `fk_reg_activity` FOREIGN KEY (`activity_id`) REFERENCES `activities`(`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_reg_student`  FOREIGN KEY (`student_id`)  REFERENCES `users`(`id`)      ON DELETE CASCADE,
-    CONSTRAINT `uq_activity_student` UNIQUE (`activity_id`, `student_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- =============================================================================
--- 9. budgets
--- =============================================================================
-CREATE TABLE IF NOT EXISTS `budgets` (
-    `id`            BIGINT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `activity_id`   BIGINT          NOT NULL UNIQUE,
-    `total_amount`  DECIMAL(12,2)   NOT NULL,
-    `description`   TEXT            NULL,
-    `status`        ENUM('DRAFT','APPROVED','REJECTED') NOT NULL DEFAULT 'DRAFT',
-    `approved_by`   BIGINT          NULL,
-    `created_at`    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `updated_at`    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_budget_activity` FOREIGN KEY (`activity_id`)  REFERENCES `activities`(`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_budget_approver` FOREIGN KEY (`approved_by`)  REFERENCES `users`(`id`)      ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- =============================================================================
--- 10. budget_items
--- =============================================================================
-CREATE TABLE IF NOT EXISTS `budget_items` (
-    `id`            BIGINT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `budget_id`     BIGINT          NOT NULL,
-    `name`          VARCHAR(255)    NOT NULL,
-    `amount`        DECIMAL(12,2)   NOT NULL,
-    `category`      VARCHAR(100)    NOT NULL,
-    `note`          TEXT            NULL,
-    CONSTRAINT `fk_item_budget` FOREIGN KEY (`budget_id`) REFERENCES `budgets`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- =============================================================================
--- 11. tasks
--- =============================================================================
-CREATE TABLE IF NOT EXISTS `tasks` (
-    `id`            BIGINT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `activity_id`   BIGINT          NOT NULL,
-    `title`         VARCHAR(255)    NOT NULL,
-    `description`   TEXT            NULL,
-    `assigned_to`   BIGINT          NOT NULL,
-    `due_date`      DATE            NOT NULL,
-    `status`        ENUM('TODO','IN_PROGRESS','DONE') NOT NULL DEFAULT 'TODO',
-    `created_at`    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    `updated_at`    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_task_activity` FOREIGN KEY (`activity_id`)  REFERENCES `activities`(`id`) ON DELETE CASCADE,
-    CONSTRAINT `fk_task_user`     FOREIGN KEY (`assigned_to`)  REFERENCES `users`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =============================================================================
@@ -207,8 +149,6 @@ CREATE TABLE IF NOT EXISTS `attendance_sessions` (
     CONSTRAINT `fk_session_activity` FOREIGN KEY (`activity_id`) REFERENCES `activities`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- =============================================================================
--- 13. attendance_records
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS `attendance_records` (
     `id`                        BIGINT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -230,8 +170,6 @@ CREATE TABLE IF NOT EXISTS `attendance_records` (
 -- Partial unique: MySQL không hỗ trợ partial index, dùng trigger hoặc app-level
 CREATE UNIQUE INDEX `uq_session_student_nn` ON `attendance_records` (`attendance_session_id`, `student_id`);
 
--- =============================================================================
--- 14. activity_points
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS `activity_points` (
     `id`            BIGINT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
@@ -284,18 +222,34 @@ CREATE TABLE IF NOT EXISTS `audit_logs` (
     INDEX `idx_audit_timestamp` (`timestamp`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+SET FOREIGN_KEY_CHECKS = 1;
+
+
 -- =============================================================================
--- 17. ai_audit_logs  [Deprecated stub — ai_assistant.AuditLog]
+-- 10. activity_participations
 -- =============================================================================
-CREATE TABLE IF NOT EXISTS `ai_audit_logs` (
-    `id`            BIGINT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `user_id`       BIGINT          NULL,
-    `action`        VARCHAR(100)    NOT NULL,
-    `object_type`   VARCHAR(100)    NOT NULL,
-    `object_id`     BIGINT          NOT NULL,
-    `ip_address`    VARCHAR(45)     NULL,
-    `created_at`    DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_ai_log_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+CREATE TABLE IF NOT EXISTS `activity_participations` (
+    `id`                    BIGINT          NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    `activity_id`           BIGINT          NOT NULL,
+    `student_id`            BIGINT          NOT NULL,
+    `status`                ENUM('REGISTERED','ATTENDED','VERIFIED','ABSENT','CANCELED') NOT NULL DEFAULT 'REGISTERED',
+    `registered_at`         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `entered_student_code`  VARCHAR(20)     NULL,
+    `entered_student_name`  VARCHAR(255)    NULL,
+    `attendance_session_id` BIGINT          NULL,
+    `checkin_time`          DATETIME        NULL,
+    `photo_path`            VARCHAR(500)    NULL,
+    `verified_by`           BIGINT          NULL,
+    `awarded_points`        DECIMAL(5,2)    NOT NULL DEFAULT 0.00,
+    `point_category_id`     BIGINT          NULL,
+    `awarded_by`            BIGINT          NULL,
+    `awarded_at`            DATETIME        NULL,
+    `created_at`            DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `updated_at`            DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_part_activity` FOREIGN KEY (`activity_id`) REFERENCES `activities`(`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_part_student`  FOREIGN KEY (`student_id`)  REFERENCES `users`(`id`)      ON DELETE CASCADE,
+    CONSTRAINT `fk_part_session`  FOREIGN KEY (`attendance_session_id`) REFERENCES `attendance_sessions`(`id`) ON DELETE SET NULL,
+    CONSTRAINT `fk_part_pointcat` FOREIGN KEY (`point_category_id`) REFERENCES `point_categories`(`id`) ON DELETE SET NULL,
+    CONSTRAINT `uq_activity_student` UNIQUE (`activity_id`, `student_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-SET FOREIGN_KEY_CHECKS = 1;

@@ -85,18 +85,8 @@
                         <p class="font-black text-lg bg-bg-light p-2 border-2 border-slate-200 text-primary">{{ target_user.student_profile.student_code }}</p>
                     </div>
                     <div>
-                        <p class="text-[10px] font-black uppercase text-slate-500 mb-1">KHOA TRỰC THUỘC</p>
-                        <p class="font-bold text-sm bg-bg-light p-2 border-2 border-slate-200">{{ target_user.student_profile.faculty }}</p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <p class="text-[10px] font-black uppercase text-slate-500 mb-1">LỚP</p>
-                            <p class="font-bold text-sm bg-bg-light p-2 border-2 border-slate-200">{{ target_user.student_profile.class_name|default:"—" }}</p>
-                        </div>
-                        <div>
-                            <p class="text-[10px] font-black uppercase text-slate-500 mb-1">KHÓA</p>
-                            <p class="font-bold text-sm bg-bg-light p-2 border-2 border-slate-200">{{ target_user.student_profile.course_year|default:"—" }}</p>
-                        </div>
+                        <p class="text-[10px] font-black uppercase text-slate-500 mb-1">KHÓA</p>
+                        <p class="font-bold text-sm bg-bg-light p-2 border-2 border-slate-200">{{ target_user.student_profile.course_year|default:"—" }}</p>
                     </div>
                     {% else %}
                     <div class="text-center py-4">

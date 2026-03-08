@@ -81,9 +81,9 @@ def log_org_delete(sender, instance, **kwargs):
     )
 
 
-# ─── AttendanceRecord Signals ─────────────────────────────────────────────────
+# ─── ActivityParticipation Signals ──────────────────────────────────────────────────
 
-@receiver(post_save, sender='attendance.AttendanceRecord')
+@receiver(post_save, sender='activities.ActivityParticipation')
 def log_attendance_save(sender, instance, created, **kwargs):
     if not created:
         return

@@ -103,6 +103,18 @@ class Activity(models.Model):
         choices=ActivityStatus.choices,
         default=ActivityStatus.DRAFT,
     )
+    budget_info = models.JSONField(
+        default=dict,
+        blank=True,
+        null=True,
+        help_text='Tổng hợp dự trù kinh phí'
+    )
+    tasks_info = models.JSONField(
+        default=list,
+        blank=True,
+        null=True,
+        help_text='Danh sách task công việc'
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -129,154 +141,91 @@ class Activity(models.Model):
         return self.title
 
 
-class ActivityRegistration(models.Model):
+class ActivityParticipation(models.Model):
     """
-    Student registration for activities.
-    Maps to table: activity_registrations
+    Unified record for a student's participation in an activity.
+    Replaces: ActivityRegistration, AttendanceRecord, ActivityPoint.
+    Maps to table: activity_participations
     """
 
-    class RegStatus(models.TextChoices):
+    class PartStatus(models.TextChoices):
         REGISTERED = 'REGISTERED', 'Đã đăng ký'
+        ATTENDED = 'ATTENDED', 'Đã tham gia (Chờ duyệt)'
+        VERIFIED = 'VERIFIED', 'Đã duyệt tham gia'
+        ABSENT = 'ABSENT', 'Vắng mặt'
         CANCELED = 'CANCELED', 'Đã hủy'
         BANNED = 'BANNED', 'Bị cấm'
-        ATTENDED = 'ATTENDED', 'Đã tham gia'
-        POINT_AWARDED = 'POINT_AWARDED', 'Đã cộng điểm'
 
     activity = models.ForeignKey(
         Activity,
         on_delete=models.CASCADE,
-        related_name='registrations',
+        related_name='participations',
     )
     student = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='activity_registrations',
-    )
-    registered_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(
-        max_length=20,
-        choices=RegStatus.choices,
-        default=RegStatus.REGISTERED,
-    )
-
-    class Meta:
-        db_table = 'activity_registrations'
-        verbose_name = 'Đăng ký hoạt động'
-        verbose_name_plural = 'Đăng ký hoạt động'
-        constraints = [
-            models.UniqueConstraint(
-                fields=['activity', 'student'],
-                name='unique_activity_registration',
-            )
-        ]
-
-    def __str__(self):
-        return f"{self.student} -> {self.activity}"
-
-
-class Budget(models.Model):
-    """
-    Budget planning for each activity.
-    Maps to table: budgets
-    """
-
-    class BudgetStatus(models.TextChoices):
-        DRAFT = 'DRAFT', 'Nháp'
-        APPROVED = 'APPROVED', 'Đã duyệt'
-        REJECTED = 'REJECTED', 'Từ chối'
-
-    activity = models.OneToOneField(
-        Activity,
-        on_delete=models.CASCADE,
-        related_name='budget',
-    )
-    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
-    description = models.TextField(blank=True, null=True)
-    status = models.CharField(
-        max_length=20,
-        choices=BudgetStatus.choices,
-        default=BudgetStatus.DRAFT,
-    )
-    approved_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='approved_budgets',
+        related_name='activity_participations',
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        db_table = 'budgets'
-        verbose_name = 'Ngân sách'
-        verbose_name_plural = 'Ngân sách'
-
-    def __str__(self):
-        return f"Budget: {self.activity.title}"
-
-
-class BudgetItem(models.Model):
-    """
-    Individual line items within a budget.
-    Maps to table: budget_items
-    """
-
-    budget = models.ForeignKey(
-        Budget,
-        on_delete=models.CASCADE,
-        related_name='items',
-    )
-    name = models.CharField(max_length=255)
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
-    category = models.CharField(max_length=100)
-    note = models.TextField(blank=True, null=True)
-
-    class Meta:
-        db_table = 'budget_items'
-        verbose_name = 'Khoản mục ngân sách'
-        verbose_name_plural = 'Khoản mục ngân sách'
-
-    def __str__(self):
-        return f"{self.name} ({self.amount})"
-
-
-class Task(models.Model):
-    """
-    Task assignment within an activity's organizing committee.
-    Maps to table: tasks
-    """
-
-    class TaskStatus(models.TextChoices):
-        TODO = 'TODO', 'Chưa làm'
-        IN_PROGRESS = 'IN_PROGRESS', 'Đang làm'
-        DONE = 'DONE', 'Hoàn thành'
-
-    activity = models.ForeignKey(
-        Activity,
-        on_delete=models.CASCADE,
-        related_name='tasks',
-    )
-    title = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)
-    assigned_to = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='assigned_tasks',
-    )
-    due_date = models.DateField()
+    entered_student_code = models.CharField(max_length=20, blank=True, null=True)
+    entered_student_name = models.CharField(max_length=150, blank=True, null=True)
+    
     status = models.CharField(
         max_length=20,
-        choices=TaskStatus.choices,
-        default=TaskStatus.TODO,
+        choices=PartStatus.choices,
+        default=PartStatus.REGISTERED,
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    registered_at = models.DateTimeField(auto_now_add=True)
+    
+    # Check-in info
+    checkin_time = models.DateTimeField(null=True, blank=True)
+    photo_path = models.CharField(max_length=500, blank=True, null=True)
+    attendance_session = models.ForeignKey(
+        'attendance.AttendanceSession',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='participations',
+    )
+    verified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='verified_participations',
+    )
+    
+    # Point info
+    awarded_points = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    point_category = models.ForeignKey(
+        PointCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='awarded_participations',
+    )
+    awarded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='awarded_participations',
+    )
+    awarded_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
-        db_table = 'tasks'
-        verbose_name = 'Nhiệm vụ'
-        verbose_name_plural = 'Nhiệm vụ'
+        db_table = 'activity_participations'
+        verbose_name = 'Tham gia hoạt động'
+        verbose_name_plural = 'Tham gia hoạt động'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['activity', 'student'],
+                condition=models.Q(student__isnull=False),
+                name='unique_activity_student_participation',
+            )
+        ]
 
     def __str__(self):
-        return self.title
+        code = self.entered_student_code or (self.student.username if self.student else "Unknown")
+        return f"{code} -> {self.activity.title}"

@@ -159,76 +159,12 @@ CREATE TABLE activities (
 );
 GO
 
--- =============================================================================
--- 8. activity_registrations
--- =============================================================================
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='activity_registrations' AND xtype='U')
-CREATE TABLE activity_registrations (
-    id              BIGINT          IDENTITY(1,1) PRIMARY KEY,
-    activity_id     BIGINT          NOT NULL,
-    student_id      BIGINT          NOT NULL,
-    registered_at   DATETIMEOFFSET  NOT NULL DEFAULT SYSDATETIMEOFFSET(),
-    status          NVARCHAR(20)    NOT NULL DEFAULT 'REGISTERED'
-                        CHECK (status IN ('REGISTERED','CANCELED','BANNED')),
-    CONSTRAINT uq_activity_student UNIQUE (activity_id, student_id),
-    CONSTRAINT fk_reg_activity FOREIGN KEY (activity_id) REFERENCES activities(id) ON DELETE CASCADE,
-    CONSTRAINT fk_reg_student  FOREIGN KEY (student_id)  REFERENCES users(id)      ON DELETE CASCADE
-);
 GO
 
--- =============================================================================
--- 9. budgets
--- =============================================================================
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='budgets' AND xtype='U')
-CREATE TABLE budgets (
-    id              BIGINT          IDENTITY(1,1) PRIMARY KEY,
-    activity_id     BIGINT          NOT NULL,
-    total_amount    DECIMAL(12,2)   NOT NULL,
-    description     NVARCHAR(MAX)   NULL,
-    status          NVARCHAR(20)    NOT NULL DEFAULT 'DRAFT'
-                        CHECK (status IN ('DRAFT','APPROVED','REJECTED')),
-    approved_by     BIGINT          NULL,
-    created_at      DATETIMEOFFSET  NOT NULL DEFAULT SYSDATETIMEOFFSET(),
-    updated_at      DATETIMEOFFSET  NOT NULL DEFAULT SYSDATETIMEOFFSET(),
-    CONSTRAINT uq_budget_activity   UNIQUE (activity_id),
-    CONSTRAINT fk_budget_activity   FOREIGN KEY (activity_id)  REFERENCES activities(id) ON DELETE CASCADE,
-    CONSTRAINT fk_budget_approver   FOREIGN KEY (approved_by)  REFERENCES users(id)
-);
 GO
 
--- =============================================================================
--- 10. budget_items
--- =============================================================================
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='budget_items' AND xtype='U')
-CREATE TABLE budget_items (
-    id              BIGINT          IDENTITY(1,1) PRIMARY KEY,
-    budget_id       BIGINT          NOT NULL,
-    name            NVARCHAR(255)   NOT NULL,
-    amount          DECIMAL(12,2)   NOT NULL,
-    category        NVARCHAR(100)   NOT NULL,
-    note            NVARCHAR(MAX)   NULL,
-    CONSTRAINT fk_item_budget FOREIGN KEY (budget_id) REFERENCES budgets(id) ON DELETE CASCADE
-);
 GO
 
--- =============================================================================
--- 11. tasks
--- =============================================================================
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='tasks' AND xtype='U')
-CREATE TABLE tasks (
-    id              BIGINT          IDENTITY(1,1) PRIMARY KEY,
-    activity_id     BIGINT          NOT NULL,
-    title           NVARCHAR(255)   NOT NULL,
-    description     NVARCHAR(MAX)   NULL,
-    assigned_to     BIGINT          NOT NULL,
-    due_date        DATE            NOT NULL,
-    status          NVARCHAR(20)    NOT NULL DEFAULT 'TODO'
-                        CHECK (status IN ('TODO','IN_PROGRESS','DONE')),
-    created_at      DATETIMEOFFSET  NOT NULL DEFAULT SYSDATETIMEOFFSET(),
-    updated_at      DATETIMEOFFSET  NOT NULL DEFAULT SYSDATETIMEOFFSET(),
-    CONSTRAINT fk_task_activity FOREIGN KEY (activity_id)  REFERENCES activities(id) ON DELETE CASCADE,
-    CONSTRAINT fk_task_user     FOREIGN KEY (assigned_to)  REFERENCES users(id)
-);
 GO
 
 -- =============================================================================
@@ -252,8 +188,6 @@ CREATE TABLE attendance_sessions (
 );
 GO
 
--- =============================================================================
--- 13. attendance_records
 -- =============================================================================
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='attendance_records' AND xtype='U')
 CREATE TABLE attendance_records (
@@ -280,8 +214,6 @@ CREATE UNIQUE INDEX uq_session_student
     WHERE student_id IS NOT NULL;
 GO
 
--- =============================================================================
--- 14. activity_points
 -- =============================================================================
 IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='activity_points' AND xtype='U')
 CREATE TABLE activity_points (
@@ -345,18 +277,33 @@ GO
 CREATE INDEX idx_audit_timestamp ON audit_logs (timestamp DESC);
 GO
 
--- =============================================================================
--- 17. ai_audit_logs  [Deprecated stub — ai_assistant.AuditLog]
--- =============================================================================
-IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='ai_audit_logs' AND xtype='U')
-CREATE TABLE ai_audit_logs (
-    id              BIGINT          IDENTITY(1,1) PRIMARY KEY,
-    user_id         BIGINT          NULL,
-    action          NVARCHAR(100)   NOT NULL,
-    object_type     NVARCHAR(100)   NOT NULL,
-    object_id       BIGINT          NOT NULL,
-    ip_address      NVARCHAR(45)    NULL,
-    created_at      DATETIMEOFFSET  NOT NULL DEFAULT SYSDATETIMEOFFSET(),
-    CONSTRAINT fk_ai_log_user FOREIGN KEY (user_id) REFERENCES users(id)
-);
 GO
+
+
+-- =============================================================================
+-- 10. activity_participations
+-- =============================================================================
+CREATE TABLE [activity_participations] (
+    [id]                    BIGINT          IDENTITY(1,1) PRIMARY KEY,
+    [activity_id]           BIGINT          NOT NULL,
+    [student_id]            BIGINT          NOT NULL,
+    [status]                VARCHAR(50)     NOT NULL DEFAULT 'REGISTERED',
+    [registered_at]         DATETIME2       NOT NULL DEFAULT GETDATE(),
+    [entered_student_code]  VARCHAR(20)     NULL,
+    [entered_student_name]  NVARCHAR(255)   NULL,
+    [attendance_session_id] BIGINT          NULL,
+    [checkin_time]          DATETIME2       NULL,
+    [photo_path]            NVARCHAR(500)   NULL,
+    [verified_by]           BIGINT          NULL,
+    [awarded_points]        DECIMAL(5,2)    NOT NULL DEFAULT 0.00,
+    [point_category_id]     BIGINT          NULL,
+    [awarded_by]            BIGINT          NULL,
+    [awarded_at]            DATETIME2       NULL,
+    [created_at]            DATETIME2       NOT NULL DEFAULT GETDATE(),
+    [updated_at]            DATETIME2       NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT [fk_part_activity] FOREIGN KEY ([activity_id]) REFERENCES [activities]([id]) ON DELETE CASCADE,
+    CONSTRAINT [fk_part_student]  FOREIGN KEY ([student_id])  REFERENCES [users]([id])      ON DELETE CASCADE,
+    CONSTRAINT [fk_part_session]  FOREIGN KEY ([attendance_session_id]) REFERENCES [attendance_sessions]([id]),
+    CONSTRAINT [uq_activity_student] UNIQUE ([activity_id], [student_id])
+);
+

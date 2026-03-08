@@ -9,9 +9,9 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from activities.models import Activity
+from activities.models import Activity, ActivityParticipation
 from django.db.models import Count, Q
-from .models import ActivityPoint, AttendanceRecord, AttendanceSession
+from .models import AttendanceSession
 
 
 # ────────────────────────────────────────────────────────────
@@ -43,7 +43,7 @@ def sessions_view(request):
         qs = AttendanceSession.objects.select_related('activity')
     else:
         # Students see open sessions of activities they registered
-        registered_ids = request.user.registrations.values_list('activity_id', flat=True)
+        registered_ids = request.user.activity_participations.values_list('activity_id', flat=True)
         qs = AttendanceSession.objects.filter(
             activity_id__in=registered_ids,
             status=AttendanceSession.SessionStatus.OPEN,
@@ -64,7 +64,7 @@ def activity_sessions_list(request, activity_pk):
     
     # Students see only open sessions if they are registered
     if request.user.role == 'STUDENT':
-        is_registered = request.user.registrations.filter(activity=activity).exists()
+        is_registered = request.user.activity_participations.filter(activity=activity).exists()
         if not is_registered:
             messages.error(request, "Bạn chưa đăng ký hoạt động này.")
             return redirect('activities:list')
@@ -146,7 +146,7 @@ def session_detail(request, pk):
         AttendanceSession.objects.select_related('activity'),
         pk=pk,
     )
-    records = session.records.select_related('student', 'verified_by').order_by('-checkin_time')
+    records = session.participations.select_related('student', 'verified_by').order_by('-checkin_time')
     checkin_url = request.build_absolute_uri(f'/attendance/checkin/{session.qr_token}/')
     qr_data = _qr_base64(checkin_url)
 
@@ -277,7 +277,7 @@ def checkin_view(request, token):
 
     existing = None
     if request.user.is_authenticated:
-        existing = AttendanceRecord.objects.filter(
+        existing = ActivityParticipation.objects.filter(
             attendance_session=session,
             student=request.user,
         ).first()
@@ -317,7 +317,7 @@ def checkin_submit(request, token):
             student_code = getattr(student_instance, 'student_code', student_instance.username)
             student_name = student_instance.full_name
             # Prevent duplicate for authenticated users
-            if AttendanceRecord.objects.filter(
+            if ActivityParticipation.objects.filter(
                 attendance_session=session, student=student_instance
             ).exists():
                 messages.info(request, 'Bạn đã điểm danh trước đó rồi.')
@@ -331,7 +331,7 @@ def checkin_submit(request, token):
                 return redirect('attendance:checkin', token=token)
 
             # Prevent duplicate for guests based on student_code
-            if AttendanceRecord.objects.filter(
+            if ActivityParticipation.objects.filter(
                 attendance_session=session, entered_student_code=student_code
             ).exists():
                 messages.info(request, 'MSSV này đã được điểm danh trong phiên này rồi.')
@@ -346,15 +346,20 @@ def checkin_submit(request, token):
 
         # Determine status
         needs_photo = session.requires_photo
-        record_status = 'PENDING' if needs_photo else 'VERIFIED'
+        record_status = 'ATTENDED' if needs_photo else 'VERIFIED'
 
-        record = AttendanceRecord(
-            attendance_session=session,
+        record, _ = ActivityParticipation.objects.get_or_create(
+            activity=session.activity,
             student=student_instance,
-            entered_student_code=student_code,
-            entered_student_name=student_name,
-            status=record_status,
+            defaults={
+                'entered_student_code': student_code,
+                'entered_student_name': student_name,
+            }
         )
+        record.attendance_session = session
+        record.status = record_status
+        record.checkin_time = now
+
 
         # Handle optional photo
         if needs_photo and 'photo' in request.FILES:
@@ -392,9 +397,9 @@ def records_list(request, session_pk):
         messages.error(request, 'Bạn không có quyền xem danh sách này.')
         return redirect('attendance:sessions')
 
-    records = session.records.select_related('student', 'verified_by').order_by('status', '-checkin_time')
+    records = session.participations.select_related('student', 'verified_by').order_by('status', '-checkin_time')
     
-    pending_count = sum(1 for r in records if r.status == 'PENDING')
+    pending_count = sum(1 for r in records if r.status == 'ATTENDED')
     
     return render(request, 'attendance/records_list.html', {
         'session': session,
@@ -410,7 +415,7 @@ def pending_sessions_view(request):
         return redirect('core:dashboard')
 
     sessions = AttendanceSession.objects.annotate(
-        pending_count=Count('records', filter=Q(records__status='PENDING'))
+        pending_count=Count('records', filter=Q(records__status='ATTENDED'))
     ).filter(
         pending_count__gt=0
     ).select_related('activity').order_by('-created_at')
@@ -422,13 +427,13 @@ def pending_sessions_view(request):
 @transaction.atomic
 def record_approve(request, pk):
     """Approve a PENDING record and grant points."""
-    record = get_object_or_404(AttendanceRecord, pk=pk)
+    record = get_object_or_404(ActivityParticipation, pk=pk)
     if request.user.role == 'STUDENT':
         messages.error(request, 'Bạn không có quyền duyệt điểm danh.')
         return redirect('attendance:sessions')
 
-    if request.method == 'POST' and record.status == 'PENDING':
-        record.status = AttendanceRecord.RecordStatus.VERIFIED
+    if request.method == 'POST' and record.status == 'ATTENDED':
+        record.status = 'VERIFIED'
         record.verified_by = request.user
         record.save()
 
@@ -439,23 +444,23 @@ def record_approve(request, pk):
             else:
                 messages.success(request, f'Đã duyệt điểm danh cho {record.student.full_name}.')
 
-    return redirect('attendance:records_list', session_pk=record.attendance_session_id)
+    return redirect('attendance:records_list', session_pk=record.attendance_session_id or record.attendance_session.pk)
 
 
 @login_required
 def record_reject(request, pk):
     """Reject a PENDING record."""
-    record = get_object_or_404(AttendanceRecord, pk=pk)
+    record = get_object_or_404(ActivityParticipation, pk=pk)
     if request.user.role == 'STUDENT':
         messages.error(request, 'Bạn không có quyền từ chối điểm danh.')
         return redirect('attendance:sessions')
 
-    if request.method == 'POST' and record.status == 'PENDING':
-        record.status = AttendanceRecord.RecordStatus.REJECTED
+    if request.method == 'POST' and record.status == 'ATTENDED':
+        record.status = 'ABSENT'
         record.save()
         messages.success(request, 'Đã từ chối bản ghi điểm danh.')
 
-    return redirect('attendance:records_list', session_pk=record.attendance_session_id)
+    return redirect('attendance:records_list', session_pk=record.attendance_session_id or record.attendance_session.pk)
 
 
 @login_required
@@ -468,13 +473,13 @@ def records_bulk_approve(request, session_pk):
         return redirect('attendance:sessions')
 
     if request.method == 'POST':
-        pending_records = session.records.filter(status='PENDING').select_related('student')
+        pending_records = session.participations.filter(status='ATTENDED').select_related('student')
         count = 0
         from django.utils import timezone as tz
         now = tz.now()
 
         for record in pending_records:
-            record.status = AttendanceRecord.RecordStatus.VERIFIED
+            record.status = 'VERIFIED'
             record.verified_by = request.user
             record.approved_at = now
             record.save()
@@ -497,15 +502,15 @@ def records_bulk_approve(request, session_pk):
 def points_view(request):
     """Display activity points."""
     if request.user.role == 'STUDENT':
-        pts = ActivityPoint.objects.filter(
-            student=request.user
-        ).select_related('activity').order_by('-created_at')
+        pts = ActivityParticipation.objects.filter(
+            student=request.user, awarded_points__gt=0
+        ).select_related('activity').order_by('-awarded_at')
     else:
-        pts = ActivityPoint.objects.select_related(
+        pts = ActivityParticipation.objects.filter(awarded_points__gt=0).select_related(
             'student', 'activity'
-        ).order_by('-created_at')
+        ).order_by('-awarded_at')
 
-    total = sum(p.points for p in pts)
+    total = sum(p.awarded_points for p in pts)
     return render(request, 'attendance/points.html', {
         'points': pts,
         'total_points': total,
@@ -513,17 +518,10 @@ def points_view(request):
 
 
 # ────────────────────────────────────────────────────────────
-# PHASE 3: Verify attendance grouped by student × activity
+# PHASE 3: Verify attendance & Points Map
 # ────────────────────────────────────────────────────────────
 @login_required
 def activity_attendance_verify(request, activity_pk):
-    """
-    Staff/Admin view: attendance matrix for a single activity.
-    Rows = Students who registered or checked in.
-    Cols = AttendanceSessions (Phiên 1, Phiên 2, ...).
-    Each cell: True/False (đã điểm danh phiên đó chưa).
-    Shows total checked/total sessions and Award button per student.
-    """
     if request.user.role == 'STUDENT':
         messages.error(request, 'Bạn không có quyền duyệt điểm danh.')
         return redirect('activities:detail', pk=activity_pk)
@@ -533,70 +531,37 @@ def activity_attendance_verify(request, activity_pk):
         pk=activity_pk,
     )
 
-    # All sessions for this activity (ordered)
-    sessions = list(
-        AttendanceSession.objects.filter(activity=activity).order_by('start_time')
-    )
-
-    # All records across all sessions of this activity
-    all_records = AttendanceRecord.objects.filter(
-        attendance_session__activity=activity,
-        student__isnull=False,
-    ).select_related('student', 'attendance_session')
-
-    # Map student_id → student object
-    student_map = {}
-    # Map (student_id, session_id) → record
-    record_map = {}
-    for rec in all_records:
-        sid = rec.student_id
-        if sid not in student_map:
-            student_map[sid] = rec.student
-        record_map[(sid, rec.attendance_session_id)] = rec
-
-    # Also include students who registered but haven't checked in yet
-    from activities.models import ActivityRegistration
-    registered = ActivityRegistration.objects.filter(
-        activity=activity,
-        status__in=['REGISTERED', 'ATTENDED', 'POINT_AWARDED'],
-    ).select_related('student')
-    for reg in registered:
-        if reg.student_id not in student_map:
-            student_map[reg.student_id] = reg.student
-
-    # Build matrix rows
-    total_sessions = len(sessions)
-
-    # Students who already received points
-    awarded_student_ids = set(
-        ActivityPoint.objects.filter(activity=activity).values_list('student_id', flat=True)
-    )
+    participations = ActivityParticipation.objects.filter(activity=activity).select_related('student', 'attendance_session')
+    sessions = list(AttendanceSession.objects.filter(activity=activity).order_by('start_time'))
 
     student_rows = []
-    for student_id, student in sorted(student_map.items(), key=lambda x: x[1].full_name):
-        session_cells = []
-        checked_count = 0
-        for session in sessions:
-            rec = record_map.get((student_id, session.pk))
-            is_checked = rec is not None and rec.status in ('PENDING', 'VERIFIED')
-            is_verified = rec is not None and rec.status == 'VERIFIED'
-            session_cells.append({
-                'session': session,
-                'record': rec,
-                'is_checked': is_checked,
-                'is_verified': is_verified,
-            })
-            if is_checked:
-                checked_count += 1
+    awarded_count = 0
+    fully_attended_count = 0
 
-        is_fully_attended = (checked_count == total_sessions and total_sessions > 0)
-        already_awarded = student_id in awarded_student_ids
+    for part in participations:
+        student = part.student
+        is_fully_attended = part.status == 'VERIFIED' or part.status == 'ATTENDED'
+        already_awarded = part.awarded_points > 0
+
+        if is_fully_attended: fully_attended_count += 1
+        if already_awarded: awarded_count += 1
+
+        cells = []
+        for session in sessions:
+            is_checked = part.attendance_session_id == session.id and part.status in ['ATTENDED', 'VERIFIED']
+            cells.append({
+                'session': session,
+                'is_checked': is_checked,
+                'is_verified': part.status == 'VERIFIED',
+                'record': part if part.attendance_session_id == session.id else None
+            })
 
         student_rows.append({
+            'part': part,
             'student': student,
-            'cells': session_cells,
-            'checked_count': checked_count,
-            'total_sessions': total_sessions,
+            'cells': cells,
+            'checked_count': 1 if is_fully_attended else 0,
+            'total_sessions': 1,
             'is_fully_attended': is_fully_attended,
             'already_awarded': already_awarded,
         })
@@ -606,253 +571,94 @@ def activity_attendance_verify(request, activity_pk):
         'sessions': sessions,
         'student_rows': student_rows,
         'total_students': len(student_rows),
-        'fully_attended_count': sum(1 for r in student_rows if r['is_fully_attended']),
-        'awarded_count': sum(1 for r in student_rows if r['already_awarded']),
+        'fully_attended_count': fully_attended_count,
+        'awarded_count': awarded_count,
         'active_tab': 'verify',
     }
     return render(request, 'attendance/activity_verify.html', context)
 
 
-# ────────────────────────────────────────────────────────────
-# HELPERS
-# ────────────────────────────────────────────────────────────
-def _grant_points(student, activity, awarded_by=None):
-    """Grant activity points (taken from activity.points), skip if already granted."""
-    from django.utils import timezone as tz
-    ActivityPoint.objects.get_or_create(
-        student=student,
-        activity=activity,
-        defaults={
-            'points': activity.points,
-            'point_category': activity.point_category,
-            'reason': 'ATTENDANCE',
-            'awarded_by': awarded_by,
-            'awarded_at': tz.now(),
-        },
-    )
-
-
 def _check_and_auto_award(student, activity, awarded_by=None):
-    """
-    Check if the student has VERIFIED records for all sessions in the activity.
-    If so, auto-award points.
-    """
-    total_sessions = activity.sessions.count()
-    if total_sessions == 0:
-        return False
-        
-    verified_count = student.attendance_records.filter(
-        attendance_session__activity=activity,
-        status='VERIFIED'
-    ).values('attendance_session').distinct().count()
-
-    if verified_count >= total_sessions:
-        awarded, _ = _do_award_student(student, activity, awarded_by=awarded_by)
-        return awarded
+    from django.utils import timezone as tz
+    part = ActivityParticipation.objects.filter(student=student, activity=activity).first()
+    if part and part.status == 'VERIFIED':
+        if part.awarded_points == 0:
+            part.awarded_points = activity.points
+            part.point_category = activity.point_category
+            part.awarded_by = awarded_by
+            part.awarded_at = tz.now()
+            part.save()
+            return True
     return False
 
-# ────────────────────────────────────────────────────────────
-# PHASE 4: Award Points — Individual + Bulk
-# ────────────────────────────────────────────────────────────
-
 def _do_award_student(student, activity, awarded_by):
-    """
-    Core award logic for a single student:
-    1. Verify all PENDING attendance records for this student in the activity
-    2. Create ActivityPoint (skips if already exists via unique constraint)
-    3. Update ActivityRegistration → POINT_AWARDED
-    Returns (awarded: bool, reason: str)
-    """
-    from activities.models import ActivityRegistration
     from django.utils import timezone as tz
-
-    # 1. Mark all PENDING records as VERIFIED
-    records_updated = AttendanceRecord.objects.filter(
-        attendance_session__activity=activity,
-        student=student,
-        status=AttendanceRecord.RecordStatus.PENDING,
-    ).update(
-        status=AttendanceRecord.RecordStatus.VERIFIED,
-        verified_by=awarded_by,
-        approved_at=tz.now(),
-    )
-
-    # 2. Create ActivityPoint — skip if already exists
-    _, created = ActivityPoint.objects.get_or_create(
-        student=student,
-        activity=activity,
-        defaults={
-            'points': activity.points,
-            'point_category': activity.point_category,
-            'reason': f'Hoàn thành hoạt động: {activity.title}',
-            'awarded_by': awarded_by,
-            'awarded_at': tz.now(),
-        },
-    )
-
-    # 3. Update ActivityRegistration status
-    ActivityRegistration.objects.filter(
-        activity=activity,
-        student=student,
-        status__in=['REGISTERED', 'ATTENDED'],
-    ).update(status='POINT_AWARDED')
-
-    return created, records_updated
-
+    part = ActivityParticipation.objects.filter(student=student, activity=activity).first()
+    if part and part.awarded_points == 0:
+        if part.status == 'ATTENDED':
+            part.status = 'VERIFIED'
+        part.awarded_points = activity.points
+        part.point_category = activity.point_category
+        part.awarded_by = awarded_by
+        part.awarded_at = tz.now()
+        part.save()
+        return True, 1
+    return False, 0
 
 @login_required
 @transaction.atomic
 def award_student_points(request, activity_pk, student_pk):
-    """
-    Phase 4: Award points to a single student.
-    POST only. Updates attendance records + creates ActivityPoint.
-    Idempotent — calling again for same student is safe (skipped).
-    """
     if request.user.role == 'STUDENT':
-        messages.error(request, 'Bạn không có quyền cấp điểm.')
         return redirect('activities:detail', pk=activity_pk)
 
-    if request.method != 'POST':
-        return redirect('attendance:activity_verify', activity_pk=activity_pk)
-
-    activity = get_object_or_404(
-        Activity.objects.select_related('point_category'),
-        pk=activity_pk,
-    )
-
+    activity = get_object_or_404(Activity, pk=activity_pk)
     from django.contrib.auth import get_user_model
     User = get_user_model()
     student = get_object_or_404(User, pk=student_pk)
 
-    awarded, records_updated = _do_award_student(student, activity, awarded_by=request.user)
-
-    if awarded:
-        messages.success(
-            request,
-            f'✅ Đã cấp {activity.points} điểm rèn luyện cho {student.full_name}.'
-            + (f' Xác nhận {records_updated} bản ghi điểm danh.' if records_updated else '')
-        )
-    else:
-        messages.warning(
-            request,
-            f'{student.full_name} đã được cấp điểm trước đó — bỏ qua.'
-        )
-
+    awarded, recs = _do_award_student(student, activity, request.user)
+    if awarded: messages.success(request, f'Đã cấp điểm cho {student.full_name}.')
     return redirect('attendance:activity_verify', activity_pk=activity_pk)
 
 
 @login_required
 @transaction.atomic
 def award_revoke_student_points(request, activity_pk, student_pk):
-    """
-    Revoke points from a specific student for this activity.
-    """
     if request.user.role == 'STUDENT':
-        messages.error(request, 'Bạn không có quyền hủy điểm.')
         return redirect('activities:detail', pk=activity_pk)
-
-    if request.method != 'POST':
-        return redirect('attendance:activity_verify', activity_pk=activity_pk)
-
+    
     activity = get_object_or_404(Activity, pk=activity_pk)
-
     from django.contrib.auth import get_user_model
-    User = get_user_model()
-    student = get_object_or_404(User, pk=student_pk)
+    student = get_object_or_404(get_user_model(), pk=student_pk)
 
-    deleted_count, _ = ActivityPoint.objects.filter(
-        student=student, 
-        activity=activity
-    ).delete()
-
-    from activities.models import ActivityRegistration
-    ActivityRegistration.objects.filter(
-        activity=activity,
-        student=student,
-        status='POINT_AWARDED',
-    ).update(status='ATTENDED')
-
-    if deleted_count > 0:
-        messages.success(request, f'Đã hủy cấp điểm rèn luyện cho {student.full_name}.')
-    else:
-        messages.warning(request, f'{student.full_name} chưa được cấp điểm.')
-
+    part = ActivityParticipation.objects.filter(student=student, activity=activity).first()
+    if part:
+        part.awarded_points = 0
+        part.point_category = None
+        part.awarded_by = None
+        part.awarded_at = None
+        part.save()
+        messages.success(request, f'Đã hủy điểm của {student.full_name}.')
     return redirect('attendance:activity_verify', activity_pk=activity_pk)
 
 
 @login_required
 @transaction.atomic
 def award_bulk_points(request, activity_pk):
-    """
-    Phase 4: Award points to multiple students at once.
-    POST only.
-    - If eligible_only=1: only award students with all sessions checked
-    - Otherwise: award all students not yet awarded
-    Returns summary of awarded / skipped counts.
-    """
-    if request.user.role == 'STUDENT':
-        messages.error(request, 'Bạn không có quyền cấp điểm.')
-        return redirect('activities:detail', pk=activity_pk)
+    if request.user.role == 'STUDENT': return redirect('activities:detail', pk=activity_pk)
+    activity = get_object_or_404(Activity, pk=activity_pk)
 
-    if request.method != 'POST':
-        return redirect('attendance:activity_verify', activity_pk=activity_pk)
-
-    activity = get_object_or_404(
-        Activity.objects.select_related('point_category'),
-        pk=activity_pk,
-    )
-
-    eligible_only = request.POST.get('eligible_only') == '1'
-
-    # Get all sessions count
-    sessions = AttendanceSession.objects.filter(activity=activity)
-    total_sessions = sessions.count()
-
-    # Already awarded student IDs
-    awarded_ids = set(
-        ActivityPoint.objects.filter(activity=activity).values_list('student_id', flat=True)
-    )
-
-    # Candidates: students who checked in to at least 1 session
-    from django.contrib.auth import get_user_model
-    from django.db.models import Count
-    User = get_user_model()
-
-    candidate_qs = User.objects.filter(
-        attendance_records__attendance_session__activity=activity,
-        attendance_records__status__in=['PENDING', 'VERIFIED'],
-    ).annotate(
-        checked_sessions=Count('attendance_records__attendance_session', distinct=True)
-    ).distinct()
-
-    awarded_count = 0
-    skipped_count = 0
-
-    for student in candidate_qs:
-        # Skip already-awarded
-        if student.pk in awarded_ids:
-            skipped_count += 1
-            continue
-
-        # Filter by eligible_only
-        if eligible_only and total_sessions > 0:
-            if student.checked_sessions < total_sessions:
-                skipped_count += 1
-                continue
-
-        _, was_awarded = _do_award_student(student, activity, awarded_by=request.user)
-        if was_awarded:
-            awarded_count += 1
-        else:
-            skipped_count += 1
-
-    if awarded_count > 0:
-        messages.success(
-            request,
-            f'✅ Đã cấp điểm cho {awarded_count} sinh viên.'
-            + (f' Bỏ qua {skipped_count} (đã cấp hoặc chưa đủ điều kiện).' if skipped_count else '')
-        )
-    else:
-        messages.warning(request, 'Không có sinh viên nào được cấp điểm mới.')
-
+    parts = ActivityParticipation.objects.filter(activity=activity, status__in=['VERIFIED', 'ATTENDED'], awarded_points=0)
+    count = 0
+    from django.utils import timezone as tz
+    now = tz.now()
+    for part in parts:
+        part.status = 'VERIFIED'
+        part.awarded_points = activity.points
+        part.point_category = activity.point_category
+        part.awarded_by = request.user
+        part.awarded_at = now
+        part.save()
+        count += 1
+    messages.success(request, f'Đã cấp điểm cho {count} sinh viên.')
     return redirect('attendance:activity_verify', activity_pk=activity_pk)

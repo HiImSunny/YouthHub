@@ -90,8 +90,6 @@ class StudentProfile(models.Model):
         related_name='student_profile',
     )
     student_code = models.CharField(max_length=20, unique=True)
-    faculty = models.CharField(max_length=100)
-    class_name = models.CharField(max_length=50, blank=True, null=True)
     course_year = models.CharField(max_length=20, blank=True, null=True)
 
     class Meta:

@@ -219,8 +219,6 @@ class Command(BaseCommand):
                     user=user,
                     defaults={
                         'student_code': data['student_code'],
-                        'faculty': data['faculty'],
-                        'class_name': data['class_name'],
                         'course_year': data['course_year'],
                     }
                 )
@@ -248,7 +246,7 @@ class Command(BaseCommand):
 
     # ── 5. Demo Activities ─────────────────────────────────────────────────────
     def _seed_activities(self):
-        from activities.models import Activity, PointCategory, ActivityRegistration
+        from activities.models import Activity, PointCategory, ActivityParticipation
         from core.models import Organization, Semester
 
         try:
@@ -337,7 +335,7 @@ class Command(BaseCommand):
                 # Register students for APPROVED activity
                 if act.status == 'APPROVED':
                     for sv in students[:3]:
-                        ActivityRegistration.objects.get_or_create(
+                        ActivityParticipation.objects.get_or_create(
                             activity=act,
                             student=sv,
                             defaults={'status': 'REGISTERED'},

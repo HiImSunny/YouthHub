@@ -17,5 +17,5 @@ class OrganizationMemberAdmin(admin.ModelAdmin):
 
 @admin.register(Semester)
 class SemesterAdmin(admin.ModelAdmin):
-    list_display = ('name', 'academic_year', 'start_date', 'end_date', 'is_current')
-    list_filter = ('is_current', 'academic_year')
+    list_display = ('name', 'organization', 'academic_year', 'start_date', 'end_date', 'is_current')
+    list_filter = ('organization', 'is_current', 'academic_year')

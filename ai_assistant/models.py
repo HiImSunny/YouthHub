@@ -64,32 +64,4 @@ class AiDocument(models.Model):
 
 
 
-class AuditLog(models.Model):
-    """
-    DEPRECATED: AuditLog has been moved to core.AuditLog.
-    This stub remains to allow migration squashing.
-    Do NOT use this model — import from core.models instead.
-    """
-
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='ai_audit_logs',  # renamed to avoid clash with core.AuditLog
-    )
-    action = models.CharField(max_length=100)
-    object_type = models.CharField(max_length=100)
-    object_id = models.BigIntegerField()
-    ip_address = models.GenericIPAddressField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'ai_audit_logs'  # renamed table to avoid conflict
-        verbose_name = 'AI Audit Log (Deprecated)'
-        verbose_name_plural = 'AI Audit Logs (Deprecated)'
-        ordering = ['-created_at']
-
-    def __str__(self):
-        return f"{self.action} on {self.object_type}#{self.object_id}"
 

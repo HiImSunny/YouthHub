@@ -82,6 +82,13 @@ class Semester(models.Model):
     Maps to table: semesters
     """
 
+    organization = models.ForeignKey(
+        'core.Organization',
+        on_delete=models.CASCADE,
+        related_name='semesters',
+        null=True,  # To allow migration running
+        blank=True,
+    )
     name = models.CharField(max_length=100)
     academic_year = models.CharField(max_length=20)
     start_date = models.DateField()
@@ -98,6 +105,11 @@ class Semester(models.Model):
             models.CheckConstraint(
                 condition=models.Q(start_date__lt=models.F('end_date')),
                 name='semester_date_check',
+            ),
+            models.UniqueConstraint(
+                fields=['organization'],
+                condition=models.Q(is_current=True),
+                name='unique_current_semester_per_school',
             )
         ]
 

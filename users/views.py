@@ -53,8 +53,6 @@ def register_view(request):
         email = request.POST.get('email', '').strip()
         full_name = request.POST.get('full_name', '').strip()
         student_code = request.POST.get('student_code', '').strip()
-        faculty = request.POST.get('faculty', '').strip()
-        class_name = request.POST.get('class_name', '').strip()
         password = request.POST.get('password', '')
         password2 = request.POST.get('password2', '')
 
@@ -68,8 +66,6 @@ def register_view(request):
             errors.append('Họ tên không được để trống.')
         if not student_code:
             errors.append('Mã sinh viên không được để trống.')
-        if not faculty:
-            errors.append('Khoa không được để trống.')
         if len(password) < 6:
             errors.append('Mật khẩu phải ít nhất 6 ký tự.')
         if password != password2:
@@ -101,8 +97,6 @@ def register_view(request):
             StudentProfile.objects.create(
                 user=user,
                 student_code=student_code,
-                faculty=faculty,
-                class_name=class_name,
             )
             messages.success(request, 'Đăng ký thành công! Hãy đăng nhập.')
             return redirect('users:login')

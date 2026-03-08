@@ -20,7 +20,7 @@
         <h1 class="text-5xl font-black uppercase tracking-tighter leading-none mb-2">📊 DASHBOARD CỦA TÔI</h1>
         {% if profile %}
         <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">
-            {{ profile.student_code }} · {{ profile.faculty }}{% if profile.class_name %} · {{ profile.class_name }}{% endif %}
+            {{ profile.student_code }}
         </p>
         {% endif %}
     </div>
@@ -167,16 +167,7 @@
                         <span class="text-zinc-400 uppercase">Mã SV</span>
                         <span>{{ profile.student_code }}</span>
                     </div>
-                    <div class="flex justify-between">
-                        <span class="text-zinc-400 uppercase">Khoa</span>
-                        <span>{{ profile.faculty }}</span>
-                    </div>
-                    {% if profile.class_name %}
-                    <div class="flex justify-between">
-                        <span class="text-zinc-400 uppercase">Lớp</span>
-                        <span>{{ profile.class_name }}</span>
-                    </div>
-                    {% endif %}
+
                 </div>
             </div>
             {% endif %}
