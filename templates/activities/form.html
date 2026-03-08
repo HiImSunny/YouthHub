@@ -54,7 +54,7 @@
                 <div>
                     <label class="block text-sm font-black uppercase mb-2">TỔ CHỨC <span
                             class="text-accent-red">*</span></label>
-                    <select name="organization" required
+                    <select name="organization" id="orgSelect" required
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- CHỌN --</option>
                         {% for org in organizations %}
@@ -64,11 +64,11 @@
                 </div>
                 <div>
                     <label class="block text-sm font-black uppercase mb-2">HỌC KỲ</label>
-                    <select name="semester"
+                    <select name="semester" id="semSelect"
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- KHÔNG XÁC ĐỊNH --</option>
                         {% for sem in semesters %}
-                        <option value="{{ sem.pk }}" {% if activity.semester_id == sem.pk %}selected{% endif %}>{{ sem.name }} ({{ sem.academic_year }})</option>
+                        <option value="{{ sem.pk }}" data-org="{{ sem.organization_id }}" {% if activity.semester_id == sem.pk %}selected{% endif %}>{{ sem.name }} ({{ sem.academic_year }})</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -88,11 +88,11 @@
                 </div>
                 <div>
                     <label class="block text-sm font-black uppercase mb-2">MỤC ĐIỂM RÈN LUYỆN</label>
-                    <select name="point_category"
+                    <select name="point_category" id="pcSelect"
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- KHÔNG XÁC ĐỊNH --</option>
                         {% for pc in point_categories %}
-                        <option value="{{ pc.pk }}" {% if activity.point_category_id == pc.pk %}selected{% endif %}>{{ pc.code }} - {{ pc.name }}</option>
+                        <option value="{{ pc.pk }}" data-org="{{ pc.organization_id }}" {% if activity.point_category_id == pc.pk %}selected{% endif %}>{{ pc.code }} - {{ pc.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -225,5 +225,47 @@ Yêu cầu:
             btn.classList.add('bg-accent-teal', 'text-white', 'border-black');
         }
     }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const orgSelect = document.getElementById('orgSelect');
+        const semSelect = document.getElementById('semSelect');
+        const pcSelect = document.getElementById('pcSelect');
+
+        function filterOptions(selectElem, orgId) {
+            Array.from(selectElem.options).forEach(opt => {
+                if (opt.value === "") {
+                    opt.style.display = 'block'; 
+                    return;
+                }
+                if (opt.dataset.org === orgId) {
+                    opt.style.display = 'block';
+                } else {
+                    opt.style.display = 'none';
+                    if (opt.selected) opt.selected = false;
+                }
+            });
+            
+            // Re-eval selection
+            if (selectElem.selectedIndex > 0 && selectElem.options[selectElem.selectedIndex].style.display === 'none') {
+                selectElem.selectedIndex = 0;
+            }
+        }
+
+        if (orgSelect && semSelect && pcSelect) {
+            orgSelect.addEventListener('change', function () {
+                filterOptions(semSelect, this.value);
+                filterOptions(pcSelect, this.value);
+            });
+            // Initial filter when page loads, only if it's new creation or already has selected org
+            if (orgSelect.value) {
+                filterOptions(semSelect, orgSelect.value);
+                filterOptions(pcSelect, orgSelect.value);
+            } else {
+                // If no org selected, hide all options except empty ones
+                filterOptions(semSelect, 'NONE');
+                filterOptions(pcSelect, 'NONE');
+            }
+        }
+    });
 </script>
 {% endblock %}

@@ -50,13 +50,13 @@
                 <option value="{{ code }}" {% if request.GET.type == code %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
-            <select name="semester" class="border-3 border-black bg-white py-4 pl-4 pr-10 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
+            <select name="semester" id="filterSemester" class="border-3 border-black bg-white py-4 pl-4 pr-10 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
                 <option value="">HỌC KỲ</option>
                 {% for s in semesters %}
-                <option value="{{ s.id }}" {% if current_semester == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name|truncatechars:20 }}</option>
+                <option value="{{ s.id }}" data-org="{{ s.organization_id }}" {% if current_semester == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name|truncatechars:20 }}</option>
                 {% endfor %}
             </select>
-            <select name="org" class="border-3 border-black bg-white py-4 pl-4 pr-10 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
+            <select name="org" id="filterOrg" class="border-3 border-black bg-white py-4 pl-4 pr-10 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
                 <option value="">TỔ CHỨC</option>
                 {% for o in organizations %}
                 <option value="{{ o.id }}" {% if current_org == o.id|stringformat:"s" %}selected{% endif %}>{{ o.name|truncatechars:20 }}</option>
@@ -184,4 +184,37 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const filterOrg = document.getElementById('filterOrg');
+        const filterSem = document.getElementById('filterSemester');
+
+        function filterOptions(selectElem, orgId) {
+            Array.from(selectElem.options).forEach(opt => {
+                if (opt.value === "") {
+                    opt.style.display = 'block'; 
+                    return;
+                }
+                
+                // If orgId is empty, show all options (so users can search by semester globally)
+                // If orgId is selected, only show semesters of that org.
+                if (!orgId || opt.dataset.org === orgId) {
+                    opt.style.display = 'block';
+                } else {
+                    opt.style.display = 'none';
+                    if (opt.selected) opt.selected = false;
+                }
+            });
+        }
+
+        if (filterOrg && filterSem) {
+            filterOrg.addEventListener('change', function () {
+                filterOptions(filterSem, this.value);
+            });
+            // Initial filter on page load
+            filterOptions(filterSem, filterOrg.value);
+        }
+    });
+</script>
 {% endblock %}
