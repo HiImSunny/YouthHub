@@ -9,6 +9,7 @@ urlpatterns = [
     path('generate/', views.generate_view, name='generate'),
     path('status/', views.ollama_status_api, name='status'),
     path('suggest/', views.ai_suggest_api, name='suggest'),
+    path('pull/', views.pull_model_api, name='pull'),
 
     # Document management
     path('documents/', views.documents_list, name='documents'),

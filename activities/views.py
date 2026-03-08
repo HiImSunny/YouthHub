@@ -2,6 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils import timezone
+from django.db.models import Count, Q
 
 from .models import Activity, ActivityRegistration, PointCategory
 from core.models import Organization, Semester
@@ -19,7 +20,12 @@ def activity_list(request):
     if request.user.role == 'STUDENT':
         return redirect('students:portal')
 
-    qs = Activity.objects.select_related('organization', 'created_by', 'semester')
+    qs = Activity.objects.select_related('organization', 'created_by', 'semester').annotate(
+        pending_attendance_count=Count(
+            'attendance_sessions__records',
+            filter=Q(attendance_sessions__records__status='PENDING')
+        )
+    )
 
     # Filter by status
     status = request.GET.get('status')

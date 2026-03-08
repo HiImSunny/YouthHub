@@ -15,7 +15,7 @@ OLLAMA_BASE_URL = getattr(settings, 'OLLAMA_BASE_URL', 'http://localhost:11434')
 OLLAMA_TIMEOUT = getattr(settings, 'OLLAMA_TIMEOUT', 120)
 
 def get_default_model():
-    return getattr(settings, 'OLLAMA_MODEL', 'qwen2.5:1.5b-instruct')
+    return getattr(settings, 'OLLAMA_MODEL', 'sailor2:1b')
 
 
 # ────────────────────────────────────────────────────────────
@@ -28,6 +28,7 @@ Hãy soạn một BẢN KẾ HOẠCH / BÁO CÁO hoàn chỉnh theo cấu trúc 
 Thông tin:
 - Tên sự kiện: {event_name}
 - Tổ chức: {organization}
+- Mô tả ngắn: {description}
 - Ngày: {date}
 
 Yêu cầu:
@@ -44,6 +45,7 @@ Hãy soạn một BIÊN BẢN HỌP hoàn chỉnh.
 Thông tin:
 - Tên cuộc họp: {event_name}
 - Tổ chức: {organization}
+- Mô tả ngắn: {description}
 - Ngày: {date}
 
 Yêu cầu:
@@ -60,6 +62,7 @@ Hãy soạn một TỜ TRÌNH hoàn chỉnh.
 Thông tin:
 - Nội dung trình: {event_name}
 - Tổ chức: {organization}
+- Mô tả ngắn: {description}
 - Ngày: {date}
 
 Yêu cầu:
@@ -76,6 +79,7 @@ Hãy soạn một CÔNG VĂN hoàn chỉnh.
 Thông tin:
 - Chủ đề: {event_name}
 - Tổ chức: {organization}
+- Mô tả ngắn: {description}
 - Ngày: {date}
 
 Yêu cầu:
@@ -85,6 +89,59 @@ Yêu cầu:
 4. Nơi nhận, ký tên.
 
 Soạn công văn:""",
+
+    'BÀI ĐĂNG SOCIAL': """Bạn là chuyên viên truyền thông cho tổ chức Đoàn - Hội Sinh viên trường Đại học.
+Hãy viết một BÀI ĐĂNG MẠNG XÃ HỘI (Facebook Fanpage) thật thu hút, năng động và chuyên nghiệp.
+
+Thông tin:
+- Tên sự kiện/chủ đề: {event_name}
+- Tổ chức: {organization}
+- Mô tả ngắn: {description}
+- Ngày: {date}
+
+Yêu cầu:
+1. Mở bài ấn tượng, có chứa emoji phù hợp với sinh viên trẻ trung.
+2. Thân bài truyền tải rõ ràng thời gian, địa điểm, quyền lợi tham gia.
+3. Kêu gọi hành động (Call to Action) mạnh mẽ (like, share, tag bạn bè, điền form...).
+4. Đoạn cuối có hashtag phù hợp (ví dụ: #DoanHoi, #SinhVien, #... ).
+5. Câu chữ không quá cứng nhắc nhưng vẫn giữ được sự lịch sự của một tổ chức chính thống.
+
+Viết bài đăng:""",
+
+    'EMAIL THÔNG BÁO': """Bạn là trợ lý truyền thông cho tổ chức Đoàn - Hội Sinh viên.
+Hãy soạn một EMAIL THÔNG BÁO gửi đến toàn thể sinh viên.
+
+Thông tin:
+- Tên sự kiện: {event_name}
+- Tổ chức: {organization}
+- Mô tả ngắn: {description}
+- Ngày: {date}
+
+Yêu cầu:
+1. Tiêu đề email ngắn gọn, rõ ràng [THÔNG BÁO] ...
+2. Mở đầu lịch sự (Kính gửi toàn thể các bạn sinh viên thân mến / Dear students, ...).
+3. Đưa thông tin trọng tâm (Lý do email, thời gian, địa điểm, nội dung).
+4. Nhấn mạnh hạn chót (deadline) đăng ký hoặc tham gia nếu có.
+5. Lời chúc và thông tin liên hệ giải đáp thắc mắc.
+
+Soạn email:""",
+
+    'KỊCH BẢN MC': """Bạn là một MC chuyên nghiệp chuyên dẫn các chương trình của Đoàn - Hội Sinh viên.
+Hãy soạn một KỊCH BẢN MC chi tiết cho sự kiện.
+
+Thông tin:
+- Tên sự kiện: {event_name}
+- Tổ chức: {organization}
+- Mô tả ngắn về luồng chương trình: {description}
+- Ngày: {date}
+
+Yêu cầu:
+1. Bố cục rõ ràng: Tuyên bố lý do, Giới thiệu đại biểu, Khai mạc, Nội dung chính, Bế mạc.
+2. Tại mỗi phần phải ghi rõ ràng [MC nam], [MC nữ], hoặc [MC] nếu dẫn đơn.
+3. Lời dẫn phải trau chuốt, trang trọng đối với đại biểu nhưng phải tràn đầy năng lượng, nhiệt huyết đối với sinh viên.
+4. Có những khoảng trống dự phòng "[Tùy cơ ứng biến]" hoặc "[Xin mời đại biểu X bước lên sân khấu...]"
+
+Soạn kịch bản MC:""",
 }
 
 
@@ -96,10 +153,11 @@ def check_ollama_status() -> dict:
         if resp.status_code == 200:
             data = resp.json()
             models = [m['name'] for m in data.get('models', [])]
+            has_model = default_model in models or f"{default_model}:latest" in models
             return {
                 'online': True,
                 'models': models,
-                'has_model': default_model in models or any(default_model.split(':')[0] in m for m in models),
+                'has_model': has_model,
             }
     except requests.ConnectionError:
         pass
@@ -108,7 +166,7 @@ def check_ollama_status() -> dict:
     return {'online': False, 'models': [], 'has_model': False}
 
 
-def generate_document(doc_type: str, event_name: str, organization: str, date: str, model_name: str = None) -> dict:
+def generate_document(doc_type: str, event_name: str, organization: str, date: str, description: str = '', model_name: str = None) -> dict:
     """
     Generate a document using Ollama API.
     Returns dict with 'content', 'tokens_input', 'tokens_output', 'model', 'error'.
@@ -120,8 +178,17 @@ def generate_document(doc_type: str, event_name: str, organization: str, date: s
     prompt = template.format(
         event_name=event_name or 'Chưa có tên',
         organization=organization or 'Đoàn Thanh niên',
+        description=description or 'Không có mô tả thêm',
         date=date or 'Chưa xác định',
     )
+    
+    # Định dạng nghiêm ngặt để cấm Markdown và bắt buộc xuất Plain Text
+    prompt += "\n\n=== QUY TẮC ĐỊNH DẠNG TỬ THI ===\n"
+    prompt += "1. CHỈ XUẤT VĂN BẢN TRƠN (PLAIN TEXT).\n"
+    prompt += "2. CẤM TUYỆT ĐỐI các ký tự đặc biệt của Markdown: dấu sao (*), dấu thăng (#), gạch ngang đầu dòng (-), dấu huyền (`), gạch dưới (_).\n"
+    prompt += "3. KHÔNG sử dụng in đậm, in nghiêng bằng ký hiệu. Các đề mục lớn hãy VIẾT HOA TOÀN BỘ.\n"
+    prompt += "4. Các danh sách thì đánh số kiểu 1. 2. 3. hoặc a. b. c. theo sau là dấu chấm.\n"
+    prompt += "5. Đi thẳng vào nội dung chính, không chào hỏi, không lặp lại yêu cầu."
 
     try:
         resp = requests.post(
@@ -131,9 +198,11 @@ def generate_document(doc_type: str, event_name: str, organization: str, date: s
                 'prompt': prompt,
                 'stream': False,
                 'options': {
-                    'temperature': 0.7,
-                    'top_p': 0.9,
+                    'temperature': 0.3,   # Lower for more precise/formal text
+                    'top_p': 0.85,
+                    'top_k': 40,
                     'num_predict': 2048,
+                    'repeat_penalty': 1.1, # 1.25 is too extreme and causes gibberish
                 },
             },
             timeout=OLLAMA_TIMEOUT,
@@ -152,6 +221,7 @@ def generate_document(doc_type: str, event_name: str, organization: str, date: s
             return {
                 'content': '',
                 'error': f'Ollama returned status {resp.status_code}: {resp.text[:200]}',
+                'status_code': resp.status_code
             }
 
     except requests.ConnectionError:
@@ -172,7 +242,7 @@ def generate_document(doc_type: str, event_name: str, organization: str, date: s
         }
 
 
-def generate_fallback(doc_type: str, event_name: str, organization: str, date: str) -> str:
+def generate_fallback(doc_type: str, event_name: str, organization: str, date: str, description: str = '') -> str:
     """Fallback template when Ollama is offline."""
     return f"""[BẢN MẪU — OLLAMA ĐANG OFFLINE]
 

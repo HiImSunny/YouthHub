@@ -334,8 +334,13 @@ Hãy viết một vài câu nhận xét ngắn gọn (khoảng 3 câu) về mứ
 
         btn.disabled = true;
         btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> ĐANG PHÂN TÍCH...';
+        btn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-slate-300', 'text-slate-500', 'border-slate-400');
+        btn.classList.remove('bg-black', 'text-white', 'border-black');
+
         box.classList.remove('hidden');
-        box.innerHTML = 'AI đang suy nghĩ... <span class="animate-pulse">_</span>';
+        box.innerHTML = '<div class="flex items-center gap-2 text-slate-500"><span class="material-symbols-outlined animate-spin text-sm">cached</span> <span>AI đang phân tích dữ liệu chuyên cần... Vui lòng đợi</span></div>';
+        box.classList.add('animate-pulse', 'bg-slate-100');
+        box.classList.remove('bg-slate-50');
 
         try {
             const response = await fetch('{% url "ai_assistant:suggest" %}', {
@@ -347,21 +352,36 @@ Hãy viết một vài câu nhận xét ngắn gọn (khoảng 3 câu) về mứ
                 body: JSON.stringify({ prompt: prompt })
             });
 
+            box.classList.remove('animate-pulse', 'bg-slate-100');
+            box.classList.add('bg-slate-50');
+
             if (response.ok) {
                 const data = await response.json();
                 if (data.content) {
                     box.innerHTML = data.content.trim();
                 } else if (data.error) {
-                    box.innerHTML = '<span class="text-accent-red">Lỗi AI: ' + data.error + '</span>';
+                    box.innerHTML = '<span class="text-accent-red font-bold">Lỗi AI: ' + data.error + '</span>';
                 }
             } else {
-                box.innerHTML = '<span class="text-accent-red">Có lỗi xảy ra khi kết nối tới AI.</span>';
+                box.innerHTML = '<span class="text-accent-red font-bold">Có lỗi xảy ra khi kết nối tới hệ thống AI.</span>';
             }
         } catch (error) {
-            box.innerHTML = '<span class="text-accent-red">Lỗi kết nối tới AI: ' + error.message + '</span>';
+            box.classList.remove('animate-pulse', 'bg-slate-100');
+            box.classList.add('bg-slate-50');
+            box.innerHTML = '<span class="text-accent-red font-bold">Lỗi kết nối tới hệ thống AI: ' + error.message + '</span>';
         } finally {
-            btn.disabled = false;
-            btn.innerHTML = originalText;
+            btn.disabled = true; // Still disabled after success to prevent spamming
+            btn.innerHTML = '<span class="material-symbols-outlined text-sm">check</span> ĐÃ PHÂN TÍCH';
+            btn.classList.remove('bg-slate-300', 'text-slate-500', 'border-slate-400', 'animate-pulse');
+            btn.classList.add('bg-accent-teal', 'text-white', 'border-teal-700');
+            
+            // Allow re-generating after 5s
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-accent-teal', 'text-white', 'border-teal-700');
+                btn.classList.add('bg-black', 'text-white', 'border-black');
+            }, 5000);
         }
     }
 </script>

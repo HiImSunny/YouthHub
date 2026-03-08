@@ -54,7 +54,15 @@
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {% for act in activities %}
         <div
-            class="bg-white border-3 border-black flex flex-col shadow-brutal-lg hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all">
+            class="bg-white border-3 border-black flex flex-col shadow-brutal-lg hover:-translate-y-1 hover:-translate-x-1 hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all relative">
+            
+            {% if act.pending_attendance_count > 0 %}
+            <!-- Pending Attendance Badge -->
+            <div class="absolute -top-3 -right-3 z-10 bg-accent-red text-white border-3 border-black px-2 py-1 text-[10px] font-black uppercase shadow-brutal-sm animate-bounce">
+                {{ act.pending_attendance_count }} CẦN DUYỆT
+            </div>
+            {% endif %}
+
             <!-- Status Badge Header -->
             <div class="border-b-3 border-black p-4 bg-bg-light flex items-center justify-between">
                 <span

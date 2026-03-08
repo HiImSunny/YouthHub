@@ -10,9 +10,15 @@
 
 {% block content %}
 <div>
-    <div class="mb-8">
-        <h1 class="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-2">📄 VĂN BẢN AI</h1>
-        <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">DOCUMENT HISTORY</p>
+    <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-2">📄 VĂN BẢN AI</h1>
+            <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">DOCUMENT HISTORY</p>
+        </div>
+        <a href="{% url 'ai_assistant:chat' %}"
+            class="bg-white text-black border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2 self-start md:self-auto">
+            <span class="material-symbols-outlined text-lg">arrow_back</span> QUAY LẠI TẠO VĂN BẢN
+        </a>
     </div>
 
     {% if documents %}
@@ -35,11 +41,9 @@
                     <tr class="border-b-2 border-black hover:bg-primary/5">
                         <td class="p-4 border-r-2 border-black">
                             <a href="{% url 'ai_assistant:document_detail' pk=doc.pk %}"
-                                class="font-black uppercase hover:text-primary text-sm">{{ doc.title|truncatechars:40
-                                }}</a>
+                                class="font-black uppercase hover:text-primary text-sm">{{ doc.title|truncatechars:40 }}</a>
                         </td>
-                        <td class="p-4 border-r-2 border-black text-xs font-bold uppercase text-primary">{{
-                            doc.get_doc_type_display }}</td>
+                        <td class="p-4 border-r-2 border-black text-xs font-bold uppercase text-primary">{{ doc.get_doc_type_display }}</td>
                         <td class="p-4 border-r-2 border-black">
                             <span class="px-2 py-1 border-3 border-black text-xs font-black uppercase
                 {% if doc.status == 'DRAFT' %}bg-accent-yellow
@@ -49,9 +53,9 @@
                                 {{ doc.get_status_display }}
                             </span>
                         </td>
-                        {% if user.role != 'STUDENT' %}<td
-                            class="p-4 border-r-2 border-black text-sm font-bold uppercase">{{ doc.created_by.full_name
-                            }}</td>{% endif %}
+                        {% if user.role != 'STUDENT' %}
+                        <td class="p-4 border-r-2 border-black text-sm font-bold uppercase">{{ doc.created_by.full_name }}</td>
+                        {% endif %}
                         <td class="p-4 border-r-2 border-black text-sm font-bold">{{ doc.created_at|date:"d/m/Y H:i" }}
                         </td>
                         <td class="p-4">
@@ -77,8 +81,7 @@
         <span class="material-symbols-outlined text-6xl text-slate-300">description</span>
         <h3 class="text-2xl font-black uppercase text-slate-400 mt-4">CHƯA CÓ VĂN BẢN</h3>
         <a href="{% url 'ai_assistant:chat' %}"
-            class="mt-4 inline-block bg-primary text-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn transition-all">TẠO
-            VĂN BẢN ĐẦU TIÊN</a>
+            class="mt-4 inline-block bg-primary text-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn transition-all">TẠO VĂN BẢN ĐẦU TIÊN</a>
     </div>
     {% endif %}
 </div>

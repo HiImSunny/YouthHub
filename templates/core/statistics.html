@@ -7,10 +7,36 @@
 
 {% block content %}
 <div>
-    <!-- Hero -->
-    <div class="mb-8">
-        <h1 class="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-2">📊 THỐNG KÊ</h1>
-        <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">BÁO CÁO TOÀN HỆ THỐNG</p>
+    <!-- Hero & Actions -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+            <h1 class="text-5xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-2">📊 THỐNG KÊ</h1>
+            <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">BÁO CÁO TOÀN HỆ THỐNG</p>
+        </div>
+        
+        <!-- Action Buttons & Filters -->
+        <div class="flex flex-wrap items-end gap-3">
+            <form method="GET" action="" class="flex items-end gap-2">
+                <div>
+                    <label class="block text-xs font-black uppercase mb-1">Thời gian (Học kỳ)</label>
+                    <select name="semester" class="border-3 border-black p-2 font-bold focus:outline-none focus:ring-0 shadow-brutal text-sm" onchange="this.form.submit()">
+                        <option value="">-- Tất cả thời gian --</option>
+                        {% for sem in semesters %}
+                        <option value="{{ sem.id }}" {% if current_semester_id == sem.id|stringformat:"s" %}selected{% endif %}>{{ sem.name }} ({{ sem.academic_year }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+            
+            <a href="?export=excel{% if current_semester_id %}&semester={{ current_semester_id }}{% endif %}" class="bg-accent-teal text-white border-3 border-black p-2 font-bold shadow-brutal hover:translate-y-1 hover:shadow-none transition-all flex items-center gap-2 text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                EXCEL
+            </a>
+            <button onclick="window.print()" class="bg-primary text-white border-3 border-black p-2 font-bold shadow-brutal hover:translate-y-1 hover:shadow-none transition-all flex items-center gap-2 text-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                BẢN IN (PDF)
+            </button>
+        </div>
     </div>
 
     <!-- Summary Cards -->
@@ -33,7 +59,11 @@
         </div>
         <div class="bg-zinc-900 text-white border-3 border-black p-5 shadow-brutal col-span-2 lg:col-span-1">
             <p class="text-xs font-black uppercase mb-1 opacity-80">NGÂN SÁCH</p>
+            {% if budget_total > 0 %}
             <p class="text-2xl font-black">{{ budget_total|floatformat:0 }}<span class="text-sm">đ</span></p>
+            {% else %}
+            <p class="text-sm font-bold text-gray-400 mt-2">— Lấy dữ liệu trống —</p>
+            {% endif %}
         </div>
     </div>
 
@@ -46,7 +76,7 @@
                 <h2 class="font-black uppercase text-lg">HOẠT ĐỘNG THEO TRẠNG THÁI</h2>
             </div>
             <div class="p-6 flex justify-center">
-                <div style="max-width:280px; width:100%;">
+                <div style="max-width:320px; width:100%;">
                     <canvas id="chartStatus"></canvas>
                 </div>
             </div>
@@ -78,7 +108,7 @@
                 <h2 class="font-black uppercase text-lg">CƠ CẤU TỔ CHỨC</h2>
             </div>
             <div class="p-6 flex justify-center">
-                <div style="max-width:280px; width:100%;">
+                <div style="max-width:320px; width:100%;">
                     <canvas id="chartOrg"></canvas>
                 </div>
             </div>
@@ -90,6 +120,7 @@
 
 <!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 
 <!-- ── Django Data Islands (VS Code lint-safe) ─────────────────────────── -->
 <script id="data-status-labels" type="application/json">{{ status_labels|safe }}</script>
@@ -113,29 +144,75 @@
     const orgLabels = jd('data-org-labels');
     const orgData = jd('data-org-data');
 
-    // ── Neobrutalism Color Palette ──────────────────────────────────────────────
-    const COLORS = ['#ff6a00', '#fbef2e', '#008080', '#ff4d4d', '#3b82f6', '#8b5cf6'];
+    // ── Pre-process Donut Labels (Add Percentage) ──────────────────────────────
+    function computeDonutLabels(labels, data) {
+        const total = data.reduce((a, b) => a + b, 0);
+        return labels.map((lbl, i) => {
+            const val = data[i];
+            const pct = total ? Math.round((val / total) * 100) : 0;
+            return `${lbl} — ${pct}% (${val})`;
+        });
+    }
+    const orgLabelsWithPercent = computeDonutLabels(orgLabels, orgData);
+    const statusLabelsWithPercent = computeDonutLabels(statusLabels, statusData);
 
+    // Register DataLabels Plugin globally
+    Chart.register(ChartDataLabels);
+
+    // ── Neobrutalism Color Palette ──────────────────────────────────────────────
+    const COLORS = ['#ff6a00', '#fbef2e', '#008080', '#ff4d4d', '#3b82f6', '#8b5cf6', '#eab308', '#ef4444']; // Cầu vồng rực rỡ
+
+    // ── Global Configuration (Phase 1) ──────────────────────────────────────────
     Chart.defaults.font.family = "'Space Grotesk', sans-serif";
-    Chart.defaults.font.weight = '700';
+    Chart.defaults.font.weight = '900';
+    Chart.defaults.font.size = 13;
+    Chart.defaults.color = '#000'; // Đen tuyền
+    Chart.defaults.plugins.datalabels.display = false; // Tắt mặc định, tuỳ chỉnh theo chart
+
+    // Neo-brutalism Tooltips
+    Chart.defaults.plugins.tooltip.backgroundColor = '#fff';
+    Chart.defaults.plugins.tooltip.titleColor = '#000';
+    Chart.defaults.plugins.tooltip.titleFont = { size: 14, weight: '900', family: "'Space Grotesk', sans-serif" };
+    Chart.defaults.plugins.tooltip.bodyColor = '#000';
+    Chart.defaults.plugins.tooltip.bodyFont = { size: 13, weight: '700', family: "'Space Grotesk', sans-serif" };
+    Chart.defaults.plugins.tooltip.borderColor = '#000';
+    Chart.defaults.plugins.tooltip.borderWidth = 3;
+    Chart.defaults.plugins.tooltip.cornerRadius = 0; // Vuông góc
+    Chart.defaults.plugins.tooltip.caretSize = 8;
+    Chart.defaults.plugins.tooltip.padding = 10;
+    Chart.defaults.plugins.tooltip.boxPadding = 4;
+    Chart.defaults.plugins.tooltip.usePointStyle = true;
+    
+    // Grid Line Defaults (Dày và đen tuyền)
+    const gridNeo = {
+        color: '#000',
+        lineWidth: 2,
+        drawBorder: true,
+        tickColor: '#000',
+        tickLength: 6,
+    };
 
     // ── Chart 1: Status — Doughnut ──────────────────────────────────────────────
     new Chart(document.getElementById('chartStatus'), {
         type: 'doughnut',
         data: {
-            labels: statusLabels,
+            labels: statusLabelsWithPercent,
             datasets: [{
                 data: statusData,
                 backgroundColor: COLORS,
                 borderColor: '#000',
-                borderWidth: 3,
-                hoverOffset: 8,
+                borderWidth: 4,
+                hoverOffset: 12,
             }]
         },
         options: {
+            cutout: '45%', // Khuyên tròn chiếm 45% -> dày hơn như bánh xích
             responsive: true,
             plugins: {
-                legend: { position: 'bottom', labels: { padding: 14 } }
+                legend: { 
+                    position: 'bottom', 
+                    labels: { padding: 20, font: { size: 14, weight: '900' }, color: '#000', usePointStyle: true, pointStyle: 'rect' } 
+                }
             }
         }
     });
@@ -148,47 +225,78 @@
             datasets: [{
                 label: 'Số hoạt động',
                 data: typeData,
-                backgroundColor: '#ff6a00',
+                backgroundColor: COLORS, // Dùng nhiều màu ngẫu nhiên cho rực rỡ
                 borderColor: '#000',
-                borderWidth: 3,
+                borderWidth: 4,
             }]
         },
         options: {
             indexAxis: 'y',
             responsive: true,
-            plugins: { legend: { display: false } },
+            layout: { padding: { right: 30 } },
+            plugins: { 
+                legend: { display: false },
+                datalabels: {
+                    display: true,
+                    color: '#000',
+                    anchor: 'end',
+                    align: 'end',
+                    font: { weight: '900', size: 14 }
+                }
+            },
             scales: {
-                x: { grid: { color: '#e5e7eb' }, ticks: { precision: 0 } },
-                y: { grid: { display: false } }
+                x: { 
+                    grid: gridNeo, 
+                    ticks: { precision: 0, font: { weight: '900' }, color: '#000' },
+                    border: { color: '#000', width: 3 }
+                },
+                y: { 
+                    grid: gridNeo, 
+                    ticks: { font: { weight: '900', size: 12 }, color: '#000' },
+                    border: { color: '#000', width: 3 }
+                }
             }
         }
     });
 
-    // ── Chart 3: Monthly — Line ─────────────────────────────────────────────────
+    // ── Chart 3: Monthly — Bar ─────────────────────────────────────────────────
     new Chart(document.getElementById('chartMonthly'), {
-        type: 'line',
+        type: 'bar',
         data: {
             labels: monthlyLabels,
             datasets: [{
                 label: 'Hoạt động mới',
                 data: monthlyData,
-                backgroundColor: 'rgba(255,106,0,0.15)',
-                borderColor: '#ff6a00',
-                borderWidth: 3,
-                pointBackgroundColor: '#ff6a00',
-                pointBorderColor: '#000',
-                pointBorderWidth: 2,
-                pointRadius: 6,
-                tension: 0.3,
-                fill: true,
+                backgroundColor: '#fbef2e', // Vàng chanh
+                borderColor: '#000', // Khung đen
+                borderWidth: 4,
             }]
         },
         options: {
             responsive: true,
-            plugins: { legend: { display: false } },
+            layout: { padding: { top: 30 } },
+            plugins: { 
+                legend: { display: false },
+                datalabels: {
+                    display: true,
+                    color: '#000',
+                    anchor: 'end',
+                    align: 'top',
+                    font: { weight: '900', size: 14 }
+                }
+            },
             scales: {
-                y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#e5e7eb' } },
-                x: { grid: { display: false } }
+                y: { 
+                    beginAtZero: true, 
+                    ticks: { precision: 0, font: { weight: '900' }, color: '#000' },
+                    grid: gridNeo,
+                    border: { color: '#000', width: 3 }
+                },
+                x: { 
+                    grid: gridNeo, 
+                    ticks: { font: { weight: '900' }, color: '#000' },
+                    border: { color: '#000', width: 3 }
+                }
             }
         }
     });
@@ -197,19 +305,23 @@
     new Chart(document.getElementById('chartOrg'), {
         type: 'doughnut',
         data: {
-            labels: orgLabels,
+            labels: orgLabelsWithPercent,
             datasets: [{
                 data: orgData,
-                backgroundColor: ['#fbef2e', '#ff6a00', '#008080', '#ff4d4d'],
+                backgroundColor: ['#fbef2e', '#ff4d4d', '#008080', '#3b82f6', '#8b5cf6'],
                 borderColor: '#000',
-                borderWidth: 3,
-                hoverOffset: 8,
+                borderWidth: 4,
+                hoverOffset: 12,
             }]
         },
         options: {
+            cutout: '45%',
             responsive: true,
             plugins: {
-                legend: { position: 'bottom', labels: { padding: 14 } }
+                legend: { 
+                    position: 'bottom', 
+                    labels: { padding: 20, font: { size: 14, weight: '900' }, color: '#000', usePointStyle: true, pointStyle: 'rect' } 
+                }
             }
         }
     });

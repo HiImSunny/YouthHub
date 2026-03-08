@@ -123,43 +123,77 @@ def statistics_view(request):
     Advanced statistics page with Chart.js data.
     Accessible by ADMIN and STAFF.
     """
+    import datetime
+    from activities.models import Budget
+    import io
+    from django.http import HttpResponse
+
+    # Dict maps for translations
+    STATUS_MAP = dict(Activity.ActivityStatus.choices)
+    TYPE_MAP = dict(Activity.ActivityType.choices)
+    ORG_TYPE_MAP = dict(Organization.OrgType.choices)
+
+    # --- Filtering ---
+    semester_id = request.GET.get('semester')
+    base_act_qs = Activity.objects.all()
+    if semester_id:
+        base_act_qs = base_act_qs.filter(semester_id=semester_id)
+        
+    semesters = Semester.objects.order_by('-start_date')
+
     # ── Activity stats by status ────────────────────────────────────────────
     status_qs = (
-        Activity.objects.values('status')
+        base_act_qs.values('status')
         .annotate(count=Count('id'))
         .order_by('status')
     )
-    status_labels = [s['status'] for s in status_qs]
+    status_labels = [STATUS_MAP.get(s['status'], s['status']) for s in status_qs]
     status_data = [s['count'] for s in status_qs]
 
     # ── Activity stats by type ───────────────────────────────────────────────
     type_qs = (
-        Activity.objects.values('activity_type')
+        base_act_qs.values('activity_type')
         .annotate(count=Count('id'))
         .order_by('activity_type')
     )
-    type_labels = [t['activity_type'] for t in type_qs]
+    type_labels = [TYPE_MAP.get(t['activity_type'], t['activity_type']) for t in type_qs]
     type_data = [t['count'] for t in type_qs]
 
-    # ── Monthly activity creation (last 6 months) ────────────────────────────
-    six_months_ago = timezone.now() - timezone.timedelta(days=180)
+    # ── Monthly activity creation (last 6 months - padded) ───────────────────
+    today = timezone.now()
+    months_list = []
+    current_month = today.month
+    current_year = today.year
+    for i in range(5, -1, -1):
+        m = current_month - i
+        y = current_year
+        if m <= 0:
+            m += 12
+            y -= 1
+        months_list.append(f"{m:02d}/{y}")
+
+    six_months_ago = today - timezone.timedelta(days=180)
     monthly_qs = (
-        Activity.objects
+        base_act_qs
         .filter(created_at__gte=six_months_ago)
         .annotate(month=TruncMonth('created_at'))
         .values('month')
         .annotate(count=Count('id'))
         .order_by('month')
     )
-    monthly_labels = [m['month'].strftime('%m/%Y') for m in monthly_qs]
-    monthly_data = [m['count'] for m in monthly_qs]
+    
+    monthly_counts = {m['month'].strftime('%m/%Y'): m['count'] for m in monthly_qs}
+    monthly_labels = months_list
+    monthly_data = [monthly_counts.get(m, 0) for m in months_list]
 
     # ── Budget stats ─────────────────────────────────────────────────────────
-    from activities.models import Budget
-    budget_total = Budget.objects.filter(status='APPROVED').aggregate(total=Sum('total_amount'))['total'] or 0
+    budget_total = Budget.objects.filter(status='APPROVED', activity__in=base_act_qs).aggregate(total=Sum('total_amount'))['total'] or 0
 
     # ── Attendance stats ─────────────────────────────────────────────────────
-    total_checkins = AttendanceRecord.objects.filter(status='VERIFIED').count()
+    att_qs = AttendanceRecord.objects.filter(status='VERIFIED')
+    if semester_id:
+        att_qs = att_qs.filter(session__activity__semester_id=semester_id)
+    total_checkins = att_qs.count()
 
     # ── Organization breakdown ───────────────────────────────────────────────
     org_qs = (
@@ -168,8 +202,53 @@ def statistics_view(request):
         .values('type')
         .annotate(count=Count('id'))
     )
-    org_labels = [o['type'] for o in org_qs]
+    org_labels = [ORG_TYPE_MAP.get(o['type'], o['type']) for o in org_qs]
     org_data = [o['count'] for o in org_qs]
+    
+    # ── Export Logic ──
+    if request.GET.get('export') == 'excel':
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = 'Bao Cao Thong Ke'
+
+        # Title
+        ws.merge_cells('A1:C1')
+        ws['A1'] = "BÁO CÁO THỐNG KÊ HOẠT ĐỘNG"
+        ws['A1'].font = Font(bold=True, size=16)
+        ws['A1'].alignment = Alignment(horizontal='center')
+
+        # Summary
+        headers = ['Tổng hoạt động', 'Chờ duyệt', 'Tổ chức', 'Điểm danh', 'Ngân sách (đ)']
+        ws.append(headers)
+        for cell in ws[2]:
+            cell.font = Font(bold=True)
+            cell.fill = PatternFill(start_color='FF6A00', end_color='FF6A00', fill_type='solid')
+
+        ws.append([
+            base_act_qs.count(),
+            base_act_qs.filter(status='PENDING').count(),
+            Organization.objects.filter(status=True).count(),
+            total_checkins,
+            budget_total
+        ])
+
+        ws.append([]) # Empty row
+        ws.append(['TRẠNG THÁI HOẠT ĐỘNG'])
+        ws._current_row[-1][0].font = Font(bold=True)
+        for i, lbl in enumerate(status_labels):
+            ws.append([lbl, status_data[i]])
+
+        buf = io.BytesIO()
+        wb.save(buf)
+        buf.seek(0)
+        return HttpResponse(
+            buf, 
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            headers={'Content-Disposition': 'attachment; filename="bao_cao_thong_ke.xlsx"'}
+        )
 
     context = {
         # Chart.js data (JSON-safe)
@@ -182,11 +261,14 @@ def statistics_view(request):
         'org_labels': json.dumps(org_labels),
         'org_data': json.dumps(org_data),
         # Summary figures
-        'total_activities': Activity.objects.count(),
+        'total_activities': base_act_qs.count(),
         'total_organizations': Organization.objects.filter(status=True).count(),
         'budget_total': budget_total,
         'total_checkins': total_checkins,
-        'pending_count': Activity.objects.filter(status='PENDING').count(),
+        'pending_count': base_act_qs.filter(status='PENDING').count(),
+        # Filter options
+        'semesters': semesters,
+        'current_semester_id': semester_id,
     }
     return render(request, 'core/statistics.html', context)
 

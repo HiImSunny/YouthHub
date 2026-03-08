@@ -162,7 +162,6 @@
                     class="bg-white border-3 border-black p-4 font-black uppercase shadow-brutal-sm brutal-btn transition-all text-center px-8">HỦY</a>
             </div>
         </form>
-    </div>
 </div>
 
 <script>
@@ -180,11 +179,18 @@
 
         btn.disabled = true;
         btn.innerHTML = '<span class="material-symbols-outlined text-sm animate-spin">sync</span> ĐANG PHÁC THẢO...';
-        btn.classList.add('opacity-50', 'cursor-not-allowed');
+        btn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-slate-300', 'text-slate-500', 'border-slate-400');
+        btn.classList.remove('bg-accent-teal', 'text-white', 'border-black');
+        
+        const originalDesc = descInput.value;
+        descInput.value = 'AI đang phác thảo mô tả... Vui lòng đợi...';
+        descInput.classList.add('animate-pulse', 'text-slate-400', 'bg-slate-50');
 
         try {
-            const prompt = `Viết một đoạn mô tả cho hoạt động sinh viên có tên là: "${titleInput.value}". Mô tả ngắn gọn trong khoảng 3-4 câu, bao gồm mục đích và nội dung chính, phù hợp với phong cách trẻ trung năng động của sinh viên.`;
-            
+            const prompt = `Viết một đoạn mô tả (khoảng 3-4 câu) cho hoạt động sinh viên có tên là: "${titleInput.value}". 
+Yêu cầu:
+1. Gồm mục đích và nội dung chính, văn phong trẻ trung năng động.
+2. TUYỆT ĐỐI KHÔNG mở đầu bằng các câu giao tiếp như "Dưới đây là...", "Đoạn mô tả như sau...". Bắt tay ngay vào bài viết chính.`;
             const response = await fetch('{% url "ai_assistant:suggest" %}', {
                 method: 'POST',
                 headers: {
@@ -194,22 +200,29 @@
                 body: JSON.stringify({ prompt: prompt })
             });
 
+            descInput.classList.remove('animate-pulse', 'text-slate-400', 'bg-slate-50');
+
             if (response.ok) {
                 const data = await response.json();
                 if (data.content) {
                     descInput.value = data.content.trim();
                 } else if (data.error) {
                     alert('Lỗi AI: ' + data.error);
+                    descInput.value = originalDesc;
                 }
             } else {
                 alert('Có lỗi xảy ra khi kết nối tới AI. Vui lòng thử lại sau.');
+                descInput.value = originalDesc;
             }
         } catch (error) {
             alert('Lỗi kết nối tới AI: ' + error.message);
+            descInput.classList.remove('animate-pulse', 'text-slate-400', 'bg-slate-50');
+            descInput.value = originalDesc;
         } finally {
             btn.disabled = false;
             btn.innerHTML = originalText;
-            btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            btn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-300', 'text-slate-500', 'border-slate-400');
+            btn.classList.add('bg-accent-teal', 'text-white', 'border-black');
         }
     }
 </script>

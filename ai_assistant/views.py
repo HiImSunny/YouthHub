@@ -11,10 +11,18 @@ from .ollama_service import (
     generate_fallback,
     get_default_model,
 )
+from .hardware import get_hardware_info
+from core.permissions import get_manageable_orgs
 
 AVAILABLE_MODELS = [
-    {'id': 'qwen2.5:1.5b-instruct', 'name': 'Qwen 2.5 1.5B (Cơ bản - Nhanh)'},
-    {'id': 'qwen2.5:3b-instruct', 'name': 'Qwen 2.5 3B (Nâng cao - Yêu cầu GPU)'},
+    {'id': 'sailor2:1b', 'name': 'Sailor 2 1B (Mặc định - Siêu nhẹ)', 'vram': 1.5},
+    {'id': 'sailor2:8b', 'name': 'Sailor 2 8B (Nâng cao - SEO/Văn bản)', 'vram': 6.0},
+    {'id': 'sailor2:20b', 'name': 'Sailor 2 20B (Cực mạnh - Yêu cầu GPU khủng)', 'vram': 15.0},
+    {'id': 'qwen3:1.7b', 'name': 'Qwen 3 1.7B (Thông minh - Nhanh)', 'vram': 2.5},
+    {'id': 'qwen3:4b', 'name': 'Qwen 3 4B (Cân bằng)', 'vram': 4.5},
+    {'id': 'qwen3:8b', 'name': 'Qwen 3 8B (Sáng tạo cao)', 'vram': 7.0},
+    {'id': 'qwen2.5:1.5b-instruct', 'name': 'Qwen 2.5 1.5B (Cũ - Nhanh)', 'vram': 1.5},
+    {'id': 'qwen2.5:3b-instruct', 'name': 'Qwen 2.5 3B (Cũ - GPU)', 'vram': 3.5},
 ]
 
 
@@ -34,12 +42,16 @@ def chat_view(request):
     recent_docs = AiDocument.objects.filter(
         created_by=request.user
     ).order_by('-created_at')[:5]
+    
+    manageable_orgs = get_manageable_orgs(request.user).order_by('type', 'name')
 
     context = {
-        'ollama_status': None,   # Will be fetched asynchronously by frontend
+        'ollama_status': None,
         'ollama_model': get_default_model(),
         'available_models': AVAILABLE_MODELS,
         'recent_docs': recent_docs,
+        'manageable_orgs': manageable_orgs,
+        'hardware_info': get_hardware_info(),
         'output': '',
     }
     return render(request, 'ai_assistant/chat.html', context)
@@ -93,6 +105,51 @@ def ai_suggest_api(request):
 
 @login_required
 @require_POST
+def pull_model_api(request):
+    """Ajax endpoint to stream Ollama model pull progress."""
+    import json
+    import requests
+    from django.conf import settings
+
+    if request.user.role == 'STUDENT':
+        return JsonResponse({'error': 'Unauthorized'}, status=403)
+
+    try:
+        data = json.loads(request.body)
+        model_name = data.get('model_name')
+    except:
+        model_name = request.POST.get('model_name')
+
+    if not model_name:
+        return JsonResponse({'error': 'No model_name provided'}, status=400)
+
+    OLLAMA_BASE_URL = getattr(settings, 'OLLAMA_BASE_URL', 'http://localhost:11434')
+
+    def event_stream():
+        try:
+            # Stream the POST request to Ollama
+            with requests.post(
+                f'{OLLAMA_BASE_URL}/api/pull',
+                json={'name': model_name, 'stream': True},
+                stream=True,
+                timeout=3600 # 1 hour timeout for huge models
+            ) as r:
+                r.raise_for_status()
+                for line in r.iter_lines():
+                    if line:
+                        yield line.decode('utf-8') + '\n'
+        except Exception as e:
+            yield json.dumps({'error': str(e)}) + '\n'
+
+    from django.http import StreamingHttpResponse
+    response = StreamingHttpResponse(event_stream(), content_type='application/x-ndjson')
+    response['X-Accel-Buffering'] = 'no'
+    response['Cache-Control'] = 'no-cache'
+    return response
+
+
+@login_required
+@require_POST
 def generate_view(request):
     """Handle document generation request."""
     if (denied := _staff_only(request)):
@@ -101,16 +158,29 @@ def generate_view(request):
     event_name = request.POST.get('event_name', '')
     organization = request.POST.get('organization', '')
     date = request.POST.get('date', '')
+    description = request.POST.get('description', '')
     model_name = request.POST.get('model_name', get_default_model())
 
+    manageable_orgs = get_manageable_orgs(request.user).order_by('type', 'name')
+
+    import time
+    start_time = time.time()
     # Try Ollama first
-    result = generate_document(doc_type, event_name, organization, date, model_name=model_name)
+    result = generate_document(doc_type, event_name, organization, date, description, model_name=model_name)
+    generation_time = round(time.time() - start_time, 1)
 
     if result.get('error'):
+        # Pass an offline status directly back so UI shows correct state without relying async
+        status = {
+            'online': result.get('status_code') != 404,
+            'has_model': False,
+            'models': []
+        }
         # Fallback to template
-        content = generate_fallback(doc_type, event_name, organization, date)
-        messages.warning(request, f'Ollama offline — dùng bản mẫu. Lỗi: {result["error"][:100]}')
+        content = generate_fallback(doc_type, event_name, organization, date, description)
+        messages.warning(request, f'Ollama gặp lỗi. Lỗi: {result["error"][:100]}')
     else:
+        status = None # let async handle it if success
         content = result['content']
 
     # Save as RAW document
@@ -126,8 +196,6 @@ def generate_view(request):
         status=AiDocument.DocStatus.RAW,
     )
 
-    # Re-render chat page with output (status fetched async by JS)
-    status = {'online': True, 'models': [], 'has_model': True, 'current_default': get_default_model()}  # optimistic after generate
     recent_docs = AiDocument.objects.filter(
         created_by=request.user
     ).order_by('-created_at')[:5]
@@ -139,6 +207,7 @@ def generate_view(request):
         'ollama_model': model_name,
         'available_models': AVAILABLE_MODELS,
         'recent_docs': recent_docs,
+        'manageable_orgs': manageable_orgs,
         'output': content,
         'current_doc': doc,
         'word_count': word_count,
@@ -149,6 +218,9 @@ def generate_view(request):
         'form_event_name': event_name,
         'form_organization': organization,
         'form_date': date,
+        'form_description': description,
+        'hardware_info': get_hardware_info(),
+        'generation_time': generation_time,
     }
     return render(request, 'ai_assistant/chat.html', context)
 
@@ -221,5 +293,8 @@ def _map_doc_type(label: str) -> str:
         'BIÊN BẢN HỌP': 'REPORT',
         'TỜ TRÌNH': 'INVITATION',
         'CÔNG VĂN': 'OTHER',
+        'BÀI ĐĂNG SOCIAL': 'OTHER',
+        'EMAIL THÔNG BÁO': 'INVITATION',
+        'KỊCH BẢN MC': 'OTHER',
     }
     return mapping.get(label, 'OTHER')

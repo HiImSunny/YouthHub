@@ -123,7 +123,7 @@
           <span class="material-symbols-outlined text-xl">event</span> HOẠT ĐỘNG
         </a>
 
-        <!-- Duyệt tổng hợp -->
+        <!-- Duyệt tổng hợp (Ẩn theo yêu cầu)
         <a href="{% url 'core:unified_pending' %}"
             class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
             {% if 'pending' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
@@ -132,6 +132,7 @@
             <span class="ml-auto bg-accent-yellow text-black text-xs px-2 py-0.5 font-black">{{ pending_count }}</span>
             {% endif %}
         </a>
+        -->
 
         <!-- Danh mục điểm rèn luyện -->
         <a href="{% url 'activities:point_category_list' %}"
