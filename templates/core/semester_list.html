@@ -15,52 +15,102 @@
     <p class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">QUẢN LÝ HỌC KỲ, NĂM HỌC</p>
 </div>
 
-<div class="bg-white border-3 border-black shadow-brutal-lg">
-    <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="border-b-3 border-black bg-slate-100">
-                    <th class="p-4 font-black uppercase border-r-2 border-black text-sm w-16 text-center">#</th>
-                    <th class="p-4 font-black uppercase border-r-2 border-black text-sm">HỌC KỲ - NĂM HỌC</th>
-                    <th class="p-4 font-black uppercase border-r-2 border-black text-sm">TỔ CHỨC</th>
-                    <th class="p-4 font-black uppercase border-r-2 border-black text-sm">THỜI GIAN</th>
-                    <th class="p-4 font-black uppercase border-r-2 border-black text-sm">TRẠNG THÁI</th>
-                    <th class="p-4 font-black uppercase text-sm text-center">THAO TÁC</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for s in semesters %}
-                <tr class="border-b-2 border-black hover:bg-primary/5 transition-all">
-                    <td class="p-4 border-r-2 border-black font-mono text-center">{{ forloop.counter }}</td>
-                    <td class="p-4 border-r-2 border-black font-black uppercase">{{ s.name }} ({{ s.academic_year }})</td>
-                    <td class="p-4 border-r-2 border-black">{{ s.organization.name }}</td>
-                    <td class="p-4 border-r-2 border-black text-sm font-bold text-slate-600">
-                        {{ s.start_date|date:"d/m/Y" }} - {{ s.end_date|date:"d/m/Y" }}
-                    </td>
-                    <td class="p-4 border-r-2 border-black text-xs font-black uppercase">
-                        {% if s.is_current %}
-                        <span class="bg-primary/20 text-primary px-2 py-1 border border-primary">ĐANG DIỄN RA</span>
-                        {% else %}
-                        <span class="bg-slate-200 text-slate-500 px-2 py-1 border border-slate-300">ĐÃ ĐÓNG</span>
-                        {% endif %}
-                    </td>
-                    <td class="p-4 text-center">
-                        <div class="flex items-center justify-center gap-2">
-                            <a href="{% url 'core:semester_edit' s.pk %}" class="bg-accent-yellow border-2 border-black px-3 py-1 text-xs font-black uppercase brutal-btn">SỬA</a>
-                            <form method="post" action="{% url 'core:semester_delete' s.pk %}" class="inline">
-                                {% csrf_token %}
-                                <button type="submit" onclick="return confirm('Xác nhận xóa học kỳ này?')" class="bg-accent-red text-white border-2 border-black px-3 py-1 text-xs font-black uppercase brutal-btn">XÓA</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="6" class="p-10 text-center text-slate-400 font-bold uppercase">CHƯA CÓ HỌC KỲ NÀO ĐƯỢC TẠO</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<!-- Filter Bar -->
+<div class="bg-white border-3 border-black p-6 mb-8 shadow-brutal-lg">
+    <form method="get" class="flex flex-col lg:flex-row gap-4 items-stretch">
+        <div class="flex-1 relative">
+            <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined">search</span>
+            <input type="text" name="q" value="{{ current_q }}"
+                class="w-full pl-12 pr-4 py-4 border-3 border-black bg-white text-sm font-bold uppercase placeholder:text-slate-400 focus:ring-0 focus:outline-none"
+                placeholder="TÌM KIẾM HỌC KỲ...">
+        </div>
+        <select name="org" class="border-3 border-black bg-white py-4 pl-4 pr-10 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
+            <option value="">TỔ CHỨC</option>
+            {% for o in organizations %}
+            <option value="{{ o.id }}" {% if current_org == o.id|stringformat:"s" %}selected{% endif %}>{{ o.name|truncatechars:20 }}</option>
+            {% endfor %}
+        </select>
+        <select name="year" class="border-3 border-black bg-white py-4 pl-4 pr-10 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
+            <option value="">NĂM HỌC</option>
+            {% for y in years %}
+            <option value="{{ y }}" {% if current_year == y %}selected{% endif %}>{{ y }}</option>
+            {% endfor %}
+        </select>
+        <select name="status" class="border-3 border-black bg-white py-4 pl-4 pr-10 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
+            <option value="">TRẠNG THÁI</option>
+            <option value="ONGOING" {% if current_status == 'ONGOING' %}selected{% endif %}>ĐANG DIỄN RA</option>
+            <option value="UPCOMING" {% if current_status == 'UPCOMING' %}selected{% endif %}>CHỜ MỞ</option>
+            <option value="CLOSED" {% if current_status == 'CLOSED' %}selected{% endif %}>ĐÃ ĐÓNG</option>
+        </select>
+        <button type="submit" class="bg-primary text-white border-3 border-black font-black uppercase py-4 px-8 shadow-brutal brutal-btn transition-all">LỌC</button>
+        <a href="{% url 'core:semesters' %}" class="bg-slate-200 text-slate-800 border-3 border-black font-black uppercase py-4 px-6 shadow-brutal brutal-btn transition-all flex items-center justify-center">
+            <span class="material-symbols-outlined text-xl">refresh</span>
+        </a>
+    </form>
+</div>
+
+<!-- Grouped List -->
+<div class="space-y-6">
+    {% regroup semesters by organization as org_list %}
+    
+    {% for org in org_list %}
+    <details class="bg-white border-3 border-black shadow-brutal-lg group" {% if org_list|length == 1 or current_org == org.grouper.pk|stringformat:"s" %}open{% endif %}>
+        <summary class="p-4 font-black uppercase list-none cursor-pointer flex justify-between items-center hover:bg-slate-50 transition-colors border-b-3 border-black group-open:bg-bg-light">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary group-open:rotate-90 transition-transform">arrow_right</span>
+                <span class="text-lg">{{ org.grouper.name }}</span>
+            </div>
+            <span class="bg-primary text-white text-xs px-2 py-1 border-2 border-black shadow-brutal-sm">{{ org.list|length }} HỌC KỲ</span>
+        </summary>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-100">
+                        <th class="p-4 font-black uppercase border-b-3 border-black border-r-2 text-sm w-16 text-center">#</th>
+                        <th class="p-4 font-black uppercase border-b-3 border-black border-r-2 text-sm">HỌC KỲ - NĂM HỌC</th>
+                        <th class="p-4 font-black uppercase border-b-3 border-black border-r-2 text-sm">THỜI GIAN</th>
+                        <th class="p-4 font-black uppercase border-b-3 border-black border-r-2 text-sm">TRẠNG THÁI</th>
+                        <th class="p-4 font-black uppercase border-b-3 border-black text-sm text-center">THAO TÁC</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in org.list %}
+                    <tr class="border-b-2 border-black hover:bg-primary/5 transition-all last:border-b-0">
+                        <td class="p-4 border-r-2 border-black font-mono text-center">{{ forloop.counter }}</td>
+                        <td class="p-4 border-r-2 border-black font-black uppercase">{{ s.name }} ({{ s.academic_year }})</td>
+                        <td class="p-4 border-r-2 border-black text-sm font-bold text-slate-600">
+                            {{ s.start_date|date:"d/m/Y" }} - {{ s.end_date|date:"d/m/Y" }}
+                        </td>
+                        <td class="p-4 border-r-2 border-black text-xs font-black uppercase">
+                            {% if s.dynamic_status == 'ONGOING' %}
+                            <span class="bg-primary/20 text-primary px-2 py-1 border border-primary font-black">{{ s.dynamic_status_display }}</span>
+                            {% elif s.dynamic_status == 'UPCOMING' %}
+                            <span class="bg-accent-yellow/50 text-yellow-800 px-2 py-1 border border-yellow-600 font-black">{{ s.dynamic_status_display }}</span>
+                            {% else %}
+                            <span class="bg-slate-200 text-slate-500 px-2 py-1 border border-slate-300 font-black">{{ s.dynamic_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-4 text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="{% url 'core:semester_edit' s.pk %}" class="bg-accent-yellow border-2 border-black px-3 py-1 text-xs font-black uppercase brutal-btn">SỬA</a>
+                                <form method="post" action="{% url 'core:semester_delete' s.pk %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" onclick="return confirm('Xác nhận xóa học kỳ này?')" class="bg-accent-red text-white border-2 border-black px-3 py-1 text-xs font-black uppercase brutal-btn">XÓA</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </details>
+    {% empty %}
+    <div class="bg-white border-3 border-black shadow-brutal-lg p-16 text-center text-slate-400 font-black uppercase text-xl flex flex-col items-center">
+        <span class="material-symbols-outlined text-6xl mb-4">event_busy</span>
+        CHƯA CÓ HỌC KỲ NÀO ĐƯỢC TẠO
     </div>
+    {% endfor %}
 </div>
 {% endblock %}

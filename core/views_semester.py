@@ -2,6 +2,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Q
+from django.utils import timezone
 from .models import Semester, Organization
 from .permissions import get_point_category_orgs
 
@@ -15,9 +17,43 @@ def semester_list(request):
     if request.user.role == 'STUDENT': return redirect('students:portal')
     
     orgs = get_point_category_orgs(request.user)
-    semesters = Semester.objects.filter(organization__in=orgs).select_related('organization').order_by('-start_date')
+    semesters = Semester.objects.filter(organization__in=orgs).select_related('organization')
     
-    return render(request, 'core/semester_list.html', {'semesters': semesters})
+    # Dropdown data
+    years = Semester.objects.filter(organization__in=orgs).values_list('academic_year', flat=True).distinct().order_by('-academic_year')
+    organizations = Organization.objects.filter(id__in=orgs.values_list('id', flat=True)).order_by('name')
+    
+    q = request.GET.get('q')
+    org_id = request.GET.get('org')
+    year = request.GET.get('year')
+    status = request.GET.get('status')
+    
+    if q:
+        semesters = semesters.filter(name__icontains=q)
+    if org_id:
+        semesters = semesters.filter(organization_id=org_id)
+    if year:
+        semesters = semesters.filter(academic_year=year)
+        
+    if status == 'ONGOING':
+        semesters = semesters.filter(is_current=True, end_date__gte=timezone.localdate())
+    elif status == 'CLOSED':
+        semesters = semesters.filter(Q(end_date__lt=timezone.localdate()) | Q(is_current=False, start_date__lte=timezone.localdate()))
+    elif status == 'UPCOMING':
+        semesters = semesters.filter(is_current=False, start_date__gt=timezone.localdate())
+        
+    semesters = semesters.order_by('organization__name', '-start_date')
+    
+    context = {
+        'semesters': semesters,
+        'years': years,
+        'organizations': organizations,
+        'current_q': q or '',
+        'current_org': org_id or '',
+        'current_year': year or '',
+        'current_status': status or ''
+    }
+    return render(request, 'core/semester_list.html', context)
 
 @login_required
 def semester_create(request):

@@ -116,6 +116,26 @@ class Semester(models.Model):
     def __str__(self):
         return f"{self.name} ({self.academic_year})"
 
+    @property
+    def dynamic_status(self):
+        from django.utils import timezone
+        today = timezone.localdate()
+        if self.end_date < today:
+            return 'CLOSED'
+        if not self.is_current:
+            if self.start_date > today:
+                return 'UPCOMING'
+            return 'CLOSED'
+        return 'ONGOING'
+
+    @property
+    def dynamic_status_display(self):
+        status_map = {
+            'CLOSED': 'ĐÃ ĐÓNG',
+            'UPCOMING': 'CHỜ MỞ',
+            'ONGOING': 'ĐANG DIỄN RA',
+        }
+        return status_map[self.dynamic_status]
 
 class AuditLog(models.Model):
     """
