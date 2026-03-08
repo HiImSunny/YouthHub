@@ -3,9 +3,9 @@
 
 {% block header_actions %}
 {% if user.role == 'ADMIN' or user.role == 'STAFF' %}
-<a href="{% url 'attendance:session_create' %}"
+<a href="{% url 'activities:list' %}"
     class="bg-primary text-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
-    <span class="material-symbols-outlined text-lg">add</span> TẠO PHIÊN
+    <span class="material-symbols-outlined text-lg">event</span> CHỌN H.ĐỘNG
 </a>
 {% endif %}
 {% if user.role == 'STUDENT' %}
@@ -82,9 +82,8 @@
         <span class="material-symbols-outlined text-6xl text-slate-300 mb-4">qr_code_scanner</span>
         <h3 class="text-2xl font-black uppercase text-slate-400">CHƯA CÓ PHIÊN ĐIỂM DANH</h3>
         {% if user.role != 'STUDENT' %}
-        <a href="{% url 'attendance:session_create' %}"
-            class="mt-4 inline-block bg-primary text-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn transition-all">TẠO
-            PHIÊN ĐẦU TIÊN</a>
+        <a href="{% url 'activities:list' %}"
+            class="mt-4 inline-block bg-primary text-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn transition-all">CHỌN H.ĐỘNG ĐỂ TẠO</a>
         {% endif %}
     </div>
     {% endif %}
