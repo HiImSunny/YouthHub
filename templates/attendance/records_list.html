@@ -1,24 +1,23 @@
 {% extends 'base.html' %}
 {% block title %}DUYỆT ĐIỂM DANH — {{ session.name|upper }}{% endblock %}
 
-{% block header_actions %}
-<a href="{% url 'attendance:session_detail' pk=session.pk %}"
-    class="bg-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
-    <span class="material-symbols-outlined text-lg">arrow_back</span> QUAY LẠI
-</a>
-{% endblock %}
-
 {% block content %}
 <div>
-    <nav class="flex items-center gap-2 text-sm font-bold uppercase mb-6 text-slate-500">
-        <a href="{% url 'activities:detail' pk=session.activity.pk %}" class="hover:text-primary">{{ session.activity.title|truncatechars:30 }}</a>
-        <span class="material-symbols-outlined text-base">chevron_right</span>
-        <a href="{% url 'attendance:activity_sessions' activity_pk=session.activity.pk %}" class="hover:text-primary">ĐIỂM DANH</a>
-        <span class="material-symbols-outlined text-base">chevron_right</span>
-        <a href="{% url 'attendance:session_detail' pk=session.pk %}" class="hover:text-primary">{{ session.name|upper }}</a>
-        <span class="material-symbols-outlined text-base">chevron_right</span>
-        <span class="text-slate-900">DUYỆT</span>
-    </nav>
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <nav class="flex items-center flex-wrap gap-2 text-sm font-bold uppercase text-slate-500">
+            <a href="{% url 'activities:detail' pk=session.activity.pk %}" class="hover:text-primary">{{ session.activity.title|truncatechars:30 }}</a>
+            <span class="material-symbols-outlined text-base">chevron_right</span>
+            <a href="{% url 'attendance:activity_sessions' activity_pk=session.activity.pk %}" class="hover:text-primary">ĐIỂM DANH</a>
+            <span class="material-symbols-outlined text-base">chevron_right</span>
+            <a href="{% url 'attendance:session_detail' pk=session.pk %}" class="hover:text-primary">{{ session.name|upper }}</a>
+            <span class="material-symbols-outlined text-base">chevron_right</span>
+            <span class="text-slate-900">DUYỆT</span>
+        </nav>
+        <a href="{% url 'attendance:session_detail' pk=session.pk %}"
+            class="bg-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
+            <span class="material-symbols-outlined text-lg">arrow_back</span> QUAY LẠI
+        </a>
+    </div>
 
     <div class="bg-white border-3 border-black shadow-brutal overflow-hidden">
         <div class="p-6 border-b-4 border-black bg-bg-light flex justify-between items-center">
