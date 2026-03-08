@@ -147,7 +147,7 @@
                                 {% if can_manage and budget.status == 'DRAFT' %}
                                 <td class="p-3">
                                     <form method="post"
-                                        action="{% url 'activities:budget_delete_item' activity_pk=activity.pk item_index=item._index %}"
+                                        action="{% url 'activities:budget_delete_item' activity_pk=activity.pk item_pk=item.item_index %}"
                                         class="inline">
                                         {% csrf_token %}
                                         <button type="submit" onclick="return confirm('Xóa khoản mục này?')"

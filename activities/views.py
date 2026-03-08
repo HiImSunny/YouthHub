@@ -626,7 +626,7 @@ def budget_detail(request, activity_pk):
     budget = activity.budget_info or {}
     items = budget.get('items', [])
     for i, it in enumerate(items):
-        it['_index'] = i
+        it['item_index'] = i
 
     context = {
         'activity': activity,
