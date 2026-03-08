@@ -36,7 +36,7 @@
                     placeholder="TÌM KIẾM HOẠT ĐỘNG...">
             </div>
             <select name="status"
-                class="border-3 border-black bg-white py-4 px-4 font-bold uppercase text-sm focus:ring-0">
+                class="border-3 border-black bg-white py-4 pl-4 pr-10 font-bold uppercase text-sm focus:ring-0">
                 <option value="">TẤT CẢ STATUS</option>
                 <option value="DRAFT" {% if request.GET.status == 'DRAFT' %}selected{% endif %}>DRAFT</option>
                 <option value="PENDING" {% if request.GET.status == 'PENDING' %}selected{% endif %}>PENDING</option>
@@ -44,19 +44,19 @@
                 <option value="ONGOING" {% if request.GET.status == 'ONGOING' %}selected{% endif %}>ONGOING</option>
                 <option value="DONE" {% if request.GET.status == 'DONE' %}selected{% endif %}>DONE</option>
             </select>
-            <select name="type" class="border-3 border-black bg-white py-4 px-4 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
+            <select name="type" class="border-3 border-black bg-white py-4 pl-4 pr-10 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
                 <option value="">LOẠI HĐ</option>
                 {% for code, label in type_choices %}
                 <option value="{{ code }}" {% if request.GET.type == code %}selected{% endif %}>{{ label }}</option>
                 {% endfor %}
             </select>
-            <select name="semester" class="border-3 border-black bg-white py-4 px-4 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
+            <select name="semester" class="border-3 border-black bg-white py-4 pl-4 pr-10 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
                 <option value="">HỌC KỲ</option>
                 {% for s in semesters %}
                 <option value="{{ s.id }}" {% if current_semester == s.id|stringformat:"s" %}selected{% endif %}>{{ s.name|truncatechars:20 }}</option>
                 {% endfor %}
             </select>
-            <select name="org" class="border-3 border-black bg-white py-4 px-4 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
+            <select name="org" class="border-3 border-black bg-white py-4 pl-4 pr-10 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
                 <option value="">TỔ CHỨC</option>
                 {% for o in organizations %}
                 <option value="{{ o.id }}" {% if current_org == o.id|stringformat:"s" %}selected{% endif %}>{{ o.name|truncatechars:20 }}</option>
