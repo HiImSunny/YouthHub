@@ -82,6 +82,7 @@ def activity_detail(request, pk):
         'can_approve': can_approve_activity(request.user, activity),
         # D3: Budget tab
         'budget': budget,
+        'budget_items_count': len(budget.get('items', [])) if budget else 0,
         'can_manage_budget': request.user.role != 'STUDENT' and can_edit_activity(request.user, activity),
     }
     return render(request, 'activities/detail.html', context)
@@ -631,6 +632,7 @@ def budget_detail(request, activity_pk):
         'activity': activity,
         'budget': budget,
         'budget_items': items,
+        'can_manage': _can_manage_budget(request.user, activity),
         'can_edit': _can_manage_budget(request.user, activity) and budget.get('status') in [None, 'DRAFT', 'REJECTED'],
         'can_approve': _can_approve_budget(request.user, activity) and budget.get('status') == 'PENDING',
     }

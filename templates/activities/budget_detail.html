@@ -113,10 +113,10 @@
             <div class="bg-white border-3 border-black shadow-brutal">
                 <div class="p-4 border-b-3 border-black bg-bg-light flex items-center justify-between">
                     <h2 class="font-black uppercase text-lg">DANH MỤC CHI TIÊU</h2>
-                    <span class="bg-primary text-white border-2 border-black px-3 py-1 text-xs font-black uppercase">{{ budget.items.count }} KHOẢN</span>
+                    <span class="bg-primary text-white border-2 border-black px-3 py-1 text-xs font-black uppercase">{{ budget_items|length }} KHOẢN</span>
                 </div>
 
-                {% if budget.items.all %}
+                {% if budget_items %}
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse text-sm">
                         <thead>
@@ -132,7 +132,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for item in budget.items.all %}
+                            {% for item in budget_items %}
                             <tr class="border-b-2 border-black hover:bg-primary/5 transition-all">
                                 <td class="p-3 border-r-2 border-black font-mono">{{ forloop.counter }}</td>
                                 <td class="p-3 border-r-2 border-black font-black uppercase">{{ item.name }}</td>
@@ -147,7 +147,7 @@
                                 {% if can_manage and budget.status == 'DRAFT' %}
                                 <td class="p-3">
                                     <form method="post"
-                                        action="{% url 'activities:budget_delete_item' activity_pk=activity.pk item_pk=item.pk %}"
+                                        action="{% url 'activities:budget_delete_item' activity_pk=activity.pk item_index=item._index %}"
                                         class="inline">
                                         {% csrf_token %}
                                         <button type="submit" onclick="return confirm('Xóa khoản mục này?')"
