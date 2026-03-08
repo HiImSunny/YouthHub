@@ -126,7 +126,6 @@ def statistics_view(request):
     Accessible by ADMIN and STAFF.
     """
     import datetime
-    from activities.models import Budget
     import io
     from django.http import HttpResponse
 
@@ -192,7 +191,14 @@ def statistics_view(request):
     monthly_data = [monthly_counts.get(m, 0) for m in months_list]
 
     # ── Budget stats ─────────────────────────────────────────────────────────
-    budget_total = Budget.objects.filter(status='APPROVED', activity__in=base_act_qs).aggregate(total=Sum('total_amount'))['total'] or 0
+    budget_total = 0
+    for act in base_act_qs:
+        if act.budget_info and act.budget_info.get('status') == 'APPROVED':
+            try:
+                budget_total += float(act.budget_info.get('total_amount', 0))
+            except (ValueError, TypeError):
+                pass
+
 
     # ── Attendance stats ─────────────────────────────────────────────────────
     att_qs = ActivityParticipation.objects.filter(status='VERIFIED')

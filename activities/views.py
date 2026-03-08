@@ -22,8 +22,8 @@ def activity_list(request):
 
     qs = Activity.objects.select_related('organization', 'created_by', 'semester').annotate(
         pending_attendance_count=Count(
-            'attendance_sessions__records',
-            filter=Q(attendance_sessions__records__status='PENDING')
+            'participations',
+            filter=Q(participations__status='ATTENDED')
         )
     )
 
@@ -69,11 +69,8 @@ def activity_detail(request, pk):
             student=request.user, status='REGISTERED'
         ).first()
 
-    # D3: Budget info for Staff/Admin
-    from .models import Budget
-    budget = None
-    if request.user.role != 'STUDENT':
-        budget = Budget.objects.filter(activity=activity).first()
+    # D3: Budget info
+    budget = activity.budget_info
 
     context = {
         'activity': activity,
@@ -611,210 +608,131 @@ def student_dashboard(request):
 # ─── PHASE D: Budget Management ───────────────────────────────────────────────
 
 def _can_manage_budget(user, activity):
-    """D2: Who can create/edit/submit a budget."""
-    from core.permissions import can_edit_activity
+    if user.role == 'ADMIN': return True
     return can_edit_activity(user, activity)
 
-
 def _can_approve_budget(user, activity):
-    """D2: Who can approve/reject a budget (Parent Staff or Admin)."""
-    from core.permissions import can_approve_activity
+    if user.role == 'ADMIN': return True
     return can_approve_activity(user, activity)
-
 
 @login_required
 def budget_detail(request, activity_pk):
-    """D1/D3: View budget and its line items for an activity."""
     activity = get_object_or_404(Activity, pk=activity_pk)
+    if not _can_manage_budget(request.user, activity) and not _can_approve_budget(request.user, activity):
+        messages.error(request, 'Bạn không thể xem ngân sách.')
+        return redirect('activities:detail', pk=activity.pk)
 
-    if request.user.role == 'STUDENT':
-        messages.error(request, 'Sinh viên không có quyền xem ngân sách.')
-        return redirect('activities:detail', pk=activity_pk)
-
-    from .models import Budget, BudgetItem
-    budget = Budget.objects.filter(activity=activity).prefetch_related('items').first()
+    budget = activity.budget_info or {}
+    items = budget.get('items', [])
+    for i, it in enumerate(items):
+        it['_index'] = i
 
     context = {
         'activity': activity,
         'budget': budget,
-        'can_manage': _can_manage_budget(request.user, activity),
-        'can_approve': _can_approve_budget(request.user, activity),
+        'budget_items': items,
+        'can_edit': _can_manage_budget(request.user, activity) and budget.get('status') in [None, 'DRAFT', 'REJECTED'],
+        'can_approve': _can_approve_budget(request.user, activity) and budget.get('status') == 'PENDING',
     }
     return render(request, 'activities/budget_detail.html', context)
 
-
 @login_required
 def budget_create(request, activity_pk):
-    """D1: Create a new budget for an activity (Staff only)."""
     activity = get_object_or_404(Activity, pk=activity_pk)
-
-    if not _can_manage_budget(request.user, activity):
-        messages.error(request, 'Bạn không có quyền quản lý ngân sách hoạt động này.')
-        return redirect('activities:detail', pk=activity_pk)
-
-    from .models import Budget
-    if Budget.objects.filter(activity=activity).exists():
-        messages.info(request, 'Hoạt động này đã có ngân sách.')
-        return redirect('activities:budget_detail', activity_pk=activity_pk)
-
-    if request.method == 'POST':
-        description = request.POST.get('description', '').strip()
-        total_amount = request.POST.get('total_amount', '0') or '0'
-
-        try:
-            Budget.objects.create(
-                activity=activity,
-                total_amount=float(total_amount),
-                description=description,
-                status='DRAFT',
-            )
-            messages.success(request, 'Đã tạo dự trù ngân sách!')
-            return redirect('activities:budget_detail', activity_pk=activity_pk)
-        except Exception as e:
-            messages.error(request, f'Lỗi: {e}')
-
-    return render(request, 'activities/budget_form.html', {'activity': activity})
-
+    if not _can_manage_budget(request.user, activity): return redirect('activities:detail', pk=activity.pk)
+    
+    if not activity.budget_info:
+        activity.budget_info = {'status': 'DRAFT', 'total_amount': 0.0, 'description': '', 'items': []}
+        activity.save(update_fields=['budget_info'])
+    return redirect('activities:budget_detail', activity_pk=activity.pk)
 
 @login_required
 def budget_add_item(request, activity_pk):
-    """D1: Add a line item to the budget."""
     activity = get_object_or_404(Activity, pk=activity_pk)
-
-    if not _can_manage_budget(request.user, activity):
-        messages.error(request, 'Bạn không có quyền.')
-        return redirect('activities:budget_detail', activity_pk=activity_pk)
-
-    from .models import Budget, BudgetItem
-    budget = get_object_or_404(Budget, activity=activity)
-
-    if budget.status != 'DRAFT':
-        messages.error(request, 'Chỉ có thể thêm hạng mục khi ngân sách còn ở trạng thái Nháp.')
-        return redirect('activities:budget_detail', activity_pk=activity_pk)
+    if not _can_manage_budget(request.user, activity): return redirect('activities:detail', pk=activity.pk)
 
     if request.method == 'POST':
         name = request.POST.get('name', '').strip()
-        amount = request.POST.get('amount', '0') or '0'
-        category = request.POST.get('category', '').strip()
-        note = request.POST.get('note', '').strip()
-
-        if name and amount:
-            try:
-                BudgetItem.objects.create(
-                    budget=budget,
-                    name=name,
-                    amount=float(amount),
-                    category=category,
-                    note=note,
-                )
-                # Auto-update total
-                total = sum(item.amount for item in budget.items.all())
-                budget.total_amount = total
-                budget.save(update_fields=['total_amount'])
-                messages.success(request, f'Đã thêm hạng mục "{name}".')
-            except Exception as e:
-                messages.error(request, f'Lỗi: {e}')
-        else:
-            messages.error(request, 'Tên và số tiền là bắt buộc.')
-
-    return redirect('activities:budget_detail', activity_pk=activity_pk)
-
+        amount_str = request.POST.get('amount', '0').replace(',', '')
+        try:
+            amount = float(amount_str)
+        except:
+            amount = 0.0
+            
+        if name and amount >= 0:
+            budget = activity.budget_info or {'status': 'DRAFT', 'items': [], 'total_amount': 0}
+            budget.setdefault('items', []).append({
+                'name': name,
+                'amount': amount,
+                'category': request.POST.get('category', '').strip(),
+                'note': request.POST.get('note', '').strip()
+            })
+            budget['total_amount'] = sum(float(i.get('amount', 0)) for i in budget['items'])
+            activity.budget_info = budget
+            activity.save(update_fields=['budget_info'])
+            messages.success(request, 'Đã thêm khoản chi.')
+    return redirect('activities:budget_detail', activity_pk=activity.pk)
 
 @login_required
 def budget_delete_item(request, activity_pk, item_pk):
-    """D1: Delete a line item from the budget."""
     activity = get_object_or_404(Activity, pk=activity_pk)
-
-    if not _can_manage_budget(request.user, activity):
-        messages.error(request, 'Bạn không có quyền.')
-        return redirect('activities:budget_detail', activity_pk=activity_pk)
-
-    from .models import Budget, BudgetItem
-    budget = get_object_or_404(Budget, activity=activity)
-
-    if budget.status != 'DRAFT':
-        messages.error(request, 'Không thể xóa hạng mục khi ngân sách đã gửi duyệt.')
-        return redirect('activities:budget_detail', activity_pk=activity_pk)
+    if not _can_manage_budget(request.user, activity): return redirect('activities:detail', pk=activity.pk)
 
     if request.method == 'POST':
-        item = BudgetItem.objects.filter(pk=item_pk, budget=budget).first()
-        if item:
-            item.delete()
-            # Recalculate total
-            total = sum(i.amount for i in budget.items.all())
-            budget.total_amount = total
-            budget.save(update_fields=['total_amount'])
-            messages.success(request, 'Đã xóa hạng mục.')
-
-    return redirect('activities:budget_detail', activity_pk=activity_pk)
-
+        budget = activity.budget_info
+        if budget and 'items' in budget:
+            try:
+                budget['items'].pop(item_pk)
+                budget['total_amount'] = sum(float(i.get('amount', 0)) for i in budget['items'])
+                activity.budget_info = budget
+                activity.save(update_fields=['budget_info'])
+                messages.success(request, 'Đã xóa khoản chi.')
+            except IndexError:
+                pass
+    return redirect('activities:budget_detail', activity_pk=activity.pk)
 
 @login_required
 def budget_submit(request, activity_pk):
-    """D2: Staff submits budget for approval (DRAFT → PENDING)."""
     activity = get_object_or_404(Activity, pk=activity_pk)
-
-    if not _can_manage_budget(request.user, activity):
-        messages.error(request, 'Bạn không có quyền.')
-        return redirect('activities:budget_detail', activity_pk=activity_pk)
-
-    from .models import Budget
-    budget = get_object_or_404(Budget, activity=activity)
+    if not _can_manage_budget(request.user, activity): return redirect('activities:detail', pk=activity.pk)
 
     if request.method == 'POST':
-        if budget.status == 'DRAFT':
-            if not budget.items.exists():
-                messages.error(request, 'Ngân sách phải có ít nhất 1 hạng mục trước khi gửi duyệt.')
-            else:
-                budget.status = 'PENDING'
-                budget.save(update_fields=['status'])
-                messages.success(request, 'Đã gửi ngân sách để phê duyệt!')
-        else:
-            messages.error(request, 'Ngân sách không ở trạng thái Nháp.')
-
-    return redirect('activities:budget_detail', activity_pk=activity_pk)
-
+        budget = activity.budget_info
+        if budget:
+            budget['status'] = 'PENDING'
+            activity.budget_info = budget
+            activity.save(update_fields=['budget_info'])
+            messages.success(request, 'Đã trình duyệt ngân sách.')
+    return redirect('activities:budget_detail', activity_pk=activity.pk)
 
 @login_required
 def budget_approve(request, activity_pk):
-    """D2: Parent Staff or Admin approves a budget (PENDING → APPROVED)."""
     activity = get_object_or_404(Activity, pk=activity_pk)
+    if not _can_approve_budget(request.user, activity): return redirect('activities:budget_detail', activity_pk=activity.pk)
 
-    if not _can_approve_budget(request.user, activity):
-        messages.error(request, 'Bạn không có quyền phê duyệt ngân sách này.')
-        return redirect('activities:budget_detail', activity_pk=activity_pk)
-
-    from .models import Budget
-    budget = get_object_or_404(Budget, activity=activity)
-
-    if request.method == 'POST' and budget.status == 'PENDING':
-        budget.status = 'APPROVED'
-        budget.approved_by = request.user
-        budget.save(update_fields=['status', 'approved_by'])
-        messages.success(request, 'Da phe duyet ngan sach!')
-
-    return redirect('activities:budget_detail', activity_pk=activity_pk)
-
+    if request.method == 'POST':
+        budget = activity.budget_info
+        if budget:
+            budget['status'] = 'APPROVED'
+            budget['approved_by'] = request.user.id
+            activity.budget_info = budget
+            activity.save(update_fields=['budget_info'])
+            messages.success(request, 'Đã duyệt ngân sách.')
+    return redirect('activities:budget_detail', activity_pk=activity.pk)
 
 @login_required
 def budget_reject(request, activity_pk):
-    """D2: Parent Staff or Admin rejects a budget (PENDING → DRAFT)."""
     activity = get_object_or_404(Activity, pk=activity_pk)
+    if not _can_approve_budget(request.user, activity): return redirect('activities:budget_detail', activity_pk=activity.pk)
 
-    if not _can_approve_budget(request.user, activity):
-        messages.error(request, 'Ban khong co quyen tu choi ngan sach nay.')
-        return redirect('activities:budget_detail', activity_pk=activity_pk)
-
-    from .models import Budget
-    budget = get_object_or_404(Budget, activity=activity)
-
-    if request.method == 'POST' and budget.status == 'PENDING':
-        budget.status = 'DRAFT'
-        budget.save(update_fields=['status'])
-        messages.success(request, 'Da tu choi ngan sach. Ngan sach quay ve trang thai Nhap.')
-
-    return redirect('activities:budget_detail', activity_pk=activity_pk)
-
+    if request.method == 'POST':
+        budget = activity.budget_info
+        if budget:
+            budget['status'] = 'REJECTED'
+            activity.budget_info = budget
+            activity.save(update_fields=['budget_info'])
+            messages.warning(request, 'Đã từ chối ngân sách.')
+    return redirect('activities:budget_detail', activity_pk=activity.pk)
 
 # ─── POINT CATEGORY CRUD ────────────────────────────────────────────────────────
 
