@@ -581,11 +581,12 @@ def student_dashboard(request):
     - Attendance history table with activity, point category, status
     - Summary by point category
     """
-    from attendance.models import AttendanceRecord
+    from activities.models import ActivityParticipation
 
     # All attendance records for this student
-    records = AttendanceRecord.objects.filter(
-        student=request.user
+    records = ActivityParticipation.objects.filter(
+        student=request.user,
+        checkin_time__isnull=False
     ).select_related(
         'attendance_session',
         'attendance_session__activity',
@@ -596,8 +597,8 @@ def student_dashboard(request):
     # Aggregate stats
     total_checkins = records.count()
     verified_count = records.filter(status='VERIFIED').count()
-    pending_count = records.filter(status='PENDING').count()
-    rejected_count = records.filter(status='REJECTED').count()
+    pending_count = records.filter(status='ATTENDED').count()
+    rejected_count = records.filter(status__in=['ABSENT', 'CANCELED', 'BANNED']).count()
 
     # Group by point category for summary
     from django.db.models import Count
