@@ -262,6 +262,14 @@ def checkin_view(request, token):
             attendance_session=session,
             student=request.user,
         ).first()
+    else:
+        # Check guest session cookie
+        guest_record_id = request.session.get(f'guest_record_{token}')
+        if guest_record_id:
+            existing = ActivityParticipation.objects.filter(
+                id=guest_record_id,
+                attendance_session=session
+            ).first()
 
     return render(request, 'attendance/checkin.html', {
         'session': session,
@@ -311,32 +319,44 @@ def checkin_submit(request, token):
                 messages.error(request, 'Vui lòng nhập đầy đủ MSSV và Tên.')
                 return redirect('attendance:checkin', token=token)
 
-            # Prevent duplicate for guests based on student_code
+            # Prevent duplicate for guests based on student_code AND student_name
             if ActivityParticipation.objects.filter(
-                attendance_session=session, entered_student_code=student_code
+                attendance_session=session,
+                entered_student_code__iexact=student_code,
+                entered_student_name__iexact=student_name
             ).exists():
-                messages.info(request, 'MSSV này đã được điểm danh trong phiên này rồi.')
+                messages.info(request, 'Bạn đã điểm danh trong phiên này với tên và MSSV này rồi.')
                 return redirect('attendance:checkin', token=token)
 
-            # Attempt to link to an existing user if they have the same student_code
-            from django.contrib.auth import get_user_model
-            User = get_user_model()
-            student_instance = User.objects.filter(
-                Q(student_profile__student_code=student_code) | Q(username=student_code)
-            ).first()
+            # Do not link student_instance right now to avoid UniqueConstraint errors
+            # if multiple guests use the same student_code. Linking will happen on verify.
+            student_instance = None
 
-        # Determine status
+        # Determine status and validate photo first
         needs_photo = session.requires_photo
+        if needs_photo and 'photo' not in request.FILES:
+            messages.error(request, 'Vui lòng cung cấp ảnh minh chứng.')
+            return redirect('attendance:checkin', token=token)
+
         record_status = 'ATTENDED' if needs_photo else 'VERIFIED'
 
-        record, _ = ActivityParticipation.objects.get_or_create(
-            activity=session.activity,
-            student=student_instance,
-            defaults={
-                'entered_student_code': student_code,
-                'entered_student_name': student_name,
-            }
-        )
+        if student_instance:
+            record, _ = ActivityParticipation.objects.get_or_create(
+                activity=session.activity,
+                student=student_instance,
+                defaults={
+                    'entered_student_code': student_code,
+                    'entered_student_name': student_name,
+                }
+            )
+        else:
+            record = ActivityParticipation.objects.create(
+                activity=session.activity,
+                student=None,
+                entered_student_code=student_code,
+                entered_student_name=student_name,
+            )
+            
         record.attendance_session = session
         record.status = record_status
         record.checkin_time = now
@@ -351,6 +371,10 @@ def checkin_submit(request, token):
             record.photo_path = path
 
         record.save()
+
+        # Save session for guests
+        if not request.user.is_authenticated:
+            request.session[f'guest_record_{session.qr_token}'] = record.pk
 
         if not needs_photo:
             if student_instance:
@@ -367,6 +391,57 @@ def checkin_submit(request, token):
     return redirect('attendance:checkin', token=token)
 
 
+def checkin_guest_reset(request, token):
+    """Reset guest checkin status by deleting the record if it is still ATTENDED."""
+    if request.method == 'POST':
+        guest_record_id = request.session.get(f'guest_record_{token}')
+        if guest_record_id:
+            record = ActivityParticipation.objects.filter(id=guest_record_id).first()
+            if record and record.status == 'ATTENDED':
+                record.delete()
+                
+            if f'guest_record_{token}' in request.session:
+                del request.session[f'guest_record_{token}']
+                
+        messages.success(request, 'Đã hủy thông tin điểm danh cũ, bạn có thể nhập lại.')
+    return redirect('attendance:checkin', token=token)
+
+
+def checkin_reupload_photo(request, token):
+    """Reupload photo for an existing ATTENDED or REJECTED record."""
+    if request.method == 'POST' and 'photo' in request.FILES:
+        session = get_object_or_404(AttendanceSession, qr_token=token)
+        existing_record = None
+        
+        if request.user.is_authenticated:
+            existing_record = ActivityParticipation.objects.filter(
+                attendance_session=session,
+                student=request.user,
+            ).first()
+        else:
+            guest_record_id = request.session.get(f'guest_record_{token}')
+            if guest_record_id:
+                existing_record = ActivityParticipation.objects.filter(
+                    id=guest_record_id,
+                    attendance_session=session
+                ).first()
+
+        if existing_record and existing_record.status in ['ATTENDED', 'ABSENT']:
+            photo = request.FILES['photo']
+            from django.core.files.storage import default_storage
+            
+            if existing_record.photo_path and default_storage.exists(existing_record.photo_path):
+                default_storage.delete(existing_record.photo_path)
+            
+            path = default_storage.save(f'checkin/{session.pk}/{photo.name}', photo)
+            existing_record.photo_path = path
+            existing_record.status = 'ATTENDED'  # Move back to pending
+            existing_record.save()
+            messages.success(request, 'Đã nộp ảnh minh chứng mới thành công! Chờ cán bộ xác nhận.')
+
+    return redirect('attendance:checkin', token=token)
+
+
 # ────────────────────────────────────────────────────────────
 # RECORDS MANAGEMENT (Staff side)
 # ────────────────────────────────────────────────────────────
@@ -378,9 +453,17 @@ def records_list(request, session_pk):
         messages.error(request, 'Bạn không có quyền xem danh sách này.')
         return redirect('activities:list')
 
-    records = session.participations.select_related('student', 'verified_by').order_by('status', '-checkin_time')
+    records = session.participations.select_related('student', 'verified_by').order_by('status', 'entered_student_code', '-checkin_time')
     
     pending_count = sum(1 for r in records if r.status == 'ATTENDED')
+    
+    # Identify duplicates 
+    from collections import Counter
+    pending_mssvs = [r.entered_student_code.upper() for r in records if r.status == 'ATTENDED' and r.entered_student_code]
+    duplicate_mssvs = {mssv for mssv, count in Counter(pending_mssvs).items() if count > 1}
+    
+    for r in records:
+        r.is_duplicate_conflict = (r.status == 'ATTENDED' and r.entered_student_code and r.entered_student_code.upper() in duplicate_mssvs)
     
     return render(request, 'attendance/records_list.html', {
         'session': session,
@@ -414,16 +497,37 @@ def record_approve(request, pk):
         return redirect('activities:list')
 
     if request.method == 'POST' and record.status == 'ATTENDED':
+        # Try to link student if null
+        if not record.student and record.entered_student_code:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            student_instance = User.objects.filter(
+                Q(student_profile__student_code=record.entered_student_code) | Q(username=record.entered_student_code)
+            ).first()
+            if student_instance:
+                if not ActivityParticipation.objects.filter(activity=record.activity, student=student_instance).exclude(pk=record.pk).exists():
+                    record.student = student_instance
+
         record.status = 'VERIFIED'
         record.verified_by = request.user
         record.save()
 
+        # Reject duplicates
+        if record.entered_student_code:
+            ActivityParticipation.objects.filter(
+                attendance_session=record.attendance_session,
+                entered_student_code__iexact=record.entered_student_code,
+                status='ATTENDED'
+            ).exclude(pk=record.pk).update(status='ABSENT')
+
         if record.student:
             awarded = _check_and_auto_award(record.student, record.activity, awarded_by=request.user)
             if awarded:
-                messages.success(request, f'Đã duyệt điểm danh cho {record.student.full_name} và cấp điểm rèn luyện do đã đủ số phiên.')
+                messages.success(request, f'Đã duyệt điểm danh cho {record.student.full_name} và cấp điểm rèn luyện.')
             else:
                 messages.success(request, f'Đã duyệt điểm danh cho {record.student.full_name}.')
+        else:
+            messages.success(request, 'Đã duyệt điểm danh cho khách.')
 
     return redirect('attendance:records_list', session_pk=record.attendance_session_id or record.attendance_session.pk)
 

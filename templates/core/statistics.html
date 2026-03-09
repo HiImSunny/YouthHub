@@ -15,8 +15,8 @@
         </div>
         
         <!-- Action Buttons & Filters -->
-        <div class="flex flex-wrap items-end gap-3">
-            <form method="GET" action="" id="statsFilterForm" class="flex flex-col md:flex-row items-end gap-3 w-full">
+        <div class="flex flex-wrap items-end gap-3 md:justify-end">
+            <form method="GET" action="" id="statsFilterForm" class="flex flex-col md:flex-row items-end gap-3">
                 <div>
                     <label class="block text-xs font-black uppercase mb-1">TỔ CHỨC / ĐƠN VỊ</label>
                     <select name="organization" class="border-3 border-black p-2 font-bold focus:outline-none focus:ring-0 shadow-brutal text-sm min-w-[200px]" onchange="document.getElementById('statsFilterForm').submit()">
@@ -41,14 +41,16 @@
                 </div>
             </form>
             
-            <a href="?export=excel{% if current_semester_id %}&semester={{ current_semester_id }}{% endif %}{% if current_org %}&organization={{ current_org }}{% endif %}" class="bg-accent-teal text-white border-3 border-black p-2 font-bold shadow-brutal hover:translate-y-1 hover:shadow-none transition-all flex items-center gap-2 text-sm">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                EXCEL
-            </a>
-            <button onclick="window.print()" class="bg-primary text-white border-3 border-black p-2 font-bold shadow-brutal hover:translate-y-1 hover:shadow-none transition-all flex items-center gap-2 text-sm">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                BẢN IN (PDF)
-            </button>
+            <div class="flex flex-wrap items-end gap-3">
+                <a href="?export=excel{% if current_semester_id %}&semester={{ current_semester_id }}{% endif %}{% if current_org %}&organization={{ current_org }}{% endif %}" class="bg-accent-teal text-white border-3 border-black p-2 font-bold shadow-brutal hover:translate-y-1 hover:shadow-none transition-all flex items-center gap-2 text-sm whitespace-nowrap">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    EXCEL
+                </a>
+                <button onclick="window.print()" class="bg-primary text-white border-3 border-black p-2 font-bold shadow-brutal hover:translate-y-1 hover:shadow-none transition-all flex items-center gap-2 text-sm whitespace-nowrap">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    BẢN IN (PDF)
+                </button>
+            </div>
         </div>
     </div>
 

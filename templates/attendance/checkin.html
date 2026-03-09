@@ -140,22 +140,50 @@
     {% if existing_record %}
         <!-- Already checked in -->
         <div class="bg-accent-teal border-4 border-black p-6 shadow-brutal text-center">
+            {% if not user.is_authenticated %}
+            <div class="mb-4 bg-white border-4 border-black p-4 text-left shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                 <p class="font-bold text-xs uppercase text-slate-500 mb-1">ĐIỂM DANH TƯ CÁCH KHÁCH:</p>
+                 <p class="font-black text-lg">{{ existing_record.entered_student_name }}</p>
+                 <p class="font-mono text-sm border-b-2 border-black pb-2 mb-2">{{ existing_record.entered_student_code }}</p>
+                 {% if existing_record.status == 'ATTENDED' %}
+                 <form method="post" action="{% url 'attendance:checkin_guest_reset' token=session.qr_token %}" class="mt-2 text-right">
+                      {% csrf_token %}
+                      <button type="submit" onclick="return confirm('Bạn có chắc muốn làm lại từ đầu không? Tác vụ này sẽ xoá bản xác nhận điểm danh hiện tại.')" class="text-[11px] font-black uppercase text-accent-red underline hover:text-red-800">Nhập sai thông tin? Làm lại từ đầu</button>
+                 </form>
+                 {% endif %}
+            </div>
+            {% endif %}
+
             <span class="material-symbols-outlined text-[60px] text-black mix-blend-overlay">check_circle</span>
             <h2 class="text-2xl font-black text-black uppercase mt-2 mb-2">ĐÃ ĐIỂM DANH!</h2>
             <p class="text-sm font-bold mb-4 bg-white border-2 border-black p-2 inline-block shadow-brutal-sm">Lúc {{ existing_record.checkin_time|date:"H:i d/m/Y" }}</p>
             
             <div class="px-4 py-2 border-4 border-black font-black text-sm uppercase flex items-center justify-center gap-2
             {% if existing_record.status == 'VERIFIED' %}bg-green-300 text-black
-            {% elif existing_record.status == 'PENDING' %}bg-accent-yellow text-black
+            {% elif existing_record.status == 'ATTENDED' %}bg-accent-yellow text-black
             {% else %}bg-accent-red text-white{% endif %}">
                 {% if existing_record.status == 'VERIFIED' %}
                 <span class="material-symbols-outlined text-lg">verified</span> ĐÃ XÁC NHẬN
-                {% elif existing_record.status == 'PENDING' %}
+                {% elif existing_record.status == 'ATTENDED' %}
                 <span class="material-symbols-outlined text-lg">pending</span> ĐANG CHỜ DUYỆT
                 {% else %}
                 <span class="material-symbols-outlined text-lg">cancel</span> BỊ TỪ CHỐI
                 {% endif %}
             </div>
+
+            {% if session.requires_photo and existing_record.status in 'ATTENDED,ABSENT' %}
+            <div class="mt-6 bg-white border-4 border-black p-4 text-left shadow-brutal-sm">
+                <p class="font-black uppercase text-sm mb-2 text-accent-red">ẢNH BỊ MỜ, HOẶC CHỤP SAI?</p>
+                <form method="post" action="{% url 'attendance:checkin_reupload_photo' token=session.qr_token %}" enctype="multipart/form-data" class="flex flex-col gap-3">
+                    {% csrf_token %}
+                    <input type="file" name="photo" accept="image/*" capture="environment" required class="border-2 border-black p-2 bg-slate-100 font-bold text-[11px] w-full" />
+                    <button type="submit" class="bg-primary text-black font-black uppercase border-2 border-black py-2 shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:translate-y-[2px] hover:translate-x-[2px] transition-all flex items-center justify-center gap-1">
+                        <span class="material-symbols-outlined text-base">upload_file</span> NỘP LẠI ẢNH MỚI
+                    </button>
+                    <p class="text-[10px] font-bold text-slate-500 uppercase mt-1">Hệ thống sẽ ghi đè ảnh cũ và chuyển về trạng thái đang chờ xét duyệt.</p>
+                </form>
+            </div>
+            {% endif %}
             
             <div class="mt-6 text-left">
                 <a href="{% url 'students:dashboard' %}" class="block bg-black text-white font-black uppercase text-center border-4 border-black py-3 shadow-brutal brutal-btn">
@@ -217,7 +245,7 @@
             </div>
             {% endif %}
 
-            <form method="post" action="{% url 'attendance:checkin_submit' token=session.qr_token %}" enctype="multipart/form-data" class="space-y-6">
+            <form method="post" action="{% url 'attendance:checkin_submit' token=session.qr_token %}" enctype="multipart/form-data" class="space-y-6" onsubmit="return validateForm()">
                 {% csrf_token %}
 
                 {% if not user.is_authenticated %}
@@ -243,20 +271,29 @@
                         ẢNH MINH CHỨNG <span class="text-accent-red text-xl align-top">*</span>
                     </label>
                     <p class="text-xs font-bold text-slate-500 uppercase mb-3 border-l-2 border-black pl-2">Chụp ảnh có mặt bạn tại sự kiện</p>
-                    <div id="photo_dropzone" class="border-4 border-dashed border-black bg-bg-light p-6 text-center hover:bg-slate-200 transition-colors cursor-pointer group min-h-[180px] w-full flex flex-col items-center justify-center relative overflow-hidden" onclick="document.getElementById('photo_input').click()">
-                        <input type="file" name="photo" accept="image/*" capture="environment" id="photo_input" class="hidden" onchange="previewPhoto(this)" required>
-                        
-                        <!-- Initial State -->
-                        <div id="photo_placeholder" class="flex flex-col items-center justify-center z-10 p-4 transition-all">
-                            <span class="material-symbols-outlined text-[50px] text-slate-400 group-hover:text-black mb-2 transition-colors">add_a_photo</span>
-                            <p class="text-sm md:text-base font-black uppercase text-black">BẤM ĐỂ CHỤP ẢNH</p>
-                            <p class="text-xs text-slate-500 font-bold mt-1">Hoặc chọn từ thư viện</p>
+                    <div id="photo_container" class="relative">
+                        <div id="photo_dropzone" class="border-4 border-dashed border-black bg-bg-light p-6 text-center hover:bg-slate-200 transition-colors cursor-pointer group min-h-[180px] w-full flex flex-col items-center justify-center relative overflow-hidden" onclick="document.getElementById('photo_input').click()">
+                            <input type="file" name="photo" accept="image/*" capture="environment" id="photo_input" class="hidden" onchange="previewPhoto(this)">
+                            
+                            <!-- Initial State -->
+                            <div id="photo_placeholder" class="flex flex-col items-center justify-center z-10 p-4 transition-all">
+                                <span class="material-symbols-outlined text-[50px] text-slate-400 group-hover:text-black mb-2 transition-colors">add_a_photo</span>
+                                <p class="text-sm md:text-base font-black uppercase text-black">BẤM ĐỂ CHỤP ẢNH</p>
+                                <p class="text-xs text-slate-500 font-bold mt-1">Hoặc chọn từ thư viện</p>
+                            </div>
                         </div>
 
-                        <!-- Preview Image -->
-                        <img id="photo_preview" src="#" alt="Preview" class="hidden absolute inset-0 w-full h-full object-cover z-0 opacity-50 group-hover:opacity-30 transition-opacity mix-blend-multiply">
-                        <div id="photo_preview_overlay" class="hidden absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none">
-                            <span class="bg-black text-white px-3 py-1 border-2 border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_rgba(255,255,255,1)]">ĐỔI ẢNH KHÁC</span>
+                        <!-- Preview Area -->
+                        <div id="photo_preview_container" class="hidden flex flex-col items-center gap-3">
+                            <div class="w-full h-48 border-4 border-black cursor-pointer overflow-hidden relative group" onclick="toggleZoom()">
+                                <img id="photo_preview" src="#" alt="Preview" class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <span class="material-symbols-outlined text-white text-5xl">zoom_in</span>
+                                </div>
+                            </div>
+                            <button type="button" onclick="document.getElementById('photo_input').click()" class="bg-black text-white px-6 py-3 border-4 border-black font-black uppercase text-sm shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[4px] hover:translate-x-[4px] hover:shadow-none transition-all flex items-center gap-2">
+                                <span class="material-symbols-outlined text-base">cameraswitch</span> CHỌN LẠI ẢNH KHÁC
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -272,6 +309,18 @@
 </div>
 
 <script>
+    // Validate form before submitting
+    function validateForm() {
+        {% if session.requires_photo %}
+        const photoInput = document.getElementById('photo_input');
+        if (!photoInput.files || photoInput.files.length === 0) {
+            alert("VUI LÒNG CHỤP HOẶC CHỌN ẢNH MINH CHỨNG TRƯỚC KHI XÁC NHẬN!");
+            return false;
+        }
+        {% endif %}
+        return true;
+    }
+
     // Preview photo
     function previewPhoto(input) {
         if (input.files && input.files[0]) {
@@ -279,17 +328,46 @@
             reader.onload = e => {
                 const preview = document.getElementById('photo_preview');
                 preview.src = e.target.result;
-                preview.classList.remove('hidden');
                 
-                // Hide placeholder, show overlay
-                document.getElementById('photo_placeholder').classList.add('hidden', 'opacity-0');
-                document.getElementById('photo_preview_overlay').classList.remove('hidden');
-                
-                const dropzone = document.getElementById('photo_dropzone');
-                dropzone.classList.remove('border-dashed');
-                dropzone.classList.add('border-solid', 'bg-slate-100');
+                // Hide dropzone, show preview area
+                document.getElementById('photo_dropzone').classList.add('hidden');
+                document.getElementById('photo_preview_container').classList.remove('hidden');
             };
             reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // Zoom modal logic
+    let isZoomed = false;
+    function toggleZoom() {
+        const preview = document.getElementById('photo_preview');
+        if (!isZoomed) {
+            // Create fullscreen overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'zoom_overlay';
+            overlay.className = 'fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 cursor-pointer';
+            overlay.onclick = toggleZoom;
+            
+            const img = document.createElement('img');
+            img.src = preview.src;
+            img.className = 'max-w-full max-h-full object-contain border-4 border-black bg-black shadow-[4px_4px_0_0_white] pointer-events-none';
+            
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'material-symbols-outlined absolute top-4 right-4 text-white hover:text-accent-red text-5xl font-black bg-black border-2 border-white rounded-full';
+            closeBtn.textContent = 'close';
+            
+            overlay.appendChild(img);
+            overlay.appendChild(closeBtn);
+            document.body.appendChild(overlay);
+            document.body.style.overflow = 'hidden';
+            isZoomed = true;
+        } else {
+            const overlay = document.getElementById('zoom_overlay');
+            if (overlay) {
+                overlay.remove();
+            }
+            document.body.style.overflow = 'auto';
+            isZoomed = false;
         }
     }
 

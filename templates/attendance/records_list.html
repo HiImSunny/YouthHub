@@ -48,7 +48,7 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-6 bg-slate-100">
             {% for rec in records %}
-            {% if rec.status == 'PENDING' %}
+            {% if rec.status == 'ATTENDED' %}
             <div class="bg-white border-4 border-black shadow-brutal flex flex-col hover:-translate-y-1 transition-transform">
                 {% if rec.photo_path %}
                 <a href="/media/{{ rec.photo_path }}" target="_blank" class="block h-48 border-b-4 border-black relative group overflow-hidden bg-slate-200">
@@ -63,7 +63,12 @@
                     <span class="font-bold text-sm uppercase">KHÔNG CÓ ẢNH</span>
                 </div>
                 {% endif %}
-                <div class="p-4 flex-grow">
+                <div class="p-4 flex-grow relative">
+                    {% if rec.is_duplicate_conflict %}
+                    <div class="absolute -top-3 -right-3 bg-accent-red text-white border-2 border-black px-2 py-1 text-[10px] font-black uppercase flex items-center gap-1 shadow-brutal-sm animate-pulse z-10" title="Trùng lặp MSSV với bản ghi khác trong phiên này">
+                        <span class="material-symbols-outlined text-[10px]">warning</span> TRÙNG LẶP
+                    </div>
+                    {% endif %}
                     <p class="font-black text-lg uppercase leading-tight mb-1">{{ rec.student.full_name|default:rec.entered_student_name|default:"KHÁCH" }}</p>
                     <p class="text-sm font-mono text-slate-600 mb-2">{{ rec.entered_student_code }}</p>
                     <div class="flex items-center gap-1 text-xs font-bold text-slate-500">
@@ -112,7 +117,12 @@
                     <tr class="border-b-2 border-black hover:bg-primary/5">
                         <td class="p-4 border-r-2 border-black text-slate-400 font-mono">{{ forloop.counter }}</td>
                         <td class="p-4 border-r-2 border-black font-black uppercase">{{ rec.student.full_name|default:rec.entered_student_name|default:"KHÁCH" }}</td>
-                        <td class="p-4 border-r-2 border-black font-mono text-sm">{{ rec.entered_student_code }}</td>
+                        <td class="p-4 border-r-2 border-black font-mono text-sm relative group">
+                            {{ rec.entered_student_code }}
+                            {% if rec.is_duplicate_conflict %}
+                            <span class="material-symbols-outlined text-accent-red text-base align-middle ml-1 cursor-help" title="Cảnh báo: Phát hiện nhiều bản ghi cùng MSSV chờ duyệt">warning</span>
+                            {% endif %}
+                        </td>
                         <td class="p-4 border-r-2 border-black text-sm font-bold">{{ rec.checkin_time|date:"H:i d/m" }}</td>
                         <td class="p-4 border-r-2 border-black">
                             {% if rec.photo_path %}
@@ -125,13 +135,13 @@
                         <td class="p-4 border-r-2 border-black">
                             <span class="px-2 py-1 border-3 border-black text-xs font-black uppercase
                 {% if rec.status == 'VERIFIED' %}bg-accent-teal/20 text-accent-teal
-                {% elif rec.status == 'PENDING' %}bg-primary/20 text-primary
+                {% elif rec.status == 'ATTENDED' %}bg-primary/20 text-primary
                 {% else %}bg-accent-red/20 text-accent-red{% endif %}">
                                 {{ rec.get_status_display }}
                             </span>
                         </td>
                         <td class="p-4">
-                            {% if rec.status == 'PENDING' %}
+                            {% if rec.status == 'ATTENDED' %}
                             <div class="flex gap-2">
                                 <form method="post" action="{% url 'attendance:record_approve' pk=rec.pk %}">
                                     {% csrf_token %}

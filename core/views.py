@@ -141,12 +141,18 @@ def statistics_view(request):
     from .permissions import get_point_category_orgs, group_orgs_by_root
     root_orgs = get_point_category_orgs(request.user)
     
-    base_act_qs = Activity.objects.all()
+    if request.user.role != 'ADMIN':
+        from .permissions import get_usable_point_category_orgs
+        visible_orgs = get_usable_point_category_orgs(request.user)
+        base_act_qs = Activity.objects.filter(organization__in=visible_orgs)
+    else:
+        base_act_qs = Activity.objects.all()
+
     if org_id:
         base_act_qs = base_act_qs.filter(organization_id=org_id)
         # Verify the org is within allowed root_orgs or admin
         if not (request.user.role == 'ADMIN' or int(org_id) in [o.id for o in root_orgs]):
-            # Instead of failing, we just let the permissions filter apply later or filter allowed only
+            # Optional: handle unauthorized org access
             pass
             
     if semester_id:
@@ -320,9 +326,12 @@ def audit_log_view(request):
     if user_q:
         logs = logs.filter(user__full_name__icontains=user_q)
 
+    type_choices = AuditLog.objects.exclude(object_type__isnull=True).exclude(object_type='').values_list('object_type', flat=True).distinct().order_by('object_type')
+
     context = {
         'logs': logs[:200],  # Limit to last 200
         'action_choices': AuditLog.Action.choices,
+        'type_choices': type_choices,
         'current_action': action_filter or '',
         'current_type': obj_type or '',
         'current_user': user_q or '',
@@ -483,17 +492,17 @@ def org_staff_view(request, org_pk):
                 messages.error(request, 'Không tìm thấy user hoặc user không phải Staff.')
 
         elif action == 'add_student':
-            student_code = request.POST.get('student_code', '').strip()
-            if not student_code:
-                messages.error(request, 'Vui lòng nhập MSSV.')
+            student_email = request.POST.get('student_email', '').strip()
+            if not student_email:
+                messages.error(request, 'Vui lòng nhập Email.')
             else:
-                profile = StudentProfile.objects.filter(student_code__iexact=student_code).first()
-                if not profile:
-                    messages.error(request, f'Không tìm thấy sinh viên có MSSV "{student_code}".')
+                target_user = User.objects.filter(email__iexact=student_email).first()
+                if not target_user:
+                    messages.error(request, f'Không tìm thấy thành viên có Email "{student_email}".')
                 else:
                     member, created = OrganizationMember.objects.get_or_create(
                         organization=org,
-                        user=profile.user,
+                        user=target_user,
                         defaults={
                             'position': 'Thanh vien',
                             'is_officer': False,
@@ -501,9 +510,9 @@ def org_staff_view(request, org_pk):
                         }
                     )
                     if created:
-                        messages.success(request, f'Đã thêm sinh viên "{profile.user.full_name}" vào tổ chức.')
+                        messages.success(request, f'Đã thêm "{target_user.full_name}" vào tổ chức.')
                     else:
-                        messages.info(request, f'Sinh viên "{profile.user.full_name}" đã là thành viên rồi.')
+                        messages.info(request, f'"{target_user.full_name}" đã là thành viên của tổ chức rồi.')
 
         elif action == 'remove_officer':
             member_id = request.POST.get('member_id')

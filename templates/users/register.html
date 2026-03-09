@@ -33,13 +33,13 @@
                     <label class="block text-xs font-black uppercase mb-1 tracking-wide">USERNAME *</label>
                     <input type="text" name="username" required value="{{ form_data.username|default:'' }}"
                         class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
-                        placeholder="vd: sv001">
+                        placeholder="vd: sinhvien">
                 </div>
                 <div>
                     <label class="block text-xs font-black uppercase mb-1 tracking-wide">EMAIL *</label>
                     <input type="email" name="email" required value="{{ form_data.email|default:'' }}"
                         class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
-                        placeholder="vd: sv001@student.edu.vn">
+                        placeholder="vd: sinhvien@gmail.com">
                 </div>
             </div>
 
@@ -51,19 +51,16 @@
                     placeholder="Nguyễn Văn A">
             </div>
 
-            <!-- Row 3: Student code + Faculty -->
-                <div class="md:col-span-2">
-                    <label class="block text-xs font-black uppercase mb-1 tracking-wide">MÃ SINH VIÊN *</label>
-                    <input type="text" name="student_code" required value="{{ form_data.student_code|default:'' }}"
-                        class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
-                        placeholder="vd: NCT2100001">
-                </div>
+            <!-- Row 3: Student code -->
+            <div class="md:col-span-2">
+                <label class="block text-xs font-black uppercase mb-1 tracking-wide">MÃ SINH VIÊN *</label>
+                <input type="text" name="student_code" required value="{{ form_data.student_code|default:'' }}"
+                    class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
+                    placeholder="vd: 223131">
             </div>
 
-
-
             <!-- Separator -->
-            <div class="border-t-3 border-black my-2"></div>
+            <div class="border-t-3 border-black my-4"></div>
 
             <!-- Row 5: Passwords -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -82,7 +79,7 @@
             </div>
 
             <button type="submit"
-                class="w-full bg-primary text-white border-3 border-black p-4 text-lg font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2">
+                class="w-full bg-primary text-white border-3 border-black p-4 text-lg font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2 mt-4">
                 <span class="material-symbols-outlined">person_add</span>
                 ĐĂNG KÝ TÀI KHOẢN
             </button>
@@ -95,6 +92,9 @@
             </a>
             <p class="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Tài khoản mặc định sẽ có quyền SINH VIÊN
+            </p>
+            <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500 mt-2">
+                Nếu bạn là cán bộ quản lý hãy liên hệ với admin hoặc cán bộ đã có tài khoản để được phân quyền
             </p>
         </div>
     </div>

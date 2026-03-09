@@ -11,7 +11,7 @@ from core.permissions import (
     can_create_activity, can_edit_activity, can_approve_activity,
     get_officer_orgs, get_approvable_orgs,
     get_point_category_orgs, can_manage_point_category, get_usable_point_category_orgs,
-    group_orgs_by_root
+    group_orgs_by_root, get_manageable_orgs
 )
 
 
@@ -32,6 +32,15 @@ def activity_list(request):
             filter=Q(participations__status='REGISTERED')
         )
     )
+
+    if request.user.role != 'ADMIN':
+        from core.permissions import get_usable_point_category_orgs
+        visible_orgs = get_usable_point_category_orgs(request.user)
+        qs = qs.filter(organization__in=visible_orgs)
+        # Using visible_orgs as the base for the organization dropdown
+        organizations = visible_orgs.order_by('name')
+    else:
+        organizations = Organization.objects.filter(status=True).order_by('name')
 
     status = request.GET.get('status')
     if status:
@@ -60,7 +69,6 @@ def activity_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    organizations = Organization.objects.filter(status=True).order_by('name')
     context = {
         'activities': page_obj,  # Pass the Pager instead
         'page_obj': page_obj,
@@ -439,24 +447,17 @@ def _get_student_visible_orgs(user):
     C1: Get all org IDs a student can see activities for:
 
     Priority order:
-    1. UNION_SCHOOL orgs → visible to ALL students always.
-    2. OrganizationMember records (created by Import Excel / manual assignment)
+    1. OrganizationMember records (created by Import Excel / manual assignment)
        → the student can see activities from any org they are a member of,
          AND activities from all ANCESTOR orgs in the chain (e.g. faculty sees school).
-    3. Fallback (if student has no OrganizationMember at all):
+    2. Fallback (if student has no OrganizationMember at all):
        Try to match StudentProfile.faculty by name against UNION_FACULTY orgs.
        This supports students who self-registered without being imported.
     """
     from core.models import OrganizationMember
     org_ids = set()
 
-    # 1. Đoàn Trường - visible to everyone
-    school_ids = Organization.objects.filter(
-        type=Organization.OrgType.UNION_SCHOOL, status=True
-    ).values_list('id', flat=True)
-    org_ids.update(school_ids)
-
-    # 2. All orgs the student is a member of (primary mechanism via Import Excel)
+    # 1. All orgs the student is a member of (primary mechanism via Import Excel)
     member_org_ids = list(
         OrganizationMember.objects.filter(user=user).values_list('organization_id', flat=True)
     )

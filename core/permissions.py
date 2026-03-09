@@ -133,21 +133,14 @@ def can_manage_org_staff(user, org):
     """
     Check if user can add/remove staff members for this org.
     - Admin: yes for all
-    - Staff: only if they are officer of the org's PARENT
+    - Staff: orgs they are officer of + all their descendant orgs
     """
     if user.role == 'ADMIN':
         return True
     if user.role == 'STUDENT':
         return False
 
-    parent = org.parent
-    if parent is None:
-        # Top-level org — only Admin can manage
-        return False
-
-    return OrganizationMember.objects.filter(
-        user=user, organization=parent, is_officer=True
-    ).exists()
+    return get_manageable_orgs(user).filter(pk=org.pk).exists()
 
 
 def can_create_org(user):

@@ -36,8 +36,13 @@
             <!-- Type filter -->
             <div>
                 <label class="block text-xs font-black uppercase mb-1">LOẠI ĐỐI TƯỢNG</label>
-                <input type="text" name="type" value="{{ current_type }}" placeholder="VD: Activity"
+                <select name="type"
                     class="w-full border-3 border-black bg-bg-light px-3 py-2 font-bold text-sm focus:outline-none focus:border-primary">
+                    <option value="">Tất cả</option>
+                    {% for val in type_choices %}
+                    <option value="{{ val }}" {% if val == current_type %}selected{% endif %}>{{ val }}</option>
+                    {% endfor %}
+                </select>
             </div>
             <!-- User filter -->
             <div>
@@ -48,7 +53,7 @@
             <!-- Submit -->
             <div class="flex items-end gap-2">
                 <button type="submit"
-                    class="flex-1 bg-zinc-900 text-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn">
+                    class="flex-1 bg-primary text-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn">
                     LỌC
                 </button>
                 <a href="{% url 'core:audit_log' %}"

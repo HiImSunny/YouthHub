@@ -196,10 +196,10 @@
                         {% csrf_token %}
                         <input type="hidden" name="action" value="add_student">
                         <div>
-                            <label class="block text-xs font-black uppercase mb-1">MÃ SỐ SINH VIÊN</label>
-                            <input type="text" name="student_code" required
+                            <label class="block text-xs font-black uppercase mb-1">EMAIL ĐĂNG KÝ CỦA THÀNH VIÊN</label>
+                            <input type="email" name="student_email" required
                                 class="w-full border-3 border-black bg-white p-2 font-bold text-sm focus:ring-0"
-                                placeholder="VD: B2011111">
+                                placeholder="VD: nguyen@example.com">
                         </div>
                         <button type="submit"
                             class="w-full bg-accent-teal text-white border-3 border-black p-3 font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2 text-sm">
