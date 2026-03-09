@@ -2,7 +2,7 @@
 {% block title %}{% if is_edit %}SUA DANH MUC DIEM{% else %}TAO DANH MUC DIEM{% endif %} — YOUTHHUB{% endblock %}
 
 {% block header_actions %}
-<a href="{% url 'activities:point_category_list' %}"
+<a href="{% url 'point_categories:point_category_list' %}"
     class="bg-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
     <span class="material-symbols-outlined text-lg">arrow_back</span> QUAY LẠI
 </a>
@@ -29,8 +29,7 @@
             <p class="font-black uppercase text-sm">Tổ chức không thể thay đổi</p>
             <p class="text-sm text-slate-600 font-bold">
                 Danh mục này thuộc về:
-                <span class="bg-black text-white px-2 py-0.5 text-xs font-black uppercase ml-1">{{ pc.organization.name
-                    }}</span>
+                <span class="bg-black text-white px-2 py-0.5 text-xs font-black uppercase ml-1">{{ pc.organization.name }}</span>
             </p>
         </div>
     </div>
@@ -54,24 +53,29 @@
                 <label for="id_organization" class="block text-xs font-black uppercase tracking-widest mb-2">
                     TỔ CHỨC <span class="text-red-500">*</span>
                 </label>
-                {% if manageable_orgs|length == 1 %}
+                {% if not is_admin %}
                 <div
                     class="w-full border-3 border-black bg-slate-100 px-4 py-4 font-bold uppercase text-sm flex items-center gap-2">
                     <span class="material-symbols-outlined text-base text-slate-500">domain</span>
-                    {{ manageable_orgs.0.name }}
+                    {{ user_org.name }}
                 </div>
-                <input type="hidden" name="organization" value="{{ manageable_orgs.0.pk }}">
+                <input type="hidden" name="organization" value="{{ user_org.pk }}">
                 {% else %}
                 <select name="organization" id="id_organization" required
                     class="w-full border-3 border-black bg-white py-4 px-4 font-bold uppercase text-sm focus:ring-0 focus:outline-none appearance-none">
                     <option value="">— CHỌN TỔ CHỨC —</option>
-                    {% for org in manageable_orgs %}
-                    <option value="{{ org.pk }}" {% if POST.organization == org.pk|stringformat:"s" %}selected{% endif %}>
-                        {{ org.name }}</option>
+                    {% for root_name, orgs in admin_org_groups.items %}
+                    <optgroup label="{{ root_name }}">
+                        {% for org in orgs %}
+                        <option value="{{ org.pk }}" {% if POST.organization == org.pk|stringformat:"s" %}selected{% endif %}>
+                            {{ org.name }}
+                        </option>
+                        {% endfor %}
+                    </optgroup>
                     {% endfor %}
                 </select>
                 {% endif %}
-                <p class="text-xs text-slate-500 font-bold mt-1 uppercase">Danh mục điểm sẽ áp dụng cho toàn bộ tổ chức
+                <p class="text-xs text-slate-500 font-bold mt-1 uppercase">Danh mục điểm sẽ áp dụng cho tổ chức được chọn
                     và các đơn vị trực thuộc.</p>
             </div>
             {% endif %}
@@ -134,7 +138,7 @@
                 <span class="material-symbols-outlined">save</span>
                 {% if is_edit %}CẬP NHẬT{% else %}TẠO DANH MỤC{% endif %}
             </button>
-            <a href="{% url 'activities:point_category_list' %}"
+            <a href="{% url 'point_categories:point_category_list' %}"
                 class="bg-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal-sm brutal-btn transition-all">HỦY</a>
         </div>
 

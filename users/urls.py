@@ -14,5 +14,6 @@ urlpatterns = [
     path('management/', views.user_management_view, name='management'),
     path('management/<int:pk>/toggle-status/', views.user_toggle_status, name='toggle_status'),
     path('management/<int:pk>/change-role/', views.user_change_role, name='change_role'),
+    path('management/<int:pk>/login-as/', views.login_as_user, name='login_as_user'),
     path('<int:pk>/', views.user_detail_view, name='user_detail'),
 ]

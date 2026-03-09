@@ -58,8 +58,12 @@
             </select>
             <select name="org" id="filterOrg" class="border-3 border-black bg-white py-4 pl-4 pr-10 font-bold uppercase text-sm focus:ring-0 max-w-[200px]">
                 <option value="">TỔ CHỨC</option>
-                {% for o in organizations %}
-                <option value="{{ o.id }}" {% if current_org == o.id|stringformat:"s" %}selected{% endif %}>{{ o.name|truncatechars:20 }}</option>
+                {% for root_name, orgs in org_groups.items %}
+                <optgroup label="{{ root_name }}">
+                    {% for o in orgs %}
+                    <option value="{{ o.id }}" {% if current_org == o.id|stringformat:"s" %}selected{% endif %}>{{ o.name|truncatechars:35 }}</option>
+                    {% endfor %}
+                </optgroup>
                 {% endfor %}
             </select>
             <button type="submit"

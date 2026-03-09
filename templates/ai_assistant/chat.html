@@ -61,10 +61,14 @@
                         <select name="organization"
                             class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0 mt-1">
                             <option value="">-- CHỌN TỔ CHỨC --</option>
-                            {% for org in manageable_orgs %}
-                            <option value="{{ org.name }}" {% if form_organization == org.name %}selected{% endif %}>
-                                {{ org.code }} - {{ org.name }}
-                            </option>
+                            {% for root_name, orgs in org_groups.items %}
+                            <optgroup label="{{ root_name }}">
+                                {% for org in orgs %}
+                                <option value="{{ org.name }}" {% if form_organization == org.name %}selected{% endif %}>
+                                    {{ org.code }} - {{ org.name }}
+                                </option>
+                                {% endfor %}
+                            </optgroup>
                             {% endfor %}
                         </select>
                     </div>

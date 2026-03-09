@@ -182,12 +182,22 @@ def user_management_view(request):
         from django.db.models import Q
         users = users.filter(Q(full_name__icontains=search) | Q(username__icontains=search))
 
+    org_filter = request.GET.get('org')
+    if org_filter:
+        users = users.filter(memberships__organization_id=org_filter).distinct()
+
+    from core.models import Organization
+    from core.permissions import group_orgs_by_root
+    organizations = Organization.objects.filter(status=True).order_by('name')
+
     context = {
         'users': users,
         'role_choices': User.Role.choices,
         'status_choices': User.Status.choices,
+        'org_groups': group_orgs_by_root(organizations),
         'current_role': role_filter or '',
         'current_status': status_filter or '',
+        'current_org': org_filter or '',
         'search_query': search or '',
         'total_users': User.objects.count(),
         'total_admin': User.objects.filter(role='ADMIN').count(),
@@ -238,6 +248,31 @@ def user_change_role(request, pk):
 
     return redirect('users:management')
 
+
+@admin_required
+def login_as_user(request, pk):
+    """Allow ADMIN to login as another user for troubleshooting."""
+    if request.method == 'POST':
+        target_user = get_object_or_404(User, pk=pk)
+        
+        if target_user == request.user:
+            messages.warning(request, 'Bạn đang đăng nhập bằng tài khoản này rồi.')
+            return redirect('users:management')
+        
+        # Logout the current admin
+        from django.contrib.auth import login
+        
+        # Login as the target user (requires specifying backend since authenticate() was bypassed)
+        login(request, target_user, backend='django.contrib.auth.backends.ModelBackend')
+        messages.success(request, f'Đã đăng nhập dưới quyền của {target_user.full_name}.')
+        
+        if target_user.role == 'STUDENT':
+            return redirect('students:dashboard')
+        return redirect('core:dashboard')
+        
+    return redirect('users:management')
+
+
 @login_required
 def user_detail_view(request, pk):
     """View details of a specific user. Available to STAFF and ADMIN."""
@@ -249,8 +284,21 @@ def user_detail_view(request, pk):
     target_user = get_object_or_404(User, pk=pk)
     memberships = target_user.memberships.select_related('organization').all()
     
+    from activities.models import ActivityParticipation
+    from django.core.paginator import Paginator
+    
+    participations_qs = ActivityParticipation.objects.filter(student=target_user).select_related(
+        'activity', 'activity__semester', 'activity__organization'
+    ).order_by('-activity__semester__start_date', '-activity__start_time')
+
+    paginator = Paginator(participations_qs, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
         'target_user': target_user,
         'memberships': memberships,
+        'participations': page_obj,
+        'page_obj': page_obj,
     }
     return render(request, 'users/user_detail.html', context)

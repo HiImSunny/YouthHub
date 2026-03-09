@@ -12,7 +12,7 @@ from .ollama_service import (
     get_default_model,
 )
 from .hardware import get_hardware_info
-from core.permissions import get_manageable_orgs
+from core.permissions import get_manageable_orgs, group_orgs_by_root
 
 AVAILABLE_MODELS = [
     {'id': 'sailor2:1b', 'name': 'Sailor 2 1B (Mặc định - Siêu nhẹ)', 'vram': 1.5},
@@ -51,6 +51,7 @@ def chat_view(request):
         'available_models': AVAILABLE_MODELS,
         'recent_docs': recent_docs,
         'manageable_orgs': manageable_orgs,
+        'org_groups': group_orgs_by_root(manageable_orgs),
         'hardware_info': get_hardware_info(),
         'output': '',
     }
@@ -208,6 +209,7 @@ def generate_view(request):
         'available_models': AVAILABLE_MODELS,
         'recent_docs': recent_docs,
         'manageable_orgs': manageable_orgs,
+        'org_groups': group_orgs_by_root(manageable_orgs),
         'output': content,
         'current_doc': doc,
         'word_count': word_count,

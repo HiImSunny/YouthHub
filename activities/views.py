@@ -10,7 +10,8 @@ from core.models import Organization, Semester
 from core.permissions import (
     can_create_activity, can_edit_activity, can_approve_activity,
     get_officer_orgs, get_approvable_orgs,
-    get_point_category_orgs, can_manage_point_category,
+    get_point_category_orgs, can_manage_point_category, get_usable_point_category_orgs,
+    group_orgs_by_root
 )
 
 
@@ -59,12 +60,14 @@ def activity_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
+    organizations = Organization.objects.filter(status=True).order_by('name')
     context = {
         'activities': page_obj,  # Pass the Pager instead
         'page_obj': page_obj,
         'status_choices': Activity.ActivityStatus.choices,
         'type_choices': Activity.ActivityType.choices,
-        'organizations': Organization.objects.filter(status=True).order_by('name'),
+        'organizations': organizations,
+        'org_groups': group_orgs_by_root(organizations),
         'semesters': Semester.objects.all().order_by('-start_date'),
         'current_status': status or '',
         'current_type': activity_type or '',
@@ -131,6 +134,7 @@ def activity_create(request):
             messages.error(request, 'Bạn không có quyền tạo hoạt động cho tổ chức này.')
             return render(request, 'activities/form.html', {
                 'organizations': allowed_orgs,
+                'org_groups': group_orgs_by_root(allowed_orgs),
                 'semesters': Semester.objects.filter(organization__in=get_point_category_orgs(request.user)).order_by('-start_date'),
                 # Load all active categories from allowed orgs for the dropdown
                 'point_categories': PointCategory.objects.filter(
@@ -166,10 +170,11 @@ def activity_create(request):
 
     context = {
         'organizations': allowed_orgs,  # B1: filtered list
+        'org_groups': group_orgs_by_root(allowed_orgs),
         'semesters': Semester.objects.filter(organization__in=get_point_category_orgs(request.user)).order_by('-start_date'),
         'point_categories': PointCategory.objects.filter(
             is_active=True,
-            organization__in=get_point_category_orgs(request.user),
+            organization__in=get_usable_point_category_orgs(request.user),
         ).select_related('organization').order_by('organization__name', 'code'),
         'type_choices': Activity.ActivityType.choices,
     }
@@ -203,10 +208,11 @@ def activity_edit(request, pk):
             return render(request, 'activities/form.html', {
                 'activity': activity,
                 'organizations': allowed_orgs,
+                'org_groups': group_orgs_by_root(allowed_orgs),
                 'semesters': Semester.objects.filter(organization__in=get_point_category_orgs(request.user)).order_by('-start_date'),
                 'point_categories': PointCategory.objects.filter(
                     is_active=True,
-                    organization__in=get_point_category_orgs(request.user),
+                    organization__in=get_usable_point_category_orgs(request.user),
                 ).select_related('organization').order_by('organization__name', 'code'),
                 'type_choices': Activity.ActivityType.choices,
                 'is_edit': True,
@@ -235,10 +241,11 @@ def activity_edit(request, pk):
     context = {
         'activity': activity,
         'organizations': allowed_orgs,  # B1: filtered
+        'org_groups': group_orgs_by_root(allowed_orgs),
         'semesters': Semester.objects.filter(organization__in=get_point_category_orgs(request.user)).order_by('-start_date'),
         'point_categories': PointCategory.objects.filter(
             is_active=True,
-            organization__in=get_point_category_orgs(request.user),
+            organization__in=get_usable_point_category_orgs(request.user),
         ).select_related('organization').order_by('organization__name', 'code'),
         'type_choices': Activity.ActivityType.choices,
         'is_edit': True,
@@ -778,27 +785,84 @@ def point_category_list(request):
 
     manageable_orgs = get_point_category_orgs(request.user)
 
-    # Admin can filter by a specific org
+    # Handle Filters
+    selected_school_id = request.GET.get('school', '')
     selected_org_id = request.GET.get('org', '')
-    if selected_org_id and request.user.role == 'ADMIN':
-        categories = PointCategory.objects.filter(
-            organization_id=selected_org_id
-        ).select_related('organization').order_by('code')
-    else:
-        categories = PointCategory.objects.filter(
-            organization__in=manageable_orgs
-        ).select_related('organization').order_by('organization__name', 'code')
-
-    # Search
+    status_filter = request.GET.get('status', '')
     search = request.GET.get('q', '').strip()
+
+    categories = PointCategory.objects.filter(
+        organization__in=manageable_orgs
+    ).select_related('organization').order_by('organization__name', 'code')
+
     if search:
         categories = categories.filter(
             dj_models.Q(name__icontains=search) | dj_models.Q(code__icontains=search)
         )
+    if status_filter == 'active':
+        categories = categories.filter(is_active=True)
+    elif status_filter == 'inactive':
+        categories = categories.filter(is_active=False)
+
+    from core.permissions import get_root_org, get_officer_orgs
+    from core.models import Organization
+    
+    root_orgs = []
+    filtered_orgs = []
+    user_org = None
+    
+    if request.user.role == 'ADMIN':
+        all_orgs = list(manageable_orgs.select_related('parent', 'parent__parent'))
+        root_org_map = {}
+        for org in all_orgs:
+            root = get_root_org(org)
+            if root.id not in root_org_map:
+                root_org_map[root.id] = root
+            
+            # Populate filtered_orgs if no school selected, or if belongs to selected school
+            if not selected_school_id or str(root.id) == selected_school_id:
+                filtered_orgs.append(org)
+                
+        root_orgs = list(root_org_map.values())
+        
+        # Apply filters
+        if selected_org_id:
+            categories = categories.filter(organization_id=selected_org_id)
+        elif selected_school_id:
+            # Get all categories belonging to any org under this school
+            school_org_ids = [org.id for org in filtered_orgs]
+            categories = categories.filter(organization_id__in=school_org_ids)
+            
+    else:
+        user_org = get_officer_orgs(request.user).first()
+        
+    # Group categories by organization for accordion display
+    from collections import OrderedDict
+    org_groups = OrderedDict()
+    
+    for cat in categories:
+        org_id = cat.organization_id
+        if org_id not in org_groups:
+            org_groups[org_id] = {
+                'organization': cat.organization,
+                'categories': [],
+                'has_active': False
+            }
+        
+        org_groups[org_id]['categories'].append(cat)
+        if cat.is_active:
+            org_groups[org_id]['has_active'] = True
+            
+    grouped_categories = list(org_groups.values())
 
     context = {
-        'categories': categories,
+        'grouped_categories': grouped_categories,
+        'categories_count': categories.count(),
         'manageable_orgs': manageable_orgs,
+        'root_orgs': root_orgs,
+        'filtered_orgs': filtered_orgs,
+        'user_org': user_org,
+        'selected_school_id': selected_school_id,
         'selected_org_id': selected_org_id,
         'search_query': search,
         'is_admin': request.user.role == 'ADMIN',
@@ -820,11 +884,29 @@ def point_category_create(request):
     manageable_orgs = get_point_category_orgs(request.user)
     if not manageable_orgs.exists():
         messages.error(request, 'Bạn không thuộc tổ chức nào để tạo danh mục điểm.')
-        return redirect('activities:point_category_list')
+        return redirect('point_categories:point_category_list')
+
+    from core.permissions import get_root_org, get_officer_orgs
+    admin_org_groups = {}
+    user_org = None
+    
+    if request.user.role == 'ADMIN':
+        all_orgs = list(manageable_orgs.select_related('parent', 'parent__parent'))
+        for org in all_orgs:
+            root = get_root_org(org)
+            if root.name not in admin_org_groups:
+                admin_org_groups[root.name] = []
+            admin_org_groups[root.name].append(org)
+    else:
+        user_org = get_officer_orgs(request.user).first()
 
     if request.method == 'POST':
-        org_id = request.POST.get('organization')
-        org = manageable_orgs.filter(pk=org_id).first()
+        if request.user.role == 'ADMIN':
+            org_id = request.POST.get('organization')
+            org = manageable_orgs.filter(pk=org_id).first()
+        else:
+            org = user_org
+            
         if not org:
             messages.error(request, 'Tổ chức không hợp lệ hoặc bạn không có quyền.')
         else:
@@ -846,13 +928,16 @@ def point_category_create(request):
                     is_active=is_active,
                 )
                 messages.success(request, f'Đã tạo danh mục điểm "{pc}" thành công!')
-                return redirect('activities:point_category_list')
+                return redirect('point_categories:point_category_list')
+
+    initial_org_id = request.GET.get('org', '')
 
     context = {
         'manageable_orgs': manageable_orgs,
-        'default_org': manageable_orgs.first() if manageable_orgs.count() == 1 else None,
+        'admin_org_groups': admin_org_groups,
+        'user_org': user_org,
         'is_admin': request.user.role == 'ADMIN',
-        'POST': request.POST if request.method == 'POST' else {},
+        'POST': request.POST if request.method == 'POST' else {'organization': initial_org_id},
         'is_active_default': True,  # new categories are active by default
     }
     return render(request, 'activities/point_category_form.html', context)
@@ -865,7 +950,7 @@ def point_category_edit(request, pk):
 
     if not can_manage_point_category(request.user, pc):
         messages.error(request, 'Bạn không có quyền chỉnh sửa danh mục điểm này.')
-        return redirect('activities:point_category_list')
+        return redirect('point_categories:point_category_list')
 
     manageable_orgs = get_point_category_orgs(request.user)
 
@@ -886,7 +971,7 @@ def point_category_edit(request, pk):
             pc.is_active = is_active
             pc.save()
             messages.success(request, f'Đã cập nhật danh mục điểm "{pc}".')
-            return redirect('activities:point_category_list')
+            return redirect('point_categories:point_category_list')
 
     context = {
         'pc': pc,
@@ -909,7 +994,7 @@ def point_category_delete(request, pk):
 
     if not can_manage_point_category(request.user, pc):
         messages.error(request, 'Bạn không có quyền xóa danh mục điểm này.')
-        return redirect('activities:point_category_list')
+        return redirect('point_categories:point_category_list')
 
     if request.method == 'POST':
         in_use_count = pc.activities.count()
@@ -925,7 +1010,7 @@ def point_category_delete(request, pk):
             name = str(pc)
             pc.delete()
             messages.success(request, f'Đã xóa danh mục điểm "{name}".')
-        return redirect('activities:point_category_list')
+        return redirect('point_categories:point_category_list')
 
     context = {
         'pc': pc,

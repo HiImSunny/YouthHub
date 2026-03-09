@@ -168,30 +168,66 @@ def get_root_org(org):
     return current
 
 
+def group_orgs_by_root(orgs_queryset):
+    """
+    Given a queryset of organizations, groups them into a dictionary by their root organization name.
+    Useful for displaying organized <optgroup> dropdowns.
+    """
+    # Optimize query by fetching parents if possible to avoid N+1 inside get_root_org
+    # Assuming at most 3 levels, so parent__parent is enough.
+    from collections import OrderedDict
+    orgs = list(orgs_queryset.select_related('parent', 'parent__parent'))
+    
+    # Sort them first by name to ensure inner elements are sorted
+    orgs.sort(key=lambda x: x.name)
+    
+    grouped = OrderedDict()
+    for org in orgs:
+        root = get_root_org(org)
+        if root.name not in grouped:
+            grouped[root.name] = []
+        grouped[root.name].append(org)
+        
+    # Sort groups by root name
+    return OrderedDict(sorted(grouped.items()))
+
+
 def get_point_category_orgs(user):
     """
-    Return the set of root Organizations whose PointCategories
+    Return the set of Organizations whose PointCategories
     this user is allowed to manage.
-    - ADMIN: all root orgs
-    - STAFF: root org of any org they are officer of
+    - ADMIN: all orgs
+    - STAFF: orgs they are officer of + child orgs
     - STUDENT: none
     """
-    if user.role == 'ADMIN':
-        return Organization.objects.filter(status=True, parent__isnull=True)
     if user.role == 'STUDENT':
         return Organization.objects.none()
-    # STAFF: collect root orgs of their officer orgs
-    officer_orgs = get_officer_orgs(user)
-    root_ids = {get_root_org(o).id for o in officer_orgs}
-    return Organization.objects.filter(id__in=root_ids, status=True)
+    return get_officer_orgs(user)
 
+def get_usable_point_category_orgs(user):
+    """
+    Return orgs whose PointCategories the user can USE (for activities).
+    Includes manageable orgs + all ancestor orgs.
+    """
+    if user.role == 'ADMIN':
+        return Organization.objects.filter(status=True)
+    if user.role == 'STUDENT':
+        return Organization.objects.none()
+    
+    manageable = get_manageable_orgs(user)
+    usable_ids = set(manageable.values_list('id', flat=True))
+    
+    for org in manageable:
+        current = org.parent
+        while current is not None:
+            usable_ids.add(current.id)
+            current = current.parent
+            
+    return Organization.objects.filter(id__in=usable_ids, status=True)
 
 def can_manage_point_category(user, point_category):
     """
     Check if user can create/edit/delete a specific PointCategory.
-    - ADMIN: always yes
-    - STAFF: only if the PointCategory's org is their root org
-    - STUDENT: no
     """
     if user.role == 'ADMIN':
         return True

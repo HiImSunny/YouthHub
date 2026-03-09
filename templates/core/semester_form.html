@@ -23,8 +23,13 @@
         <div>
             <label class="block text-sm font-black uppercase mb-2">THUỘC TỔ CHỨC <span class="text-accent-red">*</span></label>
             <select name="organization" required class="w-full border-3 border-black p-3 font-bold uppercase text-sm">
-                {% for o in orgs %}
-                <option value="{{ o.id }}" {% if semester.organization_id == o.id %}selected{% endif %}>{{ o.name }}</option>
+                <option value="">— CHỌN TỔ CHỨC —</option>
+                {% for root_name, orgs in org_groups.items %}
+                <optgroup label="{{ root_name }}">
+                    {% for o in orgs %}
+                    <option value="{{ o.id }}" {% if semester.organization_id == o.id %}selected{% endif %}>{{ o.name }}</option>
+                    {% endfor %}
+                </optgroup>
                 {% endfor %}
             </select>
         </div>

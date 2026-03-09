@@ -260,8 +260,8 @@ def main():
         
     if "{% url 'core:semesters' %}" not in base_content:
         # We will put it after point_category_list
-        target = """        <a href="{% url 'activities:point_category_list' %}"
-          class="flex items-center gap-3 px-4 py-3 font-black uppercase border-3 border-transparent hover:border-black hover:bg-primary/5 transition-all w-full text-left {% if request.resolver_match.view_name == 'activities:point_category_list' %}bg-primary/10 border-black text-primary{% endif %}">
+        target = """        <a href="{% url 'point_categories:point_category_list' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase border-3 border-transparent hover:border-black hover:bg-primary/5 transition-all w-full text-left {% if request.resolver_match.view_name == 'point_categories:point_category_list' %}bg-primary/10 border-black text-primary{% endif %}">
           <span class="material-symbols-outlined shrink-0 text-xl">stars</span>
           <span class="truncate">Mục Điểm RL</span>
         </a>"""

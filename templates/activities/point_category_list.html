@@ -2,7 +2,7 @@
 {% block title %}💎 DANH MỤC ĐIỂM — YOUTHHUB{% endblock %}
 
 {% block header_actions %}
-<a href="{% url 'activities:point_category_create' %}" id="btn-create-point-category"
+<a href="{% url 'point_categories:point_category_create' %}" id="btn-create-point-category"
     class="bg-primary text-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
     <span class="material-symbols-outlined text-lg">add</span> THÊM MỚI
 </a>
@@ -20,125 +20,158 @@
 
     <!-- Filter Bar -->
     <div class="bg-white border-3 border-black p-6 mb-8 shadow-brutal-lg">
-        <form method="get" class="flex flex-col lg:flex-row gap-4 items-stretch">
-            <!-- Search -->
-            <div class="flex-1 relative">
-                <span
-                    class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">search</span>
+        <form method="get" class="flex flex-col gap-4">
+            <!-- Row 1: Search -->
+            <div class="relative w-full">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">search</span>
                 <input type="text" name="q" value="{{ search_query }}" id="search-point-category"
-                    class="w-full pl-12 pr-4 py-4 border-3 border-black bg-white text-sm font-bold uppercase placeholder:text-slate-400 focus:ring-0 focus:outline-none"
+                    class="w-full pl-12 pr-4 py-2.5 border-3 border-black bg-white text-sm font-bold uppercase placeholder:text-slate-400 focus:ring-0 focus:outline-none"
                     placeholder="TÌM MÃ HOẶC TÊN DANH MỤC...">
             </div>
 
-            <!-- Admin: filter by org -->
-            {% if is_admin %}
-            <select name="org" id="filter-org"
-                class="border-3 border-black bg-white py-4 px-4 font-bold uppercase text-sm focus:ring-0">
-                <option value="">TẤT CẢ TỔ CHỨC</option>
-                {% for org in manageable_orgs %}
-                <option value="{{ org.pk }}" {% if selected_org_id == org.pk|stringformat:"s" %}selected{% endif %}>
-                    {{ org.name }}
-                </option>
-                {% endfor %}
-            </select>
-            {% endif %}
+            <!-- Row 2: Filters -->
+            <div class="flex flex-col md:flex-row gap-4 items-stretch">
+                {% if is_admin %}
+                <select name="school" id="filter-truong"
+                    class="flex-1 border-3 border-black bg-white py-2.5 px-4 font-bold uppercase text-sm focus:ring-0">
+                    <option value="">TẤT CẢ TRƯỜNG</option>
+                    {% for root_org in root_orgs %}
+                    <option value="{{ root_org.pk }}" {% if selected_school_id == root_org.pk|stringformat:"s" %}selected{% endif %}>
+                        {{ root_org.name }}
+                    </option>
+                    {% endfor %}
+                </select>
 
-            <button type="submit"
-                class="bg-primary text-white border-3 border-black font-black uppercase py-4 px-8 shadow-brutal brutal-btn transition-all">
-                LỌC
-            </button>
-            {% if search_query or selected_org_id %}
-            <a href="{% url 'activities:point_category_list' %}"
-                class="bg-white border-3 border-black font-black uppercase py-4 px-6 shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
-                <span class="material-symbols-outlined text-base">close</span> XÓA LỌC
-            </a>
-            {% endif %}
+                <select name="org" id="filter-to-chuc"
+                    class="flex-1 border-3 border-black bg-white py-2.5 px-4 font-bold uppercase text-sm focus:ring-0">
+                    <option value="">TẤT CẢ TỔ CHỨC</option>
+                    {% for org in filtered_orgs %}
+                    <option value="{{ org.pk }}" {% if selected_org_id == org.pk|stringformat:"s" %}selected{% endif %}>
+                        {{ org.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+                {% else %}
+                <div class="flex-1 border-3 border-black px-4 py-2.5 font-black uppercase text-sm bg-slate-100 flex items-center">
+                    {{ user_org.name }}
+                </div>
+                {% endif %}
+
+                <select name="status" class="flex-1 border-3 border-black bg-white py-2.5 px-4 font-bold uppercase text-sm focus:ring-0">
+                    <option value="">TẤT CẢ TRẠNG THÁI</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>ĐANG DÙNG</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>NGƯNG DÙNG</option>
+                </select>
+
+                <div class="flex items-center px-4 bg-accent-yellow border-3 border-black font-black uppercase text-sm shadow-brutal-sm hidden md:flex">
+                    <span class="material-symbols-outlined xl:mr-2">analytics</span>
+                    <span class="hidden xl:inline">{{ categories_count }} KẾT QUẢ</span>
+                </div>
+                <button type="submit"
+                    class="bg-primary hover:bg-black text-white border-3 border-black font-black uppercase py-2.5 px-8 shadow-brutal brutal-btn transition-colors">
+                    LỌC
+                </button>
+                <a href="{% url 'point_categories:point_category_list' %}"
+                    class="bg-slate-200 text-slate-800 hover:bg-slate-300 border-3 border-black font-black uppercase py-2.5 px-6 shadow-brutal-sm brutal-btn transition-colors flex items-center justify-center">
+                    <span class="material-symbols-outlined text-xl">refresh</span>
+                </a>
+            </div>
         </form>
     </div>
 
 
 
     <!-- Table -->
-    {% if categories %}
-    <div class="bg-white border-3 border-black shadow-brutal-lg overflow-hidden">
-        <div class="p-5 border-b-3 border-black bg-bg-light flex items-center justify-between">
-            <h2 class="text-xl font-black uppercase flex items-center gap-2">
-                <span class="material-symbols-outlined">table_view</span>
-                DANH SÁCH DANH MỤC ĐIỂM
-            </h2>
-            <span class="bg-black text-white text-xs font-black uppercase px-3 py-1">{{ categories|length }} kết
-                quả</span>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="border-b-3 border-black bg-slate-100">
-                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">MÃ</th>
-                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">TÊN DANH MỤC</th>
-                        {% if is_admin %}
-                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">TỔ CHỨC</th>
-                        {% endif %}
-                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">MÔ TẢ</th>
-                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">TRẠNG THÁI</th>
-                        <th class="p-4 font-black uppercase text-sm">THAO TÁC</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for pc in categories %}
-                    <tr class="border-b-2 border-black hover:bg-primary/5 transition-all group">
-                        <!-- Code badge -->
-                        <td class="p-4 border-r-2 border-black">
-                            <span
-                                class="bg-accent-yellow border-2 border-black px-3 py-1 text-sm font-black uppercase tracking-wider">
-                                {{ pc.code }}
-                            </span>
-                        </td>
-                        <!-- Name -->
-                        <td class="p-4 border-r-2 border-black font-black uppercase">{{ pc.name }}</td>
-                        <!-- Org (Admin only) -->
-                        {% if is_admin %}
-                        <td class="p-4 border-r-2 border-black text-xs font-bold uppercase text-slate-500">
-                            <span class="bg-slate-100 border border-black px-2 py-0.5">{{ pc.organization.name }}</span>
-                        </td>
-                        {% endif %}
-                        <!-- Desc -->
-                        <td class="p-4 border-r-2 border-black text-sm text-slate-600 max-w-xs truncate">
-                            {{ pc.description|default:"—" }}
-                        </td>
-                        <!-- Status badge -->
-                        <td class="p-4 border-r-2 border-black">
-                            {% if pc.is_active %}
-                            <span
-                                class="bg-accent-teal/20 text-accent-teal border-2 border-accent-teal px-3 py-1 text-xs font-black uppercase">
-                                ĐANG DÙNG
-                            </span>
-                            {% else %}
-                            <span
-                                class="bg-slate-100 text-slate-500 border-2 border-slate-400 px-3 py-1 text-xs font-black uppercase">
-                                ĐÃ ẨN
-                            </span>
-                            {% endif %}
-                        </td>
-                        <!-- Actions -->
-                        <td class="p-4">
-                            <div class="flex items-center gap-2">
-                                <a href="{% url 'activities:point_category_edit' pk=pc.pk %}"
-                                    id="btn-edit-pc-{{ pc.pk }}"
-                                    class="bg-accent-yellow border-2 border-black px-3 py-1.5 text-xs font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-sm">edit</span> SỬA
-                                </a>
-                                <a href="{% url 'activities:point_category_delete' pk=pc.pk %}"
-                                    id="btn-delete-pc-{{ pc.pk }}"
-                                    class="bg-white border-2 border-black px-3 py-1.5 text-xs font-black uppercase shadow-brutal-sm brutal-btn transition-all hover:bg-red-50 flex items-center gap-1">
-                                    <span class="material-symbols-outlined text-sm">delete</span> XÓA
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+    <!-- Table -->
+    {% if grouped_categories %}
+    <div class="space-y-4">
+        {% for group in grouped_categories %}
+        <details class="bg-white border-3 border-black shadow-brutal-lg group/accordion" {% if group.has_active %}open{% endif %}>
+            <!-- Accordion Header -->
+            <summary class="p-4 border-b-3 border-transparent group-open/accordion:border-black bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer list-none flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-primary transition-transform group-open/accordion:rotate-90">arrow_right</span>
+                    <h2 class="text-lg font-black uppercase flex items-center gap-3">
+                        {{ group.organization.name }}
+                    </h2>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <span class="bg-primary text-white px-2 py-1 text-xs font-black uppercase border-2 border-black shadow-brutal-sm whitespace-nowrap">
+                        {{ group.categories|length }} DANH MỤC
+                    </span>
+                    <!-- Inline Add New button -->
+                    {% if is_admin or user_org == group.organization %}
+                    <a href="{% url 'point_categories:point_category_create' %}?org={{ group.organization.pk }}" 
+                       class="bg-accent-yellow border-2 border-black text-black px-2 py-1 text-[10px] font-black uppercase shadow-brutal-sm hover:bg-black hover:text-white transition-colors"
+                       onclick="event.stopPropagation();">
+                        <span class="material-symbols-outlined text-[14px] align-middle">add</span> THÊM
+                    </a>
+                    {% endif %}
+                </div>
+            </summary>
+
+            <!-- Accordion Body -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b-3 border-black bg-bg-light">
+                            <th class="p-4 font-black uppercase text-sm border-r-2 border-black max-w-[120px]">MÃ</th>
+                            <th class="p-4 font-black uppercase text-sm border-r-2 border-black min-w-[200px]">TÊN DANH MỤC</th>
+                            <th class="p-4 font-black uppercase text-sm border-r-2 border-black">MÔ TẢ</th>
+                            <th class="p-4 font-black uppercase text-sm border-r-2 border-black w-[130px]">TRẠNG THÁI</th>
+                            <th class="p-4 font-black uppercase text-sm w-[130px]">THAO TÁC</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pc in group.categories %}
+                        <tr class="border-b-2 border-black hover:bg-primary/5 transition-all last:border-0">
+                            <!-- Code badge -->
+                            <td class="p-4 border-r-2 border-black max-w-[120px]">
+                                <span class="bg-accent-yellow border-2 border-black px-3 py-1 text-sm font-black uppercase tracking-wider block truncate text-center" title="{{ pc.code }}">
+                                    {{ pc.code }}
+                                </span>
+                            </td>
+                            <!-- Name -->
+                            <td class="p-4 border-r-2 border-black font-black uppercase min-w-[200px] max-w-[250px]">
+                                <p class="truncate" title="{{ pc.name }}">{{ pc.name }}</p>
+                            </td>
+                            <!-- Desc -->
+                            <td class="p-4 border-r-2 border-black text-sm text-slate-600 max-w-[300px] truncate" title="{{ pc.description|default:'' }}">
+                                {{ pc.description|default:"—" }}
+                            </td>
+                            <!-- Status badge -->
+                            <td class="p-4 border-r-2 border-black px-2">
+                                {% if pc.is_active %}
+                                <span class="bg-accent-teal/20 text-accent-teal border-2 border-accent-teal px-2 py-1 text-xs font-black uppercase block text-center truncate" title="Đang dùng">
+                                    ĐANG DÙNG
+                                </span>
+                                {% else %}
+                                <span class="bg-slate-200 text-slate-500 border-2 border-slate-400 px-2 py-1 text-xs font-black uppercase block text-center truncate" title="Ngưng dùng">
+                                    NGƯNG DÙNG
+                                </span>
+                                {% endif %}
+                            </td>
+                            <!-- Actions -->
+                            <td class="p-4">
+                                <div class="flex items-center gap-2">
+                                    <a href="{% url 'point_categories:point_category_edit' pk=pc.pk %}"
+                                        class="bg-accent-yellow border-2 border-black px-3 py-1.5 text-black text-xs font-black uppercase shadow-brutal-sm brutal-btn transition-all hover:bg-black hover:text-white flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-sm block">edit</span> SỬA
+                                    </a>
+                                    <a href="{% url 'point_categories:point_category_delete' pk=pc.pk %}"
+                                        class="bg-white border-2 border-black px-3 py-1.5 text-black text-xs font-black uppercase shadow-brutal-sm brutal-btn transition-all hover:bg-red-500 hover:text-white flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-sm block">delete</span> XÓA
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </details>
+        {% endfor %}
     </div>
 
     {% else %}
@@ -146,11 +179,65 @@
     <div class="bg-white border-3 border-black p-16 text-center shadow-brutal">
         <span class="material-symbols-outlined text-7xl text-slate-200 block mb-4">category</span>
         <h3 class="text-2xl font-black uppercase text-slate-400 mb-4">CHƯA CÓ DANH MỤC ĐIỂM NÀO</h3>
-        <a href="{% url 'activities:point_category_create' %}"
+        <a href="{% url 'point_categories:point_category_create' %}"
             class="bg-primary text-white border-3 border-black px-6 py-3 font-black uppercase shadow-brutal brutal-btn transition-all inline-flex items-center gap-2">
             <span class="material-symbols-outlined">add</span> TẠO DANH MỤC ĐẦU TIÊN
         </a>
     </div>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const truongSelect = document.getElementById('filter-truong');
+        const toChucSelect = document.getElementById('filter-to-chuc');
+        
+        if (truongSelect && toChucSelect) {
+            truongSelect.addEventListener('change', function() {
+                const schoolId = this.value;
+                // Preserve current selected org
+                const currentOrg = toChucSelect.value;
+                
+                // Keep the 'TẤT CẢ TỔ CHỨC' option
+                const defaultOption = '<option value="">TẤT CẢ TỔ CHỨC</option>';
+                toChucSelect.innerHTML = defaultOption;
+                
+                if (!schoolId) {
+                    // If no school selected, fetch all filtered orgs (this part usually depends on the backend refetching anyway, but let's just trigger form submit to reload naturally)
+                    this.form.submit();
+                    return;
+                }
+                
+                fetch(`/api/organizations/?parent=${schoolId}&include_descendants=true`)
+                    .then(r => r.json())
+                    .then(data => {
+                        data.forEach(org => {
+                            const option = document.createElement('option');
+                            option.value = org.id;
+                            option.textContent = org.name;
+                            if (org.id == currentOrg) {
+                                option.selected = true;
+                            }
+                            toChucSelect.appendChild(option);
+                        });
+                        
+                        // If current org is no longer valid, clear it
+                        if (!Array.from(toChucSelect.options).some(opt => opt.value === currentOrg)) {
+                            toChucSelect.value = '';
+                        }
+                        
+                        // Auto-submit on school change to refresh the list
+                        truongSelect.form.submit();
+                    })
+                    .catch(e => {
+                        console.error("Error fetching organizations", e);
+                        // Fallback to regular form submission
+                        truongSelect.form.submit();
+                    });
+            });
+        }
+    });
+</script>
 {% endblock %}

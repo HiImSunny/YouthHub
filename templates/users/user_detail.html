@@ -25,11 +25,6 @@
                 <span class="material-symbols-outlined text-sm">arrow_back</span>
                 QUAY LẠI
             </button>
-            
-            <!-- Quick View Roles Tag -->
-            <span class="bg-{% if target_user.status == 'ACTIVE' %}accent-teal{% else %}accent-red{% endif %} text-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm flex items-center justify-center">
-                {{ target_user.get_status_display }}
-            </span>
         </div>
     </div>
 
@@ -100,10 +95,97 @@
 
         </div>
 
-        <!-- Right Column: Organizations -->
-        <div class="lg:col-span-2">
+        <!-- Right Column: Organizations & Activities -->
+        <div class="lg:col-span-2 space-y-6">
             
-            <div class="bg-white border-3 border-black shadow-brutal h-full">
+            <!-- Activity Participations Card -->
+            <div class="bg-white border-3 border-black shadow-brutal">
+                <div class="p-4 border-b-3 border-black bg-bg-light flex items-center justify-between">
+                    <h2 class="font-black uppercase flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm">event</span>
+                        HOẠT ĐỘNG ĐÃ THAM GIA
+                    </h2>
+                    <span class="bg-black text-white px-2 py-1 text-xs font-black uppercase">{{ participations.paginator.count }} HOẠT ĐỘNG</span>
+                </div>
+
+                {% if participations %}
+                {% regroup participations by activity.semester as sem_list %}
+                <div class="divide-y-2 divide-black">
+                    {% for sem in sem_list %}
+                    <div class="p-4 bg-slate-100 font-bold uppercase text-sm border-b-2 border-black">
+                        {{ sem.grouper.name|default:"Không có Học kỳ" }} ({{ sem.grouper.academic_year|default:"--" }})
+                    </div>
+                    {% for part in sem.list %}
+                    <div class="p-5 flex flex-col md:flex-row md:items-start justify-between gap-4 hover:bg-slate-50 transition-colors">
+                        <div class="flex-1">
+                            <h3 class="font-black uppercase text-base leading-tight mb-1">
+                                <a href="{% url 'activities:detail' pk=part.activity.pk %}" class="hover:text-primary transition-colors hover:underline">
+                                    {{ part.activity.title }}
+                                </a>
+                            </h3>
+                            <p class="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">
+                                TỔ CHỨC: {{ part.activity.organization.name }}
+                            </p>
+                            <div class="flex items-center gap-2 flex-wrap mt-2">
+                                <span class="bg-accent-yellow border-2 border-black px-2 py-1 text-[10px] font-black uppercase inline-block">
+                                    {{ part.activity.get_activity_type_display }}
+                                </span>
+                                {% if part.status == 'ATTENDED' %}
+                                <span class="bg-primary text-white border-2 border-black px-2 py-1 text-[10px] font-black uppercase inline-block">
+                                    +{{ part.points_awarded|default:part.activity.points }} ĐIỂM
+                                </span>
+                                {% elif part.status == 'CANCELED' %}
+                                <span class="bg-slate-200 text-slate-500 border-2 border-slate-400 px-2 py-1 text-[10px] font-black uppercase inline-block">
+                                    ĐÃ HỦY
+                                </span>
+                                {% else %}
+                                <span class="bg-white border-2 border-dashed border-slate-400 text-slate-500 px-2 py-1 text-[10px] font-black uppercase inline-block">
+                                    ĐANG ĐĂNG KÝ
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-left md:text-right shrink-0 mt-2 md:mt-0">
+                            <p class="text-[10px] font-black uppercase text-slate-400 mb-1">NGÀY TỔ CHỨC</p>
+                            <p class="font-bold text-sm">{{ part.activity.start_time|date:"d/m/Y" }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% endfor %}
+                </div>
+                
+                <!-- Pagination for Activities -->
+                {% if page_obj.has_other_pages %}
+                <div class="p-4 border-t-3 border-black bg-white flex justify-center">
+                    <nav class="inline-flex border-2 border-black shadow-brutal-sm bg-white overflow-hidden">
+                        {% if page_obj.has_previous %}
+                        <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1.5 border-r-2 border-black hover:bg-slate-100 font-black uppercase flex items-center text-xs">
+                            <span class="material-symbols-outlined text-sm">chevron_left</span>
+                        </a>
+                        {% endif %}
+
+                        <div class="px-4 py-1.5 border-r-2 border-black font-black uppercase bg-primary text-white flex items-center text-xs">
+                            TRANG {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                        </div>
+
+                        {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1.5 hover:bg-slate-100 font-black uppercase flex items-center text-xs">
+                            <span class="material-symbols-outlined text-sm">chevron_right</span>
+                        </a>
+                        {% endif %}
+                    </nav>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <div class="flex flex-col items-center justify-center p-8 text-center min-h-[200px]">
+                    <span class="material-symbols-outlined text-5xl text-slate-300 mb-3">event_busy</span>
+                    <p class="font-black uppercase text-slate-400 text-sm">CHƯA THAM GIA HOẠT ĐỘNG NÀO</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="bg-white border-3 border-black shadow-brutal">
                 <div class="p-4 border-b-3 border-black bg-bg-light flex items-center justify-between">
                     <h2 class="font-black uppercase flex items-center gap-2">
                         <span class="material-symbols-outlined text-sm">diversity_3</span>

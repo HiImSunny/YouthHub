@@ -10,13 +10,12 @@
     <!-- Hero -->
     <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-            <h1 class="text-5xl font-black uppercase tracking-tighter leading-none mb-2">👥 USERS</h1>
+            <h1 class="text-5xl font-black uppercase tracking-tighter leading-none mb-2">👥 NGƯỜI DÙNG</h1>
             <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">QUẢN LÝ TÀI KHOẢN HỆ THỐNG</p>
         </div>
-        <span
-            class="bg-accent-red text-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm">
-            🔒 ADMIN ONLY
-        </span>
+        <p class="text-xs font-black uppercase text-slate-400">
+            <span class="material-symbols-outlined text-[10px] align-baseline">lock</span> CHỈ ADMIN MỚI THẤY TRANG NÀY
+        </p>
     </div>
 
     <!-- Summary Stats -->
@@ -40,42 +39,55 @@
     </div>
 
     <!-- Filters -->
-    <form method="get" class="bg-white border-3 border-black shadow-brutal p-5 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-            <div>
-                <label class="block text-xs font-black uppercase mb-1">ROLE</label>
+    <form method="get" class="bg-white border-3 border-black shadow-brutal p-4 mb-6">
+        <div class="flex flex-col gap-3">
+            <!-- Search Bar (Full width) -->
+            <div class="relative w-full">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Tìm tên, username, email..."
+                    class="w-full border-3 border-black bg-white pl-10 pr-3 py-2.5 font-bold text-sm focus:outline-none focus:border-primary transition-colors">
+            </div>
+
+            <!-- Dropdowns & Actions -->
+            <div class="flex flex-col md:flex-row gap-3">
                 <select name="role"
-                    class="w-full border-3 border-black bg-bg-light px-3 py-2 font-bold text-sm focus:outline-none focus:border-primary">
-                    <option value="">Tất cả</option>
+                    class="flex-1 border-3 border-black bg-white px-3 py-2.5 font-bold text-sm focus:outline-none focus:border-primary transition-colors cursor-pointer appearance-none">
+                    <option value="">Tất cả Role</option>
                     {% for val, label in role_choices %}
                     <option value="{{ val }}" {% if val == current_role %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
-            </div>
-            <div>
-                <label class="block text-xs font-black uppercase mb-1">TRẠNG THÁI</label>
+
                 <select name="status"
-                    class="w-full border-3 border-black bg-bg-light px-3 py-2 font-bold text-sm focus:outline-none focus:border-primary">
-                    <option value="">Tất cả</option>
+                    class="flex-1 border-3 border-black bg-white px-3 py-2.5 font-bold text-sm focus:outline-none focus:border-primary transition-colors cursor-pointer appearance-none">
+                    <option value="">Tất cả Trạng thái</option>
                     {% for val, label in status_choices %}
                     <option value="{{ val }}" {% if val == current_status %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
-            </div>
-            <div>
-                <label class="block text-xs font-black uppercase mb-1">TÌM KIẾM</label>
-                <input type="text" name="q" value="{{ search_query }}" placeholder="Tên, username..."
-                    class="w-full border-3 border-black bg-bg-light px-3 py-2 font-bold text-sm focus:outline-none focus:border-primary">
-            </div>
-            <div class="flex items-end gap-2">
-                <button type="submit"
-                    class="flex-1 bg-zinc-900 text-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn">
-                    LỌC
-                </button>
-                <a href="{% url 'users:management' %}"
-                    class="flex-1 text-center bg-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn">
-                    ĐẶT LẠI
-                </a>
+
+                <select name="org"
+                    class="flex-1 border-3 border-black bg-white px-3 py-2.5 font-bold text-sm focus:outline-none focus:border-primary transition-colors cursor-pointer appearance-none lg:max-w-xs">
+                    <option value="">Tất cả Tổ chức</option>
+                    {% for root_name, orgs in org_groups.items %}
+                    <optgroup label="{{ root_name }}">
+                        {% for o in orgs %}
+                        <option value="{{ o.id }}" {% if current_org == o.id|stringformat:"s" %}selected{% endif %}>{{ o.name|truncatechars:35 }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endfor %}
+                </select>
+
+                <div class="flex gap-2 shrink-0 md:w-auto w-full">
+                    <button type="submit"
+                        class="flex-1 md:w-auto bg-primary text-white border-3 border-black px-6 py-2.5 font-black uppercase text-sm shadow-brutal-sm brutal-btn flex items-center justify-center gap-2">
+                        LỌC
+                    </button>
+                    <a href="{% url 'users:management' %}" title="Xóa lọc"
+                        class="w-[46px] shrink-0 bg-white border-3 border-black flex items-center justify-center shadow-brutal-sm brutal-btn hover:bg-slate-100 transition-colors">
+                        <span class="material-symbols-outlined font-black">refresh</span>
+                    </a>
+                </div>
             </div>
         </div>
     </form>
@@ -95,8 +107,7 @@
                         <th class="p-4 font-black uppercase text-sm border-r-2 border-black">EMAIL</th>
                         <th class="p-4 font-black uppercase text-sm border-r-2 border-black">ROLE</th>
                         <th class="p-4 font-black uppercase text-sm border-r-2 border-black">TRẠNG THÁI</th>
-                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">NGÀY TẠO</th>
-                        <th class="p-4 font-black uppercase text-sm">THAO TÁC</th>
+                        <th class="p-4 font-black uppercase text-sm w-[130px]">THAO TÁC</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -112,10 +123,10 @@
                             </div>
                         </td>
                         <!-- Name -->
-                        <td class="p-4 border-r-2 border-black">
-                            <a href="{% url 'users:user_detail' pk=u.pk %}" class="font-black uppercase text-sm hover:text-primary transition-colors hover:underline" title="Xem chi tiết">
-                                {{ u.full_name }} <span class="material-symbols-outlined text-[12px] align-middle">open_in_new</span>
-                            </a>
+                        <td class="p-4 border-r-2 border-black" title="Ngày tham gia: {{ u.created_at|date:'d/m/Y H:i' }}">
+                            <div class="font-black uppercase text-sm">
+                                {{ u.full_name }}
+                            </div>
                             <p class="text-xs text-slate-500 font-bold">
                                 {% if u.role == 'STUDENT' %}
                                     {{ u.student_profile.student_code|default:"Chưa có MSSV" }} &middot; 
@@ -142,42 +153,60 @@
                                 {{ u.get_status_display }}
                             </span>
                         </td>
-                        <!-- Date -->
-                        <td class="p-4 border-r-2 border-black text-sm font-bold">{{ u.created_at|date:"d/m/Y" }}</td>
                         <!-- Actions -->
                         <td class="p-4">
                             {% if u != request.user %}
-                            <div class="flex gap-2 flex-wrap">
+                            <div class="flex gap-2">
                                 <!-- Toggle Status -->
                                 <form method="post" action="{% url 'users:toggle_status' pk=u.pk %}" class="inline">
                                     {% csrf_token %}
                                     <button type="submit"
-                                        onclick="return confirm('Xác nhận thay đổi trạng thái tài khoản \" {{
-                                        u.full_name }}\"?')"
-                                        class="text-xs font-black uppercase border-2 border-black px-3 py-1 shadow-brutal-sm brutal-btn
-                    {% if u.status == 'ACTIVE' %}bg-accent-red text-white{% else %}bg-accent-teal text-white{% endif %}">
+                                        onclick="return confirm('Xác nhận thay đổi trạng thái tài khoản \"{{ u.full_name }}\"?')"
+                                        class="text-xs font-black uppercase border-2 border-black px-3 py-2 shadow-brutal-sm brutal-btn w-[100px]
+                                        {% if u.status == 'ACTIVE' %}bg-accent-red text-white{% else %}bg-accent-teal text-white{% endif %}">
                                         {% if u.status == 'ACTIVE' %}KHÓA{% else %}MỞ KHÓA{% endif %}
                                     </button>
                                 </form>
-                                <!-- Change Role -->
-                                <form method="post" action="{% url 'users:change_role' pk=u.pk %}"
-                                    class="inline flex gap-1">
-                                    {% csrf_token %}
-                                    <select name="role"
-                                        class="border-2 border-black text-xs font-black px-2 py-1 bg-white focus:outline-none">
-                                        {% for val, label in role_choices %}
-                                        <option value="{{ val }}" {% if val == u.role %}selected{% endif %}>{{ label }}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                    <button type="submit"
-                                        class="text-xs font-black uppercase border-2 border-black bg-zinc-900 text-white px-2 py-1 shadow-brutal-sm brutal-btn">
-                                        ĐỔI
+                                
+                                <!-- Dropdown Button -->
+                                <div class="relative group">
+                                    <button type="button" class="bg-white border-2 border-black px-2 py-2 shadow-brutal-sm brutal-btn flex items-center justify-center font-black transition-colors hover:bg-slate-50">
+                                        ⋮
                                     </button>
-                                </form>
+                                    <div class="absolute right-0 top-full mt-1 hidden group-hover:block bg-white border-3 border-black shadow-brutal w-48 z-10 text-sm">
+                                        <a href="{% url 'users:user_detail' pk=u.pk %}" class="block px-4 py-2 font-black uppercase hover:bg-slate-100 transition-colors border-b-2 border-black flex items-center gap-2">
+                                            <span class="material-symbols-outlined text-[14px]">open_in_new</span> XEM CHI TIẾT
+                                        </a>
+                                        <div class="p-3 bg-bg-light">
+                                            <label class="block text-[10px] font-black uppercase text-slate-500 mb-1">ĐỔI QUYỀN TRUY CẬP</label>
+                                            <form method="post" action="{% url 'users:change_role' pk=u.pk %}" class="flex flex-col gap-2 mb-2">
+                                                {% csrf_token %}
+                                                <select name="role" class="w-full border-2 border-black text-xs font-black px-2 py-1 bg-white focus:outline-none">
+                                                    {% for val, label in role_choices %}
+                                                    <option value="{{ val }}" {% if val == u.role %}selected{% endif %}>{{ label }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                                <button type="submit" class="w-full text-[10px] font-black uppercase border-2 border-black bg-zinc-900 text-white px-2 py-1 shadow-brutal-sm brutal-btn">
+                                                    CẬP NHẬT QUYỀN HẠN
+                                                </button>
+                                            </form>
+                                            
+                                            <hr class="border-t-2 border-black my-2">
+                                            
+                                            <form method="post" action="{% url 'users:login_as_user' pk=u.pk %}">
+                                                {% csrf_token %}
+                                                <button type="submit" 
+                                                    class="w-full text-[10px] font-black uppercase border-2 border-black bg-white text-black px-2 py-1 shadow-brutal-sm brutal-btn hover:bg-slate-200 transition-colors flex items-center justify-center gap-1"
+                                                    onclick="return confirm('Xác nhận đăng nhập và sử dụng hệ thống dưới tài khoản {{ u.full_name }}?');">
+                                                    <span class="material-symbols-outlined text-[12px]">login</span> ĐĂNG NHẬP BẰNG TK NÀY
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             {% else %}
-                            <span class="text-xs text-slate-400 italic">(Tài khoản của bạn)</span>
+                            <span class="text-[10px] font-black bg-teal-100 text-teal-800 border-2 border-teal-800 px-2 py-1 uppercase inline-block shadow-sm">ĐANG ĐĂNG NHẬP</span>
                             {% endif %}
                         </td>
                     </tr>

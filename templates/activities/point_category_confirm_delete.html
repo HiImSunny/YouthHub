@@ -2,7 +2,7 @@
 {% block title %}🗑️ XÓA DANH MỤC ĐIỂM — YOUTHHUB{% endblock %}
 
 {% block header_actions %}
-<a href="{% url 'activities:point_category_list' %}"
+<a href="{% url 'point_categories:point_category_list' %}"
     class="bg-white border-3 border-black px-4 py-2 text-sm font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center gap-2">
     <span class="material-symbols-outlined text-lg">arrow_back</span> QUAY LẠI
 </a>
@@ -92,7 +92,7 @@
                     %}</span>
                 {% if in_use %}ẨN DANH MỤC{% else %}XÓA VĨNH VIỄN{% endif %}
             </button>
-            <a href="{% url 'activities:point_category_list' %}"
+            <a href="{% url 'point_categories:point_category_list' %}"
                 class="flex-1 bg-white border-3 border-black py-4 font-black uppercase shadow-brutal-sm brutal-btn transition-all flex items-center justify-center gap-2 text-lg">
                 <span class="material-symbols-outlined">cancel</span>
                 HỦY BỎ

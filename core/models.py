@@ -49,7 +49,13 @@ class Organization(models.Model):
         name_upper = name_upper.replace('ĐẠI HỌC ', 'ĐH ')
         return name_upper.strip()
 
-
+    @property
+    def root_org(self):
+        """Returns the top-level parent organization."""
+        current = self
+        while current.parent is not None:
+            current = current.parent
+        return current
 class OrganizationMember(models.Model):
     """
     Membership records linking users to organizations.

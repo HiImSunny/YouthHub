@@ -57,13 +57,17 @@
                     <select name="organization" id="orgSelect" required
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- CHỌN --</option>
-                        {% for org in organizations %}
-                        <option value="{{ org.pk }}" 
-                            data-parent="{{ org.parent_id|default:'' }}"
-                            data-grandparent="{% if org.parent %}{{ org.parent.parent_id|default:'' }}{% endif %}"
-                            {% if activity.organization_id == org.pk %}selected{% endif %}>
-                            {{ org.name }}
-                        </option>
+                        {% for root_name, orgs in org_groups.items %}
+                        <optgroup label="{{ root_name }}">
+                            {% for org in orgs %}
+                            <option value="{{ org.pk }}" 
+                                data-parent="{{ org.parent_id|default:'' }}"
+                                data-grandparent="{% if org.parent %}{{ org.parent.parent_id|default:'' }}{% endif %}"
+                                {% if activity.organization_id == org.pk %}selected{% endif %}>
+                                {{ org.name }}
+                            </option>
+                            {% endfor %}
+                        </optgroup>
                         {% endfor %}
                     </select>
                 </div>

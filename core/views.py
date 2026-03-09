@@ -136,14 +136,28 @@ def statistics_view(request):
 
     # --- Filtering ---
     semester_id = request.GET.get('semester')
+    org_id = request.GET.get('organization')
+    
+    from .permissions import get_point_category_orgs, group_orgs_by_root
+    root_orgs = get_point_category_orgs(request.user)
+    
     base_act_qs = Activity.objects.all()
+    if org_id:
+        base_act_qs = base_act_qs.filter(organization_id=org_id)
+        # Verify the org is within allowed root_orgs or admin
+        if not (request.user.role == 'ADMIN' or int(org_id) in [o.id for o in root_orgs]):
+            # Instead of failing, we just let the permissions filter apply later or filter allowed only
+            pass
+            
     if semester_id:
         base_act_qs = base_act_qs.filter(semester_id=semester_id)
         
-    from .permissions import get_point_category_orgs
-    root_orgs = get_point_category_orgs(request.user)
+    org_groups = group_orgs_by_root(root_orgs)
     
     semesters = Semester.objects.filter(organization__in=root_orgs).order_by('-start_date')
+    if org_id:
+        # Provide only semesters belonging to the selected organization
+        semesters = semesters.filter(organization_id=org_id)
 
     # ── Activity stats by status ────────────────────────────────────────────
     status_qs = (
@@ -280,6 +294,8 @@ def statistics_view(request):
         # Filter options
         'semesters': semesters,
         'current_semester_id': semester_id,
+        'org_groups': org_groups,
+        'current_org': org_id,
     }
     return render(request, 'core/statistics.html', context)
 
