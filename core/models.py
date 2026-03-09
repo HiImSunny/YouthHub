@@ -39,6 +39,16 @@ class Organization(models.Model):
     def __str__(self):
         return f"{self.get_type_display()} - {self.name}"
 
+    @property
+    def short_name(self):
+        """Returns a shortened version of the organization name suitable for badges/QR display."""
+        name_upper = self.name.upper()
+        name_upper = name_upper.replace('ĐOÀN TRƯỜNG ĐẠI HỌC ', 'ĐH ')
+        name_upper = name_upper.replace('ĐOÀN TRƯỜNG CAO ĐẲNG ', 'CĐ ')
+        name_upper = name_upper.replace('ĐOÀN TRƯỜNG ', '')
+        name_upper = name_upper.replace('ĐẠI HỌC ', 'ĐH ')
+        return name_upper.strip()
+
 
 class OrganizationMember(models.Model):
     """

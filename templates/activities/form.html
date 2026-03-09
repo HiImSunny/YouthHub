@@ -58,7 +58,12 @@
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- CHỌN --</option>
                         {% for org in organizations %}
-                        <option value="{{ org.pk }}" {% if activity.organization_id == org.pk %}selected{% endif %}>{{ org.name }}</option>
+                        <option value="{{ org.pk }}" 
+                            data-parent="{{ org.parent_id|default:'' }}"
+                            data-grandparent="{% if org.parent %}{{ org.parent.parent_id|default:'' }}{% endif %}"
+                            {% if activity.organization_id == org.pk %}selected{% endif %}>
+                            {{ org.name }}
+                        </option>
                         {% endfor %}
                     </select>
                 </div>
@@ -190,7 +195,8 @@
             const prompt = `Viết một đoạn mô tả (khoảng 3-4 câu) cho hoạt động sinh viên có tên là: "${titleInput.value}". 
 Yêu cầu:
 1. Gồm mục đích và nội dung chính, văn phong trẻ trung năng động.
-2. TUYỆT ĐỐI KHÔNG mở đầu bằng các câu giao tiếp như "Dưới đây là...", "Đoạn mô tả như sau...". Bắt tay ngay vào bài viết chính.`;
+2. Chú ý: KẾT QUẢ TRẢ VỀ CHỈ LÀ PLAIN TEXT. TUYỆT ĐỐI KHÔNG SỬ DỤNG Markdown, không dùng dấu *, **, hay # nào cả.
+3. TUYỆT ĐỐI KHÔNG mở đầu bằng các câu giao tiếp như "Dưới đây là...", "Đoạn mô tả như sau...". Bắt tay ngay vào bài viết chính.`;
             const response = await fetch('{% url "ai_assistant:suggest" %}', {
                 method: 'POST',
                 headers: {
@@ -231,13 +237,14 @@ Yêu cầu:
         const semSelect = document.getElementById('semSelect');
         const pcSelect = document.getElementById('pcSelect');
 
-        function filterOptions(selectElem, orgId) {
+        function filterOptions(selectElem, orgId, parentId, grandParentId) {
             Array.from(selectElem.options).forEach(opt => {
                 if (opt.value === "") {
                     opt.style.display = 'block'; 
                     return;
                 }
-                if (opt.dataset.org === orgId) {
+                const targetOrg = opt.dataset.org;
+                if (targetOrg === orgId || targetOrg === parentId || targetOrg === grandParentId) {
                     opt.style.display = 'block';
                 } else {
                     opt.style.display = 'none';
@@ -252,19 +259,23 @@ Yêu cầu:
         }
 
         if (orgSelect && semSelect && pcSelect) {
-            orgSelect.addEventListener('change', function () {
-                filterOptions(semSelect, this.value);
-                filterOptions(pcSelect, this.value);
-            });
-            // Initial filter when page loads, only if it's new creation or already has selected org
-            if (orgSelect.value) {
-                filterOptions(semSelect, orgSelect.value);
-                filterOptions(pcSelect, orgSelect.value);
-            } else {
-                // If no org selected, hide all options except empty ones
-                filterOptions(semSelect, 'NONE');
-                filterOptions(pcSelect, 'NONE');
+            function updateFilters() {
+                const selectedOpt = orgSelect.options[orgSelect.selectedIndex];
+                if (!selectedOpt || selectedOpt.value === "") {
+                    filterOptions(semSelect, 'NONE');
+                    filterOptions(pcSelect, 'NONE');
+                    return;
+                }
+                const orgId = selectedOpt.value;
+                const parentId = selectedOpt.dataset.parent;
+                const grandParentId = selectedOpt.dataset.grandparent;
+                filterOptions(semSelect, orgId, parentId, grandParentId);
+                filterOptions(pcSelect, orgId, parentId, grandParentId);
             }
+
+            orgSelect.addEventListener('change', updateFilters);
+            // Initial filter when page loads
+            updateFilters();
         }
     });
 </script>
