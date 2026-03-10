@@ -21,16 +21,20 @@
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-black uppercase mb-2">TÊN HOẠT ĐỘNG <span
-                            class="text-accent-red">*</span></label>
-                    <input type="text" name="title" required value="{{ activity.title|default:'' }}"
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-black uppercase">TÊN HOẠT ĐỘNG <span class="text-accent-red">*</span></label>
+                        <button type="button" id="stopAutoGenBtn" class="hidden text-xs font-black uppercase bg-red-100 text-accent-red border-2 border-black px-2 py-0.5 shadow-brutal-sm hover:-translate-y-0.5 transition-transform flex items-center gap-1" title="Dừng tự động điền">
+                            <span class="material-symbols-outlined text-[14px]">block</span> DỪNG AUTO
+                        </button>
+                    </div>
+                    <input type="text" name="title" id="activityTitle" required value="{{ activity.title|default:'' }}"
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase placeholder:text-slate-400 focus:ring-0 focus:border-black text-sm"
                         placeholder="NHẬP TÊN HOẠT ĐỘNG">
                 </div>
                 <div>
                     <label class="block text-sm font-black uppercase mb-2">MÃ HOẠT ĐỘNG <span
                             class="text-accent-red">*</span></label>
-                    <input type="text" name="code" required value="{{ activity.code|default:'' }}"
+                    <input type="text" name="code" id="activityCode" required value="{{ activity.code|default:'' }}"
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase placeholder:text-slate-400 focus:ring-0 focus:border-black text-sm"
                         placeholder="VD: HD-001">
                 </div>
@@ -76,7 +80,7 @@
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- KHÔNG XÁC ĐỊNH --</option>
                         {% for sem in semesters %}
-                        <option value="{{ sem.pk }}" data-org="{{ sem.organization_id }}" {% if activity.semester_id == sem.pk %}selected{% endif %}>{{ sem.name }} ({{ sem.academic_year }})</option>
+                        <option value="{{ sem.pk }}" data-org="{{ sem.organization_id }}" data-current="{{ sem.is_current|yesno:'true,false' }}" data-start="{{ sem.start_date|date:'Y-m-d' }}" data-end="{{ sem.end_date|date:'Y-m-d' }}" {% if activity.semester_id == sem.pk %}selected{% endif %}>{{ sem.name }} ({{ sem.academic_year }})</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -86,7 +90,7 @@
                 <div>
                     <label class="block text-sm font-black uppercase mb-2">LOẠI HOẠT ĐỘNG <span
                             class="text-accent-red">*</span></label>
-                    <select name="activity_type" required
+                    <select name="activity_type" id="activityType" required
                         class="w-full border-3 border-black bg-white p-3 font-bold uppercase text-sm focus:ring-0">
                         <option value="">-- CHỌN --</option>
                         {% for val, label in type_choices %}
@@ -122,16 +126,14 @@
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-black uppercase mb-2">BẮT ĐẦU <span
-                            class="text-accent-red">*</span></label>
-                    <input type="datetime-local" name="start_time" required
+                    <label class="block text-sm font-black uppercase mb-2">BẮT ĐẦU <span class="text-accent-red">*</span></label>
+                    <input type="datetime-local" name="start_time" id="startTime" required
                         value="{{ activity.start_time|date:'Y-m-d\TH:i'|default:'' }}"
                         class="w-full border-3 border-black bg-white p-3 font-bold focus:ring-0 focus:border-black text-sm">
                 </div>
                 <div>
-                    <label class="block text-sm font-black uppercase mb-2">KẾT THÚC <span
-                            class="text-accent-red">*</span></label>
-                    <input type="datetime-local" name="end_time" required
+                    <label class="block text-sm font-black uppercase mb-2">KẾT THÚC <span class="text-accent-red">*</span></label>
+                    <input type="datetime-local" name="end_time" id="endTime" required
                         value="{{ activity.end_time|date:'Y-m-d\TH:i'|default:'' }}"
                         class="w-full border-3 border-black bg-white p-3 font-bold focus:ring-0 focus:border-black text-sm">
                 </div>
@@ -274,12 +276,84 @@ Yêu cầu:
                 const grandParentId = selectedOpt.dataset.grandparent;
                 filterOptions(semSelect, orgId, parentId, grandParentId);
                 filterOptions(pcSelect, orgId, parentId, grandParentId);
+                
+                // Auto-select current semester logic
+                if (!semSelect.value) { // Only auto-select if nothing is selected yet
+                    let foundCurrent = false;
+                    for(let i=1; i<semSelect.options.length; i++){
+                        const opt = semSelect.options[i];
+                        if(opt.style.display !== 'none' && opt.dataset.current === 'true'){
+                            semSelect.selectedIndex = i;
+                            foundCurrent = true;
+                            
+                            // Set current datetime logic
+                            const startTimeInput = document.getElementById('startTime');
+                            const endTimeInput = document.getElementById('endTime');
+                            if(!startTimeInput.value) {
+                                const now = new Date();
+                                const tzOffset = now.getTimezoneOffset() * 60000;
+                                const localISOTime = (new Date(now.getTime() - tzOffset)).toISOString().slice(0, 16);
+                                startTimeInput.value = localISOTime;
+                                
+                                // End time is 2 hours later by default
+                                const later = new Date(now.getTime() - tzOffset + 2*60*60*1000);
+                                endTimeInput.value = later.toISOString().slice(0, 16);
+                            }
+                            break;
+                        }
+                    }
+                }
             }
 
             orgSelect.addEventListener('change', updateFilters);
             // Initial filter when page loads
             updateFilters();
         }
+        
+        // Auto-generation logic when Title loses focus
+        const titleInput = document.getElementById('activityTitle');
+        const codeInput = document.getElementById('activityCode');
+        const descInput = document.getElementById('activityDesc');
+        const typeSelect = document.getElementById('activityType');
+        const stopBtn = document.getElementById('stopAutoGenBtn');
+        let autoGenEnabled = true; // Enabled by default
+        
+        if (titleInput && (!codeInput.value || !descInput.value)) {
+            stopBtn.classList.remove('hidden');
+        }
+        
+        stopBtn.addEventListener('click', function() {
+            autoGenEnabled = false;
+            stopBtn.classList.add('hidden');
+        });
+        
+        titleInput.addEventListener('blur', async function() {
+            if (!autoGenEnabled || !this.value.trim() || document.querySelector('input[name="is_edit"]')) return;
+            // Only auto-gen if code and desc are empty
+            if (!codeInput.value) {
+                // Generate simple code from title initials
+                const initials = this.value.split(' ').map(w => w.charAt(0).toUpperCase()).join('').substring(0, 4);
+                const randomNum = Math.floor(100 + Math.random() * 900);
+                codeInput.value = `HD-${initials}${randomNum}`;
+            }
+            if(!typeSelect.value) {
+                // Auto guess type from keywords
+                const t = this.value.toLowerCase();
+                if(t.includes('học thuật') || t.includes('cuộc thi') || t.includes('olympic')) typeSelect.value = 'ACADEMIC';
+                else if(t.includes('thể thao') || t.includes('giải') || t.includes('cúp')) typeSelect.value = 'SPORTS';
+                else if(t.includes('văn nghệ') || t.includes('gala') || t.includes('âm nhạc')) typeSelect.value = 'CULTURAL';
+                else if(t.includes('tình nguyện') || t.includes('xuân') || t.includes('mùa hè')) typeSelect.value = 'VOLUNTEER';
+                else if(t.includes('hội thảo') || t.includes('talkshow') || t.includes('tập huấn')) typeSelect.value = 'WORKSHOP';
+                else typeSelect.value = 'OTHER';
+            }
+            if (!descInput.value) {
+                // Trigger AI Draft
+                draftWithAI();
+                // We've done it once, hide the stop button
+                stopBtn.classList.add('hidden');
+                autoGenEnabled = false; 
+            }
+        });
     });
 </script>
 {% endblock %}
