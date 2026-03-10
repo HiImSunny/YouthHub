@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xac nhan dang ky hoat dong</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+  .container { max-width: 600px; margin: 30px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .header { background: #2563eb; color: #fff; padding: 28px 32px; }
+  .header h1 { margin: 0; font-size: 22px; }
+  .header p { margin: 6px 0 0; opacity: 0.85; font-size: 14px; }
+  .body { padding: 28px 32px; color: #333; }
+  .info-box { background: #f0f4ff; border-left: 4px solid #2563eb; padding: 16px 20px; border-radius: 0 8px 8px 0; margin: 20px 0; }
+  .info-box .label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .info-box .value { font-weight: 600; color: #1e3a8a; font-size: 15px; }
+  .badge { display: inline-block; background: #dcfce7; color: #166534; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-top: 12px; }
+  .footer { background: #f8fafc; padding: 20px 32px; text-align: center; color: #888; font-size: 13px; border-top: 1px solid #e2e8f0; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>✅ Dang ky thanh cong!</h1>
+    <p>He thong YouthHub xac nhan dang ky hoat dong cua ban</p>
+  </div>
+  <div class="body">
+    <p>Xin chao <strong>{{ student.get_full_name|default:student.username }}</strong>,</p>
+    <p>Ban da dang ky tham gia hoat dong ve cua Doan - Hoi Sinh vien. Duoi day la thong tin chi tiet:</p>
+
+    <div class="info-box">
+      <div class="label">Ten hoat dong</div>
+      <div class="value">{{ activity.title }}</div>
+    </div>
+
+    {% if activity.start_date %}
+    <div class="info-box">
+      <div class="label">Thoi gian bat dau</div>
+      <div class="value">{{ activity.start_date|date:"d/m/Y" }}</div>
+    </div>
+    {% endif %}
+
+    {% if activity.organization %}
+    <div class="info-box">
+      <div class="label">Don vi to chuc</div>
+      <div class="value">{{ activity.organization }}</div>
+    </div>
+    {% endif %}
+
+    <span class="badge">✓ Da dang ky</span>
+
+    <p style="margin-top: 24px; color: #555;">
+      Vui long tham gia dung gio va dang ky diem danh theo huong dan cua ban to chuc.
+      Neu co thac mac, lien he phong Doan - Hoi cua truong.
+    </p>
+  </div>
+  <div class="footer">
+    &copy; YouthHub &bull; He thong quan ly hoat dong Doan - Hoi Sinh vien<br>
+    <small>Email nay duoc gui tu dong, vui long khong reply.</small>
+  </div>
+</div>
+</body>
+</html>

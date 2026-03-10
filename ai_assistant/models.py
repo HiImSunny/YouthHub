@@ -10,16 +10,22 @@ class AiDocument(models.Model):
     """
 
     class DocType(models.TextChoices):
-        PLAN = 'PLAN', 'Kế hoạch'
-        REPORT = 'REPORT', 'Báo cáo'
-        INVITATION = 'INVITATION', 'Thư mời'
-        OTHER = 'OTHER', 'Khác'
+        PLAN = 'PLAN', 'Ke hoach'
+        REPORT = 'REPORT', 'Bao cao'
+        INVITATION = 'INVITATION', 'Thu moi'
+        OTHER = 'OTHER', 'Khac'
 
     class DocStatus(models.TextChoices):
-        RAW = 'RAW', 'Bản thô AI'
-        DRAFT = 'DRAFT', 'Bản nháp'
-        EDITED = 'EDITED', 'Đã chỉnh sửa'
-        FINAL = 'FINAL', 'Bản chính thức'
+        RAW = 'RAW', 'Ban tho AI'
+        DRAFT = 'DRAFT', 'Ban nhap'
+        EDITED = 'EDITED', 'Da chinh sua'
+        FINAL = 'FINAL', 'Ban chinh thuc'
+
+    class GenerationStatus(models.TextChoices):
+        """Tracks async Celery task progress for AI generation."""
+        PENDING = 'PENDING', 'Dang tao...'
+        DONE = 'DONE', 'Hoan thanh'
+        ERROR = 'ERROR', 'Loi'
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -41,7 +47,7 @@ class AiDocument(models.Model):
     )
     title = models.CharField(max_length=255, blank=True, null=True)
     prompt = models.TextField()
-    generated_content = models.TextField()
+    generated_content = models.TextField(blank=True, default='')
     model = models.CharField(max_length=100, default='qwen2.5-coder:1.5b')
     tokens_input = models.IntegerField(blank=True, null=True)
     tokens_output = models.IntegerField(blank=True, null=True)
@@ -50,18 +56,42 @@ class AiDocument(models.Model):
         choices=DocStatus.choices,
         default=DocStatus.RAW,
     )
+
+    # --- Async generation tracking ---
+    generation_status = models.CharField(
+        max_length=10,
+        choices=GenerationStatus.choices,
+        default=GenerationStatus.DONE,  # DONE as default for backward compatibility
+        db_index=True,
+    )
+    celery_task_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text='Celery task ID for async generation tracking',
+    )
+    generation_error = models.TextField(
+        blank=True,
+        null=True,
+        help_text='Error message if generation failed',
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'ai_documents'
-        verbose_name = 'Văn bản AI'
-        verbose_name_plural = 'Văn bản AI'
+        verbose_name = 'Van ban AI'
+        verbose_name_plural = 'Van ban AI'
         ordering = ['-created_at']
 
     def __str__(self):
         return self.title or f"AI Doc #{self.pk}"
 
+    @property
+    def is_pending(self):
+        return self.generation_status == self.GenerationStatus.PENDING
 
-
-
+    @property
+    def is_done(self):
+        return self.generation_status == self.GenerationStatus.DONE

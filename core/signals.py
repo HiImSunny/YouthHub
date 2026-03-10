@@ -107,7 +107,13 @@ def log_attendance_save(sender, instance, created, **kwargs):
         instance=instance,
         changes={'student_code': instance.entered_student_code, 'status': instance.status},
     )
-
+    # Dispatch registration email async via Celery (non-blocking)
+    try:
+        from core.tasks import send_activity_registration_email
+        send_activity_registration_email.delay(instance.pk)
+    except Exception as e:
+        import logging as _logging
+        _logging.getLogger(__name__).warning(f"Could not dispatch registration email: {e}")
 
 # ─── Auth Signals ─────────────────────────────────────────────────────────────
 

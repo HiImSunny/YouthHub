@@ -161,79 +161,106 @@ def pull_model_api(request):
 @login_required
 @require_POST
 def generate_view(request):
-    """Handle document generation request."""
+    """Handle document generation - dispatches async Celery task (non-blocking)."""
     if (denied := _staff_only(request)):
         return denied
-    doc_type = request.POST.get('doc_type', 'KẾ HOẠCH / BÁO CÁO')
+
+    doc_type = request.POST.get('doc_type', 'KE HOACH / BAO CAO')
     event_name = request.POST.get('event_name', '')
     organization = request.POST.get('organization', '')
     date = request.POST.get('date', '')
     description = request.POST.get('description', '')
     model_name = request.POST.get('model_name', get_default_model())
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
-    manageable_orgs = get_manageable_orgs(request.user).order_by('type', 'name')
-
-    import time
-    start_time = time.time()
-    # Try Ollama first
-    result = generate_document(doc_type, event_name, organization, date, description, model_name=model_name)
-    generation_time = round(time.time() - start_time, 1)
-
-    if result.get('error'):
-        # Pass an offline status directly back so UI shows correct state without relying async
-        status = {
-            'online': result.get('status_code') != 404,
-            'has_model': False,
-            'models': []
-        }
-        # Fallback to template
-        content = generate_fallback(doc_type, event_name, organization, date, description)
-        messages.warning(request, f'Ollama gặp lỗi. Lỗi: {result["error"][:100]}')
-    else:
-        status = None # let async handle it if success
-        content = result['content']
-
-    # Save as RAW document
+    # Create AiDocument record immediately with PENDING status
     doc = AiDocument.objects.create(
         created_by=request.user,
         doc_type=_map_doc_type(doc_type),
-        title=f'{doc_type}: {event_name or "Chưa có tên"}',
+        title=f'{doc_type}: {event_name or "Chua co ten"}',
         prompt=f'Type: {doc_type} | Event: {event_name} | Org: {organization} | Date: {date}',
-        generated_content=content,
-        model=result.get('model', model_name),
-        tokens_input=result.get('tokens_input'),
-        tokens_output=result.get('tokens_output'),
+        generated_content='',
+        model=model_name,
         status=AiDocument.DocStatus.RAW,
+        generation_status=AiDocument.GenerationStatus.PENDING,
     )
 
+    # Dispatch Celery task (returns immediately, does NOT block)
+    from .tasks import generate_document_task
+    task = generate_document_task.delay(
+        document_id=doc.pk,
+        doc_type=doc_type,
+        event_name=event_name,
+        organization=organization,
+        date=date,
+        description=description,
+        model_name=model_name,
+    )
+
+    # Save task ID for tracking
+    doc.celery_task_id = task.id
+    doc.save(update_fields=['celery_task_id'])
+
+    # AJAX: return task info for JavaScript polling
+    if is_ajax:
+        return JsonResponse({
+            'task_id': task.id,
+            'document_id': doc.pk,
+            'status': 'PENDING',
+        })
+
+    # Non-AJAX: re-render form with pending indicator
+    manageable_orgs = get_manageable_orgs(request.user).order_by('type', 'name')
     recent_docs = AiDocument.objects.filter(
         created_by=request.user
     ).order_by('-created_at')[:5]
 
-    word_count = len(content.split()) if content else 0
-
     context = {
-        'ollama_status': status,
+        'ollama_status': None,
         'ollama_model': model_name,
         'available_models': AVAILABLE_MODELS,
         'recent_docs': recent_docs,
         'manageable_orgs': manageable_orgs,
         'org_groups': group_orgs_by_root(manageable_orgs),
-        'output': content,
-        'current_doc': doc,
-        'word_count': word_count,
-        'tokens_in': result.get('tokens_input', 0),
-        'tokens_out': result.get('tokens_output', 0),
-        # Preserve form values
+        'output': '',
+        'pending_doc_id': doc.pk,
+        'pending_task_id': task.id,
         'form_doc_type': doc_type,
         'form_event_name': event_name,
         'form_organization': organization,
         'form_date': date,
         'form_description': description,
         'hardware_info': get_hardware_info(),
-        'generation_time': generation_time,
     }
     return render(request, 'ai_assistant/chat.html', context)
+
+
+@login_required
+def task_status_api(request, document_id):
+    """Polling endpoint: returns async generation status of an AiDocument."""
+    doc = get_object_or_404(AiDocument, pk=document_id, created_by=request.user)
+
+    if doc.generation_status == AiDocument.GenerationStatus.PENDING:
+        return JsonResponse({'status': 'PENDING'})
+
+    if doc.generation_status == AiDocument.GenerationStatus.ERROR:
+        return JsonResponse({
+            'status': 'ERROR',
+            'error': doc.generation_error or 'Loi khong xac dinh',
+            'document_id': doc.pk,
+        })
+
+    # DONE - return full content
+    word_count = len(doc.generated_content.split()) if doc.generated_content else 0
+    return JsonResponse({
+        'status': 'DONE',
+        'document_id': doc.pk,
+        'content': doc.generated_content,
+        'word_count': word_count,
+        'tokens_in': doc.tokens_input or 0,
+        'tokens_out': doc.tokens_output or 0,
+        'model': doc.model,
+    })
 
 
 @login_required
