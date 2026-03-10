@@ -100,9 +100,17 @@ def ai_suggest_api(request):
         
         if resp.status_code == 200:
             return JsonResponse({'content': resp.json().get('response', '')})
-        return JsonResponse({'error': f'Ollama error {resp.status_code}: {resp.text}'}, status=500)
+            
+        # Parse Ollama's specific error message if available
+        error_msg = f'Ollama báo lỗi {resp.status_code}: '
+        try:
+            error_msg += resp.json().get('error', resp.text)
+        except:
+            error_msg += resp.text
+            
+        return JsonResponse({'error': error_msg})
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'error': f'Không kết nối được Ollama: {str(e)}'})
 
 
 @login_required
