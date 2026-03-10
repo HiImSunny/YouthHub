@@ -11,9 +11,14 @@
 <div class="max-w-4xl mx-auto">
     <!-- Header -->
     <div class="mb-8 border-b-3 border-black pb-4">
-        <div class="flex items-center gap-4 mb-2">
-            <span class="material-symbols-outlined text-5xl text-accent-red">warning</span>
-            <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none text-accent-red">PHỤC HỒI HỆ THỐNG</h1>
+        <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-4">
+                <span class="material-symbols-outlined text-5xl text-accent-red">warning</span>
+                <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none text-accent-red">PHỤC HỒI HỆ THỐNG</h1>
+            </div>
+            <a href="{% url 'core:backup_dashboard' %}" class="bg-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn flex items-center gap-2 hover:bg-slate-100 transition-colors">
+                <span class="material-symbols-outlined">arrow_back</span> QUAY LẠI
+            </a>
         </div>
         <p class="text-sm font-bold uppercase bg-black text-white inline-block px-4 py-1 mt-2 border-3 border-black shadow-brutal-sm">
             THAO TÁC NGUY HIỂM - CHỈ DÀNH CHO QUẢN TRỊ VIÊN
