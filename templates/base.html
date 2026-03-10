@@ -61,6 +61,84 @@
       transform: translate(2px, 2px);
       box-shadow: none !important;
     }
+
+    /* Flatpickr Neo-Brutalism Overrides */
+    .flatpickr-calendar {
+      background: #fff;
+      border: 3px solid #000;
+      box-shadow: 4px 4px 0px 0px rgba(0,0,0,1) !important;
+      border-radius: 0 !important;
+      padding: 0;
+      font-family: 'Space Grotesk', sans-serif !important;
+    }
+    
+    .flatpickr-calendar.hasTime .flatpickr-time {
+      border-top: 3px solid #000;
+      height: 50px;
+    }
+    
+    .flatpickr-months {
+      border-bottom: 3px solid #000;
+      background: #f0f0eb;
+    }
+    
+    .flatpickr-month {
+      font-weight: 900;
+      text-transform: uppercase;
+      color: #000;
+      fill: #000;
+    }
+    
+    span.flatpickr-weekday {
+      font-weight: 900;
+      color: #000;
+      text-transform: uppercase;
+    }
+    
+    .flatpickr-day {
+      border-radius: 0 !important;
+      font-weight: 700;
+      border: 1px solid transparent;
+      color: #000;
+    }
+    
+    .flatpickr-day:hover, .flatpickr-day:focus {
+      background: #fbef2e;
+      border-color: #000;
+      color: #000;
+    }
+    
+    .flatpickr-day.today {
+      border-color: #000;
+      background: #f0f0eb;
+    }
+    
+    .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected.inRange, .flatpickr-day.startRange.inRange, .flatpickr-day.endRange.inRange, .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus, .flatpickr-day.selected:hover, .flatpickr-day.startRange:hover, .flatpickr-day.endRange:hover, .flatpickr-day.selected.prevMonthDay, .flatpickr-day.startRange.prevMonthDay, .flatpickr-day.endRange.prevMonthDay, .flatpickr-day.selected.nextMonthDay, .flatpickr-day.startRange.nextMonthDay, .flatpickr-day.endRange.nextMonthDay {
+      background: #ff6a00;
+      border-color: #000;
+      color: #fff;
+    }
+    
+    .flatpickr-time input:hover, .flatpickr-time .flatpickr-am-pm:hover, .flatpickr-time input:focus, .flatpickr-time .flatpickr-am-pm:focus {
+      background: #fbef2e;
+      color: #000;
+    }
+    
+    .numInputWrapper span {
+      border-left: 1px solid #000;
+    }
+    
+    .numInputWrapper span:hover {
+      background: #fbef2e;
+    }
+    
+    .flatpickr-time input.flatpickr-hour {
+      font-weight: 900;
+    }
+    
+    .flatpickr-time input.flatpickr-minute {
+      font-weight: 900;
+    }
   </style>
 </head>
 
