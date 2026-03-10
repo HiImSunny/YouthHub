@@ -10,8 +10,12 @@ from .utils_backup import list_backups, create_database_backup, create_media_bac
 def is_superuser(user):
     return user.is_active and user.is_superuser
 
-def get_grouped_backups():
+def get_grouped_backups(date_filter=None):
     files = list_backups()
+    
+    if date_filter:
+        files = [f for f in files if f['created'].strftime('%Y-%m-%d') == date_filter]
+        
     timestamps = {}
     for f in files:
         name = f['name']
@@ -41,11 +45,13 @@ def get_grouped_backups():
 
 @user_passes_test(is_superuser)
 def backup_dashboard_view(request):
-    files, full_backups, single_backups = get_grouped_backups()
+    date_filter = request.GET.get('date', '')
+    files, full_backups, single_backups = get_grouped_backups(date_filter)
     return render(request, 'core/backup_dashboard.html', {
         'backups': single_backups,
         'full_backups': full_backups,
         'all_files': files,
+        'date_filter': date_filter,
     })
 
 @user_passes_test(is_superuser)
