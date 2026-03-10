@@ -304,6 +304,25 @@
         aside.classList.toggle('w-64');
       });
     }
+
+    // Init global flatpickr
+    document.addEventListener("DOMContentLoaded", function() {
+        if(typeof flatpickr !== 'undefined') {
+            flatpickr(".datepicker", {
+                locale: "vn",
+                dateFormat: "d/m/Y",
+                allowInput: true
+            });
+
+            flatpickr(".datetimepicker", {
+                locale: "vn",
+                enableTime: true,
+                dateFormat: "d/m/Y H:i",
+                time_24hr: true,
+                allowInput: true
+            });
+        }
+    });
   </script>
 </body>
 
