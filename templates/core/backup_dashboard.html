@@ -95,7 +95,7 @@
                 <span class="material-symbols-outlined">folder</span> DANH SÁCH BẢN SAO LƯU TRÊN MÁY CHỦ
             </h2>
             <form method="get" class="flex gap-2">
-                <input type="text" name="date" value="{{ date_filter }}" class="bg-white border-3 border-black px-3 py-1.5 focus:outline-none focus:ring-0 font-bold focus:border-primary text-sm uppercase cursor-pointer h-[42px] datepicker" placeholder="CHỌN NGÀY">
+                <input type="date" name="date" value="{{ date_filter }}" class="bg-white border-3 border-black px-3 py-1.5 focus:outline-none focus:ring-0 font-bold focus:border-primary text-sm uppercase cursor-pointer h-[42px]">
                 <button type="submit" class="bg-black text-white px-4 h-[42px] font-black uppercase text-sm border-3 border-black hover:bg-white hover:text-black transition-colors brutal-btn shadow-brutal-sm flex items-center justify-center">LỌC</button>
                 {% if date_filter %}
                 <a href="{% url 'core:backup_dashboard' %}" class="bg-white text-black px-3 h-[42px] font-black uppercase text-sm border-3 border-black hover:bg-slate-100 transition-colors brutal-btn shadow-brutal-sm flex items-center justify-center" title="Xóa bộ lọc">

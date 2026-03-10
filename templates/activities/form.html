@@ -124,15 +124,15 @@
             <div class="grid grid-cols-2 gap-4">
                 <div>
                     <label class="block text-sm font-black uppercase mb-2">BẮT ĐẦU <span class="text-accent-red">*</span></label>
-                    <input type="text" name="start_time" id="startTime" required
-                        value="{{ activity.start_time|date:'d/m/Y H:i'|default:'' }}"
-                        class="w-full border-3 border-black bg-white p-3 font-bold focus:ring-0 focus:border-black text-sm datetimepicker">
+                    <input type="datetime-local" name="start_time" id="startTime" required
+                        value="{{ activity.start_time|date:'Y-m-d\TH:i'|default:'' }}"
+                        class="w-full border-3 border-black bg-white p-3 font-bold focus:ring-0 focus:border-black text-sm">
                 </div>
                 <div>
                     <label class="block text-sm font-black uppercase mb-2">KẾT THÚC <span class="text-accent-red">*</span></label>
-                    <input type="text" name="end_time" id="endTime" required
-                        value="{{ activity.end_time|date:'d/m/Y H:i'|default:'' }}"
-                        class="w-full border-3 border-black bg-white p-3 font-bold focus:ring-0 focus:border-black text-sm datetimepicker">
+                    <input type="datetime-local" name="end_time" id="endTime" required
+                        value="{{ activity.end_time|date:'Y-m-d\TH:i'|default:'' }}"
+                        class="w-full border-3 border-black bg-white p-3 font-bold focus:ring-0 focus:border-black text-sm">
                 </div>
             </div>
 
@@ -297,37 +297,14 @@ Yêu cầu:
                             const startTimeInput = document.getElementById('startTime');
                             const endTimeInput = document.getElementById('endTime');
                             if(!startTimeInput.value) {
-                                // Since we use flatpickr, it's better to update the flatpickr instance directly rather than just setting value
                                 const now = new Date();
+                                const tzOffset = now.getTimezoneOffset() * 60000;
+                                const localISOTime = (new Date(now.getTime() - tzOffset)).toISOString().slice(0, 16);
+                                startTimeInput.value = localISOTime;
                                 
-                                const later = new Date(now.getTime() + 2*60*60*1000); // 2 hours later
-                                
-                                if(startTimeInput._flatpickr) {
-                                    startTimeInput._flatpickr.setDate(now);
-                                } else {
-                                    // Fallback text format dd/mm/yyyy hh:mm
-                                    startTimeInput.value = [
-                                        now.getDate().toString().padStart(2, '0'),
-                                        (now.getMonth() + 1).toString().padStart(2, '0'),
-                                        now.getFullYear()
-                                    ].join('/') + ' ' + [
-                                        now.getHours().toString().padStart(2, '0'),
-                                        now.getMinutes().toString().padStart(2, '0')
-                                    ].join(':');
-                                }
-                                
-                                if(endTimeInput._flatpickr) {
-                                    endTimeInput._flatpickr.setDate(later);
-                                } else {
-                                    endTimeInput.value = [
-                                        later.getDate().toString().padStart(2, '0'),
-                                        (later.getMonth() + 1).toString().padStart(2, '0'),
-                                        later.getFullYear()
-                                    ].join('/') + ' ' + [
-                                        later.getHours().toString().padStart(2, '0'),
-                                        later.getMinutes().toString().padStart(2, '0')
-                                    ].join(':');
-                                }
+                                // End time is 2 hours later by default
+                                const later = new Date(now.getTime() - tzOffset + 2*60*60*1000);
+                                endTimeInput.value = later.toISOString().slice(0, 16);
                             }
                             break;
                         }

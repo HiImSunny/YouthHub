@@ -40,11 +40,11 @@
         <div class="grid grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-black uppercase mb-2">BẮT ĐẦU TỪ <span class="text-accent-red">*</span></label>
-                <input type="text" name="start_date" required value="{{ semester.start_date|date:'d/m/Y'|default:'' }}" class="w-full border-3 border-black p-3 font-bold uppercase text-sm datepicker">
+                <input type="date" name="start_date" required value="{{ semester.start_date|date:'Y-m-d'|default:'' }}" class="w-full border-3 border-black p-3 font-bold uppercase text-sm">
             </div>
             <div>
                 <label class="block text-sm font-black uppercase mb-2">KẾT THÚC KHI <span class="text-accent-red">*</span></label>
-                <input type="text" name="end_date" required value="{{ semester.end_date|date:'d/m/Y'|default:'' }}" class="w-full border-3 border-black p-3 font-bold uppercase text-sm datepicker">
+                <input type="date" name="end_date" required value="{{ semester.end_date|date:'Y-m-d'|default:'' }}" class="w-full border-3 border-black p-3 font-bold uppercase text-sm">
             </div>
         </div>
 
