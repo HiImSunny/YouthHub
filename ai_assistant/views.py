@@ -86,6 +86,7 @@ def ai_suggest_api(request):
          
     import requests
     from django.conf import settings
+    from .ollama_service import generate_document
     
     OLLAMA_BASE_URL = getattr(settings, 'OLLAMA_BASE_URL', 'http://localhost:11434')
     OLLAMA_TIMEOUT = getattr(settings, 'OLLAMA_TIMEOUT', 120)
@@ -99,7 +100,7 @@ def ai_suggest_api(request):
         
         if resp.status_code == 200:
             return JsonResponse({'content': resp.json().get('response', '')})
-        return JsonResponse({'error': f'Ollama error {resp.status_code}'}, status=500)
+        return JsonResponse({'error': f'Ollama error {resp.status_code}: {resp.text}'}, status=500)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
