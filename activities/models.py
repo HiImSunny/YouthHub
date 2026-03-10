@@ -109,12 +109,7 @@ class Activity(models.Model):
         null=True,
         help_text='Tổng hợp dự trù kinh phí'
     )
-    tasks_info = models.JSONField(
-        default=list,
-        blank=True,
-        null=True,
-        help_text='Danh sách task công việc'
-    )
+
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
