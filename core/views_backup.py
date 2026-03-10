@@ -69,15 +69,12 @@ def backup_delete_view(request, filename):
 @user_passes_test(is_superuser)
 def backup_restore_view(request):
     if request.method == 'POST':
-        restore_type = request.POST.get('type') # 'data' or 'media'
-        filename = request.POST.get('filename') # For restoring from existing file
         uploaded_file = request.FILES.get('backup_file') # For restoring from uploaded file
+        restore_option = request.POST.get('restore_option') # For restoring from existing file ('single:filename' or 'full:dbname:medianame')
         
-        if not restore_type and filename:
-            restore_type = 'data' if filename.endswith('.json') else 'media'
-            
         backup_dir = ensure_backup_dir()
         file_path = None
+        restore_type = None
         
         if uploaded_file:
             # Save uploaded file temporarily
@@ -96,27 +93,65 @@ def backup_restore_view(request):
                 messages.error(request, "Định dạng file không hỗ trợ. Sử dụng .json cho Data và .zip cho Media.")
                 os.remove(temp_path)
                 return redirect('core:backup_dashboard')
-        elif filename:
-            if '..' in filename or filename.startswith('/'):
-                return HttpResponseBadRequest("Invalid filename")
-            file_path = os.path.join(backup_dir, filename)
-            if not os.path.exists(file_path):
-                messages.error(request, "File phục hồi nội bộ không tồn tại.")
+        elif restore_option:
+            if restore_option.startswith('full:'):
+                parts = restore_option.split(':')
+                if len(parts) == 3:
+                    _, db_name, media_name = parts
+                    db_path = os.path.join(backup_dir, db_name)
+                    media_path = os.path.join(backup_dir, media_name)
+                    if not os.path.exists(db_path) or not os.path.exists(media_path):
+                        messages.error(request, "Một trong các file phục hồi tổng hợp không tồn tại.")
+                        return redirect('core:backup_dashboard')
+                    file_path = {'db': db_path, 'media': media_path}
+                    restore_type = 'full'
+                else:
+                    messages.error(request, "Định dạng tùy chọn full không hợp lệ.")
+                    return redirect('core:backup_dashboard')
+            elif restore_option.startswith('single:'):
+                filename = restore_option.split(':', 1)[1]
+                if '..' in filename or filename.startswith('/'):
+                    return HttpResponseBadRequest("Invalid filename")
+                file_path = os.path.join(backup_dir, filename)
+                if not os.path.exists(file_path):
+                    messages.error(request, "File phục hồi nội bộ không tồn tại.")
+                    return redirect('core:backup_dashboard')
+                restore_type = 'data' if filename.endswith('.json') else 'media'
+            else:
+                messages.error(request, "Tùy chọn không hợp lệ.")
                 return redirect('core:backup_dashboard')
         else:
-             messages.error(request, "Không có file nào được cung cấp để phục hồi.")
+             messages.error(request, "Không có tham số nào được cung cấp để phục hồi.")
              return redirect('core:backup_dashboard')
              
         try:
             safe_restore(file_path, restore_type)
-            messages.success(request, f"Phục hồi hệ thống ({restore_type}) thành công. Lưu ý: Có thể bạn sẽ phải đăng nhập lại.")
+            messages.success(request, f"Phục hồi hệ thống ({restore_type}) thành công. Lưu ý: Có thể bạn sẽ phải đăng nhập lại nếu phục hồi dữ liệu.")
         except Exception as e:
             messages.error(request, f"Lỗi phục hồi: {e}")
         finally:
-            if uploaded_file and file_path and os.path.exists(file_path):
+            if uploaded_file and file_path and isinstance(file_path, str) and os.path.exists(file_path):
                 # Clean up temp file
                 os.remove(file_path)
                 
         return redirect('core:backup_dashboard')
 
-    return render(request, 'core/backup_restore.html')
+    # GET Request: Prepare data for select box
+    files = list_backups()
+    timestamps = {}
+    for f in files:
+        name = f['name']
+        if '_backup_' in name:
+            ts = name.split('_backup_')[-1].split('.')[0]
+            if ts not in timestamps:
+                timestamps[ts] = {'data': None, 'media': None, 'ts': ts}
+            if f['type'] == 'data': timestamps[ts]['data'] = name
+            if f['type'] == 'media': timestamps[ts]['media'] = name
+            
+    full_backups = [v for v in timestamps.values() if v['data'] and v['media']]
+    full_backups.sort(key=lambda x: x['ts'], reverse=True)
+
+    return render(request, 'core/backup_restore.html', {
+        'backups': files,
+        'full_backups': full_backups
+    })

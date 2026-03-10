@@ -124,6 +124,9 @@ def safe_restore(restore_file_path, restore_type):
             restore_database(restore_file_path)
         elif restore_type == 'media':
             restore_media(restore_file_path)
+        elif restore_type == 'full':
+            restore_database(restore_file_path['db'])
+            restore_media(restore_file_path['media'])
     except Exception as e:
         logger.error(f"Restore thất bại: {e}")
         raise e

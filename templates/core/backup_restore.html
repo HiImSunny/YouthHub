@@ -82,10 +82,32 @@
                 {% csrf_token %}
                 
                 <div>
-                    <label class="block text-sm font-black uppercase tracking-tight mb-2">NHẬP TÊN FILE</label>
-                    <input type="text" name="filename" required placeholder="VD: data_backup_2026.json"
-                        class="w-full bg-bg-light border-3 border-black px-4 py-3 focus:outline-none focus:ring-0 font-bold focus:border-primary placeholder-slate-400 transition-colors">
-                    <span class="text-xs text-slate-500 font-bold mt-1 inline-block uppercase">* Bạn có thể lấy tên file trong thư mục Sao lưu của ứng dụng.</span>
+                    <label class="block text-sm font-black uppercase tracking-tight mb-2">CHỌN BẢN SAO LƯU</label>
+                    <select name="restore_option" required
+                        class="w-full bg-bg-light border-3 border-black px-4 py-3 focus:outline-none focus:ring-0 font-bold focus:border-primary transition-colors cursor-pointer">
+                        <option value="" disabled selected>-- Chọn file để phục hồi --</option>
+                        
+                        {% if full_backups %}
+                        <optgroup label="⚡ PHỤC HỒI TỔNG HỢP (FULL RESTORE)">
+                            {% for fb in full_backups %}
+                            <option value="full:{{ fb.data }}:{{ fb.media }}">
+                                FULL BACKUP ngày {{ fb.ts|slice:"6:8" }}/{{ fb.ts|slice:"4:6" }}/{{ fb.ts|slice:"0:4" }} lúc {{ fb.ts|slice:"9:11" }}:{{ fb.ts|slice:"11:13" }}
+                            </option>
+                            {% endfor %}
+                        </optgroup>
+                        {% endif %}
+
+                        {% if backups %}
+                        <optgroup label="📄 PHỤC HỒI ĐƠN LẺ (CHỈ DATA HOẶC MEDIA)">
+                            {% for b in backups %}
+                            <option value="single:{{ b.name }}">
+                                {% if b.type == 'data' %}[DATA]{% else %}[MEDIA]{% endif %} {{ b.name }}
+                            </option>
+                            {% endfor %}
+                        </optgroup>
+                        {% endif %}
+                    </select>
+                    <span class="text-xs text-slate-500 font-bold mt-1 inline-block uppercase">* Chọn [FULL BACKUP] để phục hồi đồng thời Data và Media sinh ra cùng thời điểm.</span>
                 </div>
                 
                 <div class="bg-red-50 border-3 border-accent-red p-4 mt-auto">
