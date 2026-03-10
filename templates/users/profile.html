@@ -2,11 +2,15 @@
 {% block title %}PROFILE — YOUTHHUB{% endblock %}
 
 {% block content %}
-<div class="max-w-xl">
-    <h1 class="text-4xl font-black uppercase tracking-tighter mb-6">PROFILE</h1>
-        <p class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">
-            THÔNG TIN CÁ NHÂN
-        </p>
+<div class="max-w-xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-4xl font-black uppercase tracking-tighter mb-2 text-center">PROFILE</h1>
+        <div class="text-center">
+            <p class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">
+                THÔNG TIN CÁ NHÂN
+            </p>
+        </div>
+    </div>
 
     <div class="bg-white border-3 border-black p-6 shadow-brutal-lg">
         <div class="flex items-center gap-4 mb-6 pb-6 border-b-3 border-black">
@@ -15,8 +19,7 @@
             </div>
             <div>
                 <h2 class="text-xl font-black uppercase">{{ user.full_name }}</h2>
-                <p class="text-sm font-bold uppercase text-slate-500 tracking-widest">{{ user.role }} · {{ user.username
-                    }}</p>
+                <p class="text-sm font-bold uppercase text-slate-500 tracking-widest">{{ user.role }} · {{ user.username }}</p>
             </div>
         </div>
 
