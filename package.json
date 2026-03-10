@@ -17,5 +17,8 @@
     "event-management"
   ],
   "author": "YouthHub Team",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "flatpickr": "^4.6.13"
+  }
 }
