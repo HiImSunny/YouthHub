@@ -216,9 +216,19 @@ Yêu cầu:
             if (response.ok) {
                 const data = await response.json();
                 if (data.content) {
-                    descInput.value = data.content.trim();
+                    // Loại bỏ các ký tự Markdown cứng đầu (vd: *, #, _)
+                    let cleanContent = data.content.replace(/[\*#_`]/g, '').trim();
+                    // Loại bỏ các gạch ngang đầu dòng dư thừa nếu có (vd: - Hoặc nội dung)
+                    cleanContent = cleanContent.replace(/^-\s+/gm, '');
+                    descInput.value = cleanContent;
                 } else if (data.error) {
-                    alert('Lỗi AI: ' + data.error);
+                    if (data.error.includes('404')) {
+                        if(confirm('Model AI chưa được cài đặt trên hệ thống. Bạn có muốn chuyển hướng sang trang TRỢ LÝ AI để tải model ngay bây giờ không?')) {
+                            window.location.href = "{% url 'ai_assistant:chat' %}";
+                        }
+                    } else {
+                        alert('Lỗi AI: ' + data.error);
+                    }
                     descInput.value = originalDesc;
                 }
             } else {
