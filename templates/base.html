@@ -71,7 +71,9 @@
         <span class="material-symbols-outlined text-3xl text-primary">bolt</span>
         <div>
           <h1 class="text-xl font-black uppercase tracking-tighter leading-none">YOUTH HUB</h1>
-          <p class="text-[10px] uppercase tracking-[0.3em] text-zinc-400 font-bold">STUDENT UNION</p>
+          <p class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">
+            STUDENT UNION
+        </p>
         </div>
       </div>
 
@@ -87,7 +89,7 @@
         <a href="{% url 'students:dashboard' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
           {% if 'student/dashboard' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
-          <span class="material-symbols-outlined text-xl">dashboard</span> DASHBOARD
+          <span class="material-symbols-outlined text-xl">dashboard</span> BẢNG ĐIỀU KHIỂN
         </a>
 
         <!-- Student: Hoạt động -->
@@ -113,7 +115,7 @@
         <a href="{% url 'core:dashboard' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
           {% if url_name == 'dashboard' %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
-          <span class="material-symbols-outlined text-xl">dashboard</span> DASHBOARD
+          <span class="material-symbols-outlined text-xl">dashboard</span> BẢNG ĐIỀU KHIỂN
         </a>
 
         <!-- Hoạt động -->
@@ -180,14 +182,23 @@
         <a href="{% url 'core:audit_log' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
           {% if 'audit' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
-          <span class="material-symbols-outlined text-xl">manage_search</span> AUDIT LOG
+          <span class="material-symbols-outlined text-xl">manage_search</span> LỊCH SỬ THAO TÁC
         </a>
 
         <!-- User Management — ADMIN only -->
         <a href="{% url 'users:management' %}"
           class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
           {% if 'management' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
-          <span class="material-symbols-outlined text-xl">manage_accounts</span> USERS
+          <span class="material-symbols-outlined text-xl">manage_accounts</span> NGƯỜI DÙNG
+        </a>
+        {% endif %}
+
+        {% if user.is_superuser %}
+        <!-- Backup & Restore — SUPERUSER only -->
+        <a href="{% url 'core:backup_dashboard' %}"
+          class="flex items-center gap-3 px-4 py-3 font-black uppercase text-sm border-3 border-transparent
+          {% if 'backup' in request.path %}bg-primary text-white border-black shadow-brutal-sm{% else %}hover:bg-zinc-800{% endif %} transition-all">
+          <span class="material-symbols-outlined text-xl">save</span> SAO LƯU DỮ LIỆU
         </a>
         {% endif %}
 

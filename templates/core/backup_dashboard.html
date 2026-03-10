@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% block title %}SAO LƯU DỮ LIỆU — YOUTHHUB{% endblock %}
+
+{% block breadcrumb %}
+<span class="text-sm font-black uppercase text-slate-500">QUẢN TRỊ / SAO LƯU DỮ LIỆU</span>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-2">SAO LƯU & PHỤC HỒI</h1>
+            <p class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">
+                QUẢN LÝ DỮ LIỆU HỆ THỐNG
+            </p>
+        </div>
+    </div>
+
+    <!-- Actions block -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <!-- Backup Data -->
+        <div class="bg-white border-3 border-black p-6 shadow-brutal flex flex-col justify-between">
+            <div>
+                <div class="w-12 h-12 bg-primary border-3 border-black flex items-center justify-center mb-4">
+                    <span class="material-symbols-outlined text-white">dataset</span>
+                </div>
+                <h3 class="text-xl font-black uppercase mb-2">SAO LƯU DỮ LIỆU CSDL</h3>
+                <p class="text-sm font-medium text-slate-600 mb-6">Tạo bản sao lưu toàn bộ thông tin Text, cấu trúc dữ liệu dưới định dạng JSON.</p>
+            </div>
+            <form action="{% url 'core:backup_create' %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="type" value="data">
+                <button type="submit" onclick="return confirm('Tiến hành sao lưu Database? Quá trình này có thể mất vài giây.')" class="w-full bg-primary text-white font-black uppercase px-4 py-3 border-3 border-black shadow-brutal-sm brutal-btn flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">add</span> TẠO BACKUP DB
+                </button>
+            </form>
+        </div>
+
+        <!-- Backup Media -->
+        <div class="bg-white border-3 border-black p-6 shadow-brutal flex flex-col justify-between">
+            <div>
+                <div class="w-12 h-12 bg-accent-yellow border-3 border-black flex items-center justify-center mb-4">
+                    <span class="material-symbols-outlined text-black">perm_media</span>
+                </div>
+                <h3 class="text-xl font-black uppercase mb-2">SAO LƯU TỆP ĐÍNH KÈM</h3>
+                <p class="text-sm font-medium text-slate-600 mb-6">Gom toàn bộ hình ảnh avatar, minh chứng điểm danh thành file ZIP.</p>
+            </div>
+            <form action="{% url 'core:backup_create' %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="type" value="media">
+                <button type="submit" onclick="return confirm('Tiến hành nén thư mục Media? File tạo ra có dung lượng lớn tương ứng với số lượng ảnh.')" class="w-full bg-accent-yellow text-black font-black uppercase px-4 py-3 border-3 border-black shadow-brutal-sm brutal-btn flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">add</span> TẠO BACKUP MEDIA
+                </button>
+            </form>
+        </div>
+
+        <!-- Full Backup -->
+        <div class="bg-black text-white border-3 border-black p-6 shadow-brutal flex flex-col justify-between">
+            <div>
+                <div class="w-12 h-12 bg-white border-3 border-black flex items-center justify-center mb-4">
+                    <span class="material-symbols-outlined text-black">all_inclusive</span>
+                </div>
+                <h3 class="text-xl font-black uppercase mb-2">SAO LƯU TỔNG HỢP</h3>
+                <p class="text-sm font-medium text-slate-400 mb-6">Thực hiện đóng gói cả Cơ sở dữ liệu VÀ thư mục hình ảnh.</p>
+            </div>
+            <form action="{% url 'core:backup_create' %}" method="post">
+                {% csrf_token %}
+                <input type="hidden" name="type" value="full">
+                <button type="submit" onclick="return confirm('Bạn có chắc chắn muốn tiến hành sao lưu tổng hợp không? Hành động này tiêu tốn nhiều tài nguyên hệ thống.')" class="w-full bg-white text-black font-black uppercase px-4 py-3 border-3 border-black hover:bg-zinc-200 transition-colors flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">done_all</span> TẠO FULL BACKUP
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Restore Banner -->
+    <div class="bg-accent-red text-white border-3 border-black p-6 shadow-brutal flex flex-col md:flex-row justify-between items-center gap-4 mb-10">
+        <div class="flex items-center gap-4">
+            <span class="material-symbols-outlined text-5xl">warning</span>
+            <div>
+                <h2 class="text-2xl font-black uppercase tracking-tight">KHU VỰC PHỤC HỒI HỆ THỐNG</h2>
+                <p class="font-medium text-red-100">Cảnh báo: Phục hồi sẽ ghi đè dữ liệu. Cần đọc kỹ thông tin trước khi thực hiện.</p>
+            </div>
+        </div>
+        <a href="{% url 'core:backup_restore' %}" class="bg-white text-accent-red font-black uppercase border-3 border-black px-6 py-3 shadow-brutal-sm brutal-btn flex items-center gap-2 whitespace-nowrap">
+            ĐẾN TRANG PHỤC HỒI <span class="material-symbols-outlined">arrow_forward</span>
+        </a>
+    </div>
+
+    <!-- Log Table -->
+    <div class="bg-white border-3 border-black shadow-brutal overflow-hidden">
+        <div class="p-4 border-b-3 border-black bg-bg-light flex items-center justify-between">
+            <h2 class="text-xl font-black uppercase flex items-center gap-2">
+                <span class="material-symbols-outlined">folder</span> DANH SÁCH BẢN SAO LƯU TRÊN MÁY CHỦ
+            </h2>
+        </div>
+        {% if backups %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b-3 border-black bg-slate-100">
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">TÊN FILE</th>
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black w-32">LOẠI</th>
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black w-32">KÍCH THƯỚC</th>
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black w-48">NGÀY TẠO</th>
+                        <th class="p-4 font-black uppercase text-sm w-48 text-center">HÀNH ĐỘNG</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for backup in backups %}
+                    <tr class="border-b-2 border-black hover:bg-slate-50 transition-colors">
+                        <td class="p-4 border-r-2 border-black font-bold font-mono text-sm break-all">
+                            {{ backup.name }}
+                        </td>
+                        <td class="p-4 border-r-2 border-black text-center">
+                            {% if backup.type == 'data' %}
+                            <span class="inline-block px-2 border-2 border-black bg-primary text-white text-xs font-black uppercase">DATA (JSON)</span>
+                            {% elif backup.type == 'media' %}
+                            <span class="inline-block px-2 border-2 border-black bg-accent-yellow text-black text-xs font-black uppercase">MEDIA (ZIP)</span>
+                            {% else %}
+                            <span class="inline-block px-2 border-2 border-black bg-slate-300 text-slate-800 text-xs font-black uppercase">UNKNOWN</span>
+                            {% endif %}
+                        </td>
+                        <td class="p-4 border-r-2 border-black font-bold uppercase text-sm text-center">
+                            {{ backup.size|filesizeformat }}
+                        </td>
+                        <td class="p-4 border-r-2 border-black text-sm">
+                            <span class="font-bold">{{ backup.created|date:"d/m/Y" }}</span><br>
+                            <span class="text-xs text-slate-500 font-bold uppercase">{{ backup.created|time:"H:i:s" }}</span>
+                        </td>
+                        <td class="p-4 flex flex-col gap-2">
+                            <a href="{% url 'core:backup_download' backup.name %}" target="_blank" class="w-full text-center bg-black text-white hover:text-accent-yellow font-black uppercase text-xs px-2 py-1.5 border-2 border-black flex items-center justify-center gap-1 transition-colors">
+                                <span class="material-symbols-outlined text-[16px]">download</span> TẢI VỀ
+                            </a>
+                            <form action="{% url 'core:backup_delete' backup.name %}" method="post" class="w-full">
+                                {% csrf_token %}
+                                <button type="submit" onclick="return confirm('Chắc chắn xóa bản sao lưu này? Không thể khôi phục lại.')" class="w-full bg-red-100 text-accent-red hover:bg-accent-red hover:text-white font-black uppercase text-xs px-2 py-1.5 border-2 border-black flex items-center justify-center gap-1 transition-colors">
+                                    <span class="material-symbols-outlined text-[16px]">delete</span> XÓA FILE
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-12 text-center text-slate-500">
+            <span class="material-symbols-outlined text-6xl mb-4 text-slate-300">find_in_page</span>
+            <p class="font-black uppercase text-lg">CHƯA CÓ BẢN SAO LƯU NÀO TRONG HỆ THỐNG.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 from .views_semester import semester_list, semester_create, semester_edit, semester_delete
+from . import views_backup
 
 
 app_name = 'core'
@@ -23,4 +24,10 @@ urlpatterns = [
     path('semesters/create/', semester_create, name='semester_create'),
     path('semesters/<int:pk>/edit/', semester_edit, name='semester_edit'),
     path('semesters/<int:pk>/delete/', semester_delete, name='semester_delete'),
+    
+    path('backup/', views_backup.backup_dashboard_view, name='backup_dashboard'),
+    path('backup/create/', views_backup.backup_create_view, name='backup_create'),
+    path('backup/download/<str:filename>/', views_backup.backup_download_view, name='backup_download'),
+    path('backup/delete/<str:filename>/', views_backup.backup_delete_view, name='backup_delete'),
+    path('backup/restore/', views_backup.backup_restore_view, name='backup_restore'),
 ]

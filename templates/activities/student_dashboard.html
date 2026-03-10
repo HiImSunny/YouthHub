@@ -1,8 +1,8 @@
-﻿{% extends 'base.html' %}
-{% block title %}DASHBOARD CỦA TÔI — YOUTHHUB{% endblock %}
+{% extends 'base.html' %}
+{% block title %}BẢNG ĐIỀU KHIỂN CỦA TÔI — YOUTHHUB{% endblock %}
 
 {% block breadcrumb %}
-<span class="font-black uppercase text-sm">📊 Dashboard của tôi</span>
+<span class="font-black uppercase text-sm">Dashboard của tôi</span>
 {% endblock %}
 
 {% block header_actions %}
@@ -17,9 +17,9 @@
 <div>
     <!-- Hero -->
     <div class="mb-8">
-        <h1 class="text-5xl font-black uppercase tracking-tighter leading-none mb-2">📊 DASHBOARD CỦA TÔI</h1>
+        <h1 class="text-5xl font-black uppercase tracking-tighter leading-none mb-2">BẢNG ĐIỀU KHIỂN CỦA TÔI</h1>
         {% if profile %}
-        <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">
+        <p class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">
             {{ profile.student_code }}
         </p>
         {% endif %}

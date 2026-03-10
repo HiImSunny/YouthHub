@@ -103,13 +103,14 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'vi'
 TIME_ZONE = 'Asia/Ho_Chi_Minh'
 USE_I18N = True
+USE_L10N = False
 USE_TZ = True
 
 # Custom date/time formats
 DATE_FORMAT = 'd/m/Y'
-DATETIME_FORMAT = 'H:i d/m/Y'
+DATETIME_FORMAT = 'd/m/Y H:i'
 SHORT_DATE_FORMAT = 'd/m/Y'
-SHORT_DATETIME_FORMAT = 'H:i d/m/Y'
+SHORT_DATETIME_FORMAT = 'd/m/Y H:i'
 
 DATE_INPUT_FORMATS = ['%d/%m/%Y', '%Y-%m-%d']
 DATETIME_INPUT_FORMATS = ['%d/%m/%Y %H:%M:%S', '%d/%m/%Y %H:%M', '%Y-%m-%dT%H:%M']
@@ -123,6 +124,11 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# =============================================================================
+# BACKUP FILES
+# =============================================================================
+BACKUP_DIR = BASE_DIR / 'backups'
 
 # =============================================================================
 # DEFAULT PRIMARY KEY

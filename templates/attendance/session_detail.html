@@ -136,7 +136,7 @@
                                 <td class="p-4 border-r-2 border-black font-mono text-sm">{{ rec.entered_student_code }}
                                 </td>
                                 <td class="p-4 border-r-2 border-black font-black uppercase">{{ rec.student.full_name|default:rec.entered_student_name|default:"KHÁCH" }}</td>
-                                <td class="p-4 border-r-2 border-black text-sm font-bold">{{ rec.checkin_time|date:"H:i d/m/Y" }}</td>
+                                <td class="p-4 border-r-2 border-black text-sm font-bold">{{ rec.checkin_time|date:"d/m/Y H:i" }}</td>
                                 <td class="p-4 border-r-2 border-black">
                                     {% if rec.photo_path %}
                                     <a href="/media/{{ rec.photo_path }}" target="_blank" class="w-10 h-10 border-3 border-black bg-slate-200 block hover:bg-white transition-colors group">

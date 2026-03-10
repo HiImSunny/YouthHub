@@ -9,6 +9,7 @@
             <div class="flex items-center justify-center gap-3 mb-2">
                 <span class="material-symbols-outlined text-4xl text-primary">bolt</span>
                 <h1 class="text-4xl font-black uppercase tracking-tighter">YOUTH HUB</h1>
+
             </div>
             <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">STUDENT UNION PLATFORM</p>
         </div>
@@ -35,10 +36,30 @@
 
             <div>
                 <label class="block text-sm font-black uppercase mb-2 tracking-wide">MẬT KHẨU</label>
-                <input type="password" name="password" required
-                    class="w-full border-3 border-black bg-white p-3 font-bold placeholder:text-slate-400 focus:ring-0 focus:border-black text-sm"
-                    placeholder="••••••••">
+                <div class="relative">
+                    <input type="password" name="password" id="loginPassword" required
+                        class="w-full border-3 border-black bg-white p-3 pr-12 font-bold placeholder:text-slate-400 focus:ring-0 focus:border-black text-sm"
+                        placeholder="••••••••">
+                    <button type="button" onclick="togglePasswordVisibility('loginPassword', 'loginToggleIcon')"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-slate-500 hover:text-black transition-colors focus:outline-none">
+                        <span id="loginToggleIcon" class="material-symbols-outlined select-none text-xl">visibility</span>
+                    </button>
+                </div>
             </div>
+
+            <script>
+                function togglePasswordVisibility(inputId, iconId) {
+                    const input = document.getElementById(inputId);
+                    const icon = document.getElementById(iconId);
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.innerText = 'visibility_off';
+                    } else {
+                        input.type = 'password';
+                        icon.innerText = 'visibility';
+                    }
+                }
+            </script>
 
             <button type="submit"
                 class="w-full bg-primary text-white border-3 border-black p-4 text-lg font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2">
@@ -52,7 +73,6 @@
                 class="block text-sm font-black uppercase text-primary hover:underline tracking-wide">
                 CHƯA CÓ TÀI KHOẢN? ĐĂNG KÝ NGAY →
             </a>
-            <p class="text-xs font-bold uppercase tracking-widest text-slate-400">POWERED BY YOUTHHUB v3.0</p>
         </div>
     </div>
 </div>

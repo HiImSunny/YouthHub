@@ -2,7 +2,7 @@
 {% block title %}NGÂN SÁCH - {{ activity.title|upper }} — YOUTHHUB{% endblock %}
 
 {% block breadcrumb %}
-<span class="font-black uppercase text-sm">💰 Ngân sách / {{ activity.title|truncatechars:25 }}</span>
+<span class="font-black uppercase text-sm">Ngân sách / {{ activity.title|truncatechars:25 }}</span>
 {% endblock %}
 
 {% block content %}
@@ -10,8 +10,10 @@
     <!-- Header -->
     <div class="mb-6 flex items-end justify-between gap-4 flex-wrap">
         <div>
-            <h1 class="text-4xl font-black uppercase tracking-tighter mb-1">💰 NGÂN SÁCH</h1>
-            <p class="text-sm font-bold uppercase tracking-[0.3em] text-primary">{{ activity.title|upper }}</p>
+            <h1 class="text-4xl font-black uppercase tracking-tighter mb-1">NGÂN SÁCH</h1>
+            <p class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">
+            {{ activity.title|upper }}
+        </p>
         </div>
         <a href="{% url 'activities:detail' pk=activity.pk %}"
             class="bg-white border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal-sm brutal-btn flex items-center gap-2">

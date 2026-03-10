@@ -2,7 +2,7 @@
 {% block title %}CHI TIẾT: {{ target_user.full_name|upper }} — YOUTHHUB{% endblock %}
 
 {% block breadcrumb %}
-<span class="font-black uppercase text-sm">👥 Người dùng / {{ target_user.full_name }}</span>
+<span class="font-black uppercase text-sm">Người dùng / {{ target_user.full_name }}</span>
 {% endblock %}
 
 {% block content %}
@@ -11,6 +11,9 @@
     <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
             <h1 class="text-5xl font-black uppercase tracking-tighter leading-none mb-2">{{ target_user.full_name }}</h1>
+        <p class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">
+            {{ TARGET_USER.FULL_NAME }} SYSTEM
+        </p>
             <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">
                 @{{ target_user.username }}  — 
                 {% if target_user.role == 'ADMIN' %}QUẢN TRỊ VIÊN

@@ -7,6 +7,15 @@ from django.contrib.auth.signals import user_logged_in, user_logged_out
 from django.dispatch import receiver
 
 from .models import AuditLog
+from functools import wraps
+
+def disable_for_loaddata(signal_handler):
+    @wraps(signal_handler)
+    def wrapper(*args, **kwargs):
+        if kwargs.get('raw'):
+            return
+        return signal_handler(*args, **kwargs)
+    return wrapper
 
 
 def _get_ip(request):
@@ -37,6 +46,7 @@ def _log(user, action, instance, request=None, changes=None):
 # ─── Activity Signals ─────────────────────────────────────────────────────────
 
 @receiver(post_save, sender='activities.Activity')
+@disable_for_loaddata
 def log_activity_save(sender, instance, created, **kwargs):
     """Log when an Activity is created or updated."""
     action = AuditLog.Action.CREATE if created else AuditLog.Action.UPDATE
@@ -49,6 +59,7 @@ def log_activity_save(sender, instance, created, **kwargs):
 
 
 @receiver(post_delete, sender='activities.Activity')
+@disable_for_loaddata
 def log_activity_delete(sender, instance, **kwargs):
     """Log when an Activity is deleted."""
     _log(
@@ -62,6 +73,7 @@ def log_activity_delete(sender, instance, **kwargs):
 # ─── Organization Signals ─────────────────────────────────────────────────────
 
 @receiver(post_save, sender='core.Organization')
+@disable_for_loaddata
 def log_org_save(sender, instance, created, **kwargs):
     action = AuditLog.Action.CREATE if created else AuditLog.Action.UPDATE
     _log(
@@ -73,6 +85,7 @@ def log_org_save(sender, instance, created, **kwargs):
 
 
 @receiver(post_delete, sender='core.Organization')
+@disable_for_loaddata
 def log_org_delete(sender, instance, **kwargs):
     _log(
         user=None,
@@ -84,6 +97,7 @@ def log_org_delete(sender, instance, **kwargs):
 # ─── ActivityParticipation Signals ──────────────────────────────────────────────────
 
 @receiver(post_save, sender='activities.ActivityParticipation')
+@disable_for_loaddata
 def log_attendance_save(sender, instance, created, **kwargs):
     if not created:
         return

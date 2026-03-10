@@ -66,17 +66,43 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-black uppercase mb-1 tracking-wide">MẬT KHẨU *</label>
-                    <input type="password" name="password" required
-                        class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
-                        placeholder="Tối thiểu 6 ký tự">
+                    <div class="relative">
+                        <input type="password" name="password" id="regPassword" required
+                            class="w-full border-3 border-black bg-white p-3 pr-12 font-bold text-sm focus:ring-0 focus:border-black"
+                            placeholder="Tối thiểu 6 ký tự">
+                        <button type="button" onclick="togglePasswordVisibility('regPassword', 'regToggleIcon1')"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-slate-500 hover:text-black transition-colors focus:outline-none">
+                            <span id="regToggleIcon1" class="material-symbols-outlined select-none text-xl">visibility</span>
+                        </button>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-xs font-black uppercase mb-1 tracking-wide">XÁC NHẬN MẬT KHẨU *</label>
-                    <input type="password" name="password2" required
-                        class="w-full border-3 border-black bg-white p-3 font-bold text-sm focus:ring-0 focus:border-black"
-                        placeholder="Nhập lại mật khẩu">
+                    <div class="relative">
+                        <input type="password" name="password2" id="regPasswordConf" required
+                            class="w-full border-3 border-black bg-white p-3 pr-12 font-bold text-sm focus:ring-0 focus:border-black"
+                            placeholder="Nhập lại mật khẩu">
+                        <button type="button" onclick="togglePasswordVisibility('regPasswordConf', 'regToggleIcon2')"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center text-slate-500 hover:text-black transition-colors focus:outline-none">
+                            <span id="regToggleIcon2" class="material-symbols-outlined select-none text-xl">visibility</span>
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            <script>
+                function togglePasswordVisibility(inputId, iconId) {
+                    const input = document.getElementById(inputId);
+                    const icon = document.getElementById(iconId);
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.innerText = 'visibility_off';
+                    } else {
+                        input.type = 'password';
+                        icon.innerText = 'visibility';
+                    }
+                }
+            </script>
 
             <button type="submit"
                 class="w-full bg-primary text-white border-3 border-black p-4 text-lg font-black uppercase shadow-brutal brutal-btn transition-all flex items-center justify-center gap-2 mt-4">

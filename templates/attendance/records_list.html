@@ -73,7 +73,7 @@
                     <p class="text-sm font-mono text-slate-600 mb-2">{{ rec.entered_student_code }}</p>
                     <div class="flex items-center gap-1 text-xs font-bold text-slate-500">
                         <span class="material-symbols-outlined text-sm">schedule</span>
-                        {{ rec.checkin_time|date:"H:i d/m/Y" }}
+                        {{ rec.checkin_time|date:"d/m/Y H:i" }}
                     </div>
                 </div>
                 <div class="flex border-t-4 border-black">
@@ -123,7 +123,7 @@
                             <span class="material-symbols-outlined text-accent-red text-base align-middle ml-1 cursor-help" title="Cảnh báo: Phát hiện nhiều bản ghi cùng MSSV chờ duyệt">warning</span>
                             {% endif %}
                         </td>
-                        <td class="p-4 border-r-2 border-black text-sm font-bold">{{ rec.checkin_time|date:"H:i d/m" }}</td>
+                        <td class="p-4 border-r-2 border-black text-sm font-bold">{{ rec.checkin_time|date:"d/m H:i" }}</td>
                         <td class="p-4 border-r-2 border-black">
                             {% if rec.photo_path %}
                             <a href="/media/{{ rec.photo_path }}" target="_blank"

@@ -1,15 +1,15 @@
-﻿{% extends 'base.html' %}
+{% extends 'base.html' %}
 {% block title %}HOẠT ĐỘNG — SINH VIÊN — YOUTHHUB{% endblock %}
 
 {% block breadcrumb %}
-<span class="font-black uppercase text-sm">🎓 Portal Sinh viên</span>
+<span class="font-black uppercase text-sm">Portal Sinh viên</span>
 {% endblock %}
 
 {% block header_actions %}
 <a href="{% url 'students:dashboard' %}"
     class="bg-accent-yellow border-3 border-black px-4 py-2 font-black uppercase text-sm shadow-brutal brutal-btn flex items-center gap-2">
     <span class="material-symbols-outlined text-sm">bar_chart</span>
-    DASHBOARD CỦA TÔI
+    BẢNG ĐIỀU KHIỂN CỦA TÔI
 </a>
 {% endblock %}
 
@@ -17,8 +17,10 @@
 <div>
     <!-- Hero -->
     <div class="mb-6">
-        <h1 class="text-5xl font-black uppercase tracking-tighter leading-none mb-2">🎓 HOẠT ĐỘNG</h1>
-        <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500">DANH SÁCH HOẠT ĐỘNG DÀNH CHO BẠN</p>
+        <h1 class="text-5xl font-black uppercase tracking-tighter leading-none mb-2">HOẠT ĐỘNG</h1>
+        <p class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">
+            DANH SÁCH HOẠT ĐỘNG DÀNH CHO BẠN
+        </p>
     </div>
 
     <!-- Tabs: time filter -->

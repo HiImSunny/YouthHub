@@ -2,13 +2,15 @@
 {% block title %}{% if is_edit %}SỬA{% else %}TẠO{% endif %} TỔ CHỨC — YOUTHHUB{% endblock %}
 
 {% block breadcrumb %}
-<span class="font-black uppercase text-sm">🏛 {% if is_edit %}Sửa{% else %}Tạo{% endif %} Tổ chức</span>
+<span class="font-black uppercase text-sm">{% if is_edit %}Sửa{% else %}Tạo{% endif %} Tổ chức</span>
 {% endblock %}
 
 {% block content %}
 <div class="max-w-xl mx-auto">
-    <h1 class="text-4xl font-black uppercase tracking-tighter mb-2">🏛 {% if is_edit %}SỬA{% else %}TẠO{% endif %} TỔ CHỨC</h1>
-    <p class="text-sm font-bold uppercase tracking-[0.3em] text-slate-500 mb-6">ADMIN ONLY</p>
+    <h1 class="text-4xl font-black uppercase tracking-tighter mb-2">{% if is_edit %}SỬA{% else %}TẠO{% endif %} TỔ CHỨC</h1>
+    <p class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">
+            ADMIN ONLY
+        </p>
 
     <div class="bg-white border-3 border-black p-6 shadow-brutal-lg">
         <form method="post" class="space-y-5">

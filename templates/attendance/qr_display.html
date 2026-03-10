@@ -76,9 +76,10 @@
                 <div class="absolute -top-5 -right-5 bg-black text-white font-mono font-bold px-4 py-1 text-sm border-2 border-black rotate-3">
                     SCAN ME
                 </div>
-                <h1 class="text-6xl lg:text-7xl font-black uppercase leading-none mb-6 break-words" style="letter-spacing: -2px;">
-                    {{ session.name }}
-                </h1>
+                <h1 class="text-6xl lg:text-7xl font-black uppercase leading-none mb-6 break-words" style="letter-spacing: -2px;">{{ session.name }}</h1>
+        <p class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">
+            {{ SESSION.NAME }} SYSTEM
+        </p>
                 
                 <div class="mb-8 flex flex-col gap-1">
                     {% if session.activity.organization.parent %}

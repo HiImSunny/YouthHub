@@ -263,7 +263,7 @@ def login_as_user(request, pk):
         from django.contrib.auth import login
         
         # Login as the target user (requires specifying backend since authenticate() was bypassed)
-        login(request, target_user, backend='django.contrib.auth.backends.ModelBackend')
+        login(request, target_user, backend='users.backends.EmailOrUsernameBackend')
         messages.success(request, f'Đã đăng nhập dưới quyền của {target_user.full_name}.')
         
         if target_user.role == 'STUDENT':

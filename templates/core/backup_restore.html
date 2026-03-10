@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}PHỤC HỒI HỆ THỐNG — YOUTHHUB{% endblock %}
+
+{% block breadcrumb %}
+<span class="text-sm font-black uppercase text-slate-500">
+    <a href="{% url 'core:backup_dashboard' %}" class="hover:text-black">QUẢN TRỊ / SAO LƯU DỮ LIỆU</a> / PHỤC HỒI
+</span>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8 border-b-3 border-black pb-4">
+        <div class="flex items-center gap-4 mb-2">
+            <span class="material-symbols-outlined text-5xl text-accent-red">warning</span>
+            <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none text-accent-red">PHỤC HỒI HỆ THỐNG</h1>
+        </div>
+        <p class="text-sm font-bold uppercase bg-black text-white inline-block px-4 py-1 mt-2 border-3 border-black shadow-brutal-sm">
+            THAO TÁC NGUY HIỂM - CHỈ DÀNH CHO QUẢN TRỊ VIÊN
+        </p>
+    </div>
+    
+    <!-- Info Banner -->
+    <div class="bg-primary/10 border-3 border-primary p-6 shadow-brutal mb-8 space-y-4">
+        <h3 class="font-black text-lg text-primary uppercase flex items-center gap-2">
+             ĐIỀU KHOẢN AN TOÀN TRƯỚC KHI THỰC HIỆN:
+        </h3>
+        <ul class="list-disc pl-6 space-y-2 font-bold text-sm text-slate-700">
+            <li>Quá trình này sẽ <strong>ghi đè vĩnh viễn</strong> dữ liệu trên hệ thống hiện tại bằng nội dung từ file Backup.</li>
+            <li>Hệ thống <strong>TỰ ĐỘNG KHỞI TẠO một bản sao lưu toàn bộ (Auto-Backup)</strong> trạng thái lúc này của Máy chủ ngay trước khi chạy lệnh ghi đè.</li>
+            <li>Nếu Auto-Backup thất bại vì một lý do bất kỳ (hết dung lượng ổ cứng,...), tiến trình Restore sẽ bị CẤM thực thi để bảo đảm an toàn!</li>
+            <li>Tất cả phiên đăng nhập sẽ bị ảnh hưởng nếu file Backup thuộc loại Dữ liệu (JSON). Vui lòng đăng nhập lại sau khi thành công.</li>
+        </ul>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+        <!-- TẢI FILE LÊN (JSON/ZIP) -->
+        <div class="bg-white border-3 border-black p-6 shadow-brutal flex flex-col justify-between">
+            <div>
+                <h3 class="text-2xl font-black uppercase mb-4 border-b-3 border-black pb-2 flex items-center gap-2">
+                    <span class="material-symbols-outlined">upload_file</span> PHỤC HỒI TỪ MÁY TÍNH
+                </h3>
+                <p class="text-sm font-medium text-slate-600 mb-6 font-bold">Upload file <span class="bg-primary text-white p-1">.json</span> để phục hồi CSDL hoặc file <span class="bg-accent-yellow text-black p-1">.zip</span> để phục hồi Media.</p>
+            </div>
+            
+            <form action="{% url 'core:backup_restore' %}" method="post" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                <div class="border-3 border-dashed border-slate-300 p-6 text-center hover:border-black transition-colors cursor-pointer" onclick="document.getElementById('backup_file_input').click()">
+                    <span class="material-symbols-outlined text-4xl text-slate-400 mb-2">cloud_upload</span>
+                    <p class="font-black uppercase text-sm" id="file_name_display">CHỌN HOẶC KÉO THẢ FILE</p>
+                    <input type="file" name="backup_file" id="backup_file_input" class="hidden" accept=".json,.zip" required onchange="document.getElementById('file_name_display').textContent = this.files[0].name" />
+                </div>
+
+                <div class="bg-red-50 border-3 border-accent-red p-4">
+                    <label class="flex items-start gap-2 cursor-pointer">
+                        <input type="checkbox" required class="mt-1 w-5 h-5 border-2 border-black focus:ring-accent-red text-accent-red cursor-pointer">
+                        <span class="text-xs font-black uppercase text-slate-700 leading-tight">TÔI XÁC NHẬN RỦI RO VÀ CHẤP THUẬN GHI ĐÈ HỆ THỐNG VỚI FILE NÀY.</span>
+                    </label>
+                </div>
+                
+                <button type="submit" class="w-full bg-accent-red text-white hover:bg-red-600 hover:text-white font-black uppercase px-4 py-3 border-3 border-black shadow-brutal-sm brutal-btn flex items-center justify-center gap-2 transition-colors">
+                    <span class="material-symbols-outlined">settings_backup_restore</span> BẮT ĐẦU PHỤC HỒI
+                </button>
+            </form>
+        </div>
+
+        <!-- PHỤC HỒI TỪ FILE CÓ SẴN TRÊN SERVER -->
+        <div class="bg-white border-3 border-black p-6 shadow-brutal flex flex-col justify-between">
+            <div>
+                <h3 class="text-2xl font-black uppercase mb-4 border-b-3 border-black pb-2 flex items-center gap-2">
+                    <span class="material-symbols-outlined">dns</span> TỪ MÁY CHỦ BẢN SAO LƯU
+                </h3>
+                <p class="text-sm font-medium text-slate-600 mb-6 font-bold">Lấy dữ liệu từ các tệp tin đã tạo sẵn trên máy chủ.</p>
+            </div>
+            
+            <form action="{% url 'core:backup_restore' %}" method="post" class="space-y-4">
+                {% csrf_token %}
+                
+                <div>
+                    <label class="block text-sm font-black uppercase tracking-tight mb-2">NHẬP TÊN FILE</label>
+                    <input type="text" name="filename" required placeholder="VD: data_backup_2026.json"
+                        class="w-full bg-bg-light border-3 border-black px-4 py-3 focus:outline-none focus:ring-0 font-bold focus:border-primary placeholder-slate-400 transition-colors">
+                    <span class="text-xs text-slate-500 font-bold mt-1 inline-block uppercase">* Bạn có thể lấy tên file trong thư mục Sao lưu của ứng dụng.</span>
+                </div>
+                
+                <div class="bg-red-50 border-3 border-accent-red p-4 mt-auto">
+                    <label class="flex items-start gap-2 cursor-pointer">
+                        <input type="checkbox" required class="mt-1 w-5 h-5 border-2 border-black focus:ring-accent-red text-accent-red cursor-pointer">
+                        <span class="text-xs font-black uppercase text-slate-700 leading-tight">TÔI XÁC NHẬN CHỌN ĐÚNG FILE BẢN GỐC VÀ THỰC THI RESTORE.</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="w-full bg-accent-red text-white hover:bg-black font-black uppercase px-4 py-3 border-3 border-black shadow-brutal-sm brutal-btn flex items-center justify-center gap-2 transition-colors">
+                    <span class="material-symbols-outlined">restart_alt</span> THỰC THI PHỤC HỒI
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

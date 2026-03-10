@@ -4,10 +4,9 @@
 {% block content %}
 <div class="max-w-3xl mx-auto">
     <div class="mb-8">
-        <h1 class="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-2">{% if is_edit %}✏️ SỬA
-            HOẠT ĐỘNG{% else %}⚡ TẠO HOẠT ĐỘNG{% endif %}</h1>
-        <p
-            class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">
+        <h1 class="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none mb-2">{% if is_edit %} SỬA
+            HOẠT ĐỘNG{% else %} TẠO HOẠT ĐỘNG{% endif %}</h1>
+        <p class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">
             {% if is_edit %}CẬP NHẬT THÔNG TIN HOẠT ĐỘNG{% else %}TẠO HOẠT ĐỘNG MỚI{% endif %}
         </p>
     </div>

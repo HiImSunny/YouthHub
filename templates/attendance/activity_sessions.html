@@ -27,7 +27,9 @@
     </nav>
     <div class="mb-4 border-l-8 border-black pl-6">
         <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-2">QUẢN LÝ ĐIỂM DANH</h1>
-        <p class="text-lg font-bold uppercase text-primary">{{ activity.title }}</p>
+        <p class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">
+            {{ activity.title }}
+        </p>
     </div>
 
     <!-- Sub-Navigation Tabs -->
@@ -79,10 +81,10 @@
                 <div class="text-xs font-bold uppercase text-slate-500 mb-4">
                     <div class="grid grid-cols-[auto_1fr] items-center gap-y-2 gap-x-3">
                         <span class="bg-black text-white px-2 py-1 font-mono text-[10px] border border-black shadow-brutal-sm">TỪ</span>
-                        <span class="text-black font-mono">{{ session.start_time|date:"H:i - d/m/Y" }}</span>
+                        <span class="text-black font-mono">{{ session.start_time|date:"d/m/Y H:i" }}</span>
                         
                         <span class="bg-primary text-black px-2 py-1 font-mono text-[10px] border border-black shadow-brutal-sm">ĐẾN</span>
-                        <span class="text-primary font-mono">{{ session.end_time|date:"H:i - d/m/Y" }}</span>
+                        <span class="text-primary font-mono">{{ session.end_time|date:"d/m/Y H:i" }}</span>
                     </div>
                 </div>
                 <div class="flex gap-3">

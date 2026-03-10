@@ -4,7 +4,10 @@
 {% block content %}
 <div class="max-w-2xl mx-auto">
     <div class="mb-8">
-        <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-2">{% if is_edit %}✏️ SỬA HỌC KỲ{% else %}⚡ TẠO HỌC KỲ MỚI{% endif %}</h1>
+        <h1 class="text-4xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-2">{% if is_edit %} SỬA HỌC KỲ{% else %} TẠO HỌC KỲ MỚI{% endif %}</h1>
+        <p class="text-sm font-bold uppercase bg-primary text-white inline-block px-4 py-1 border-3 border-black shadow-brutal">
+            CHỈNH SỬA THÔNG TIN
+        </p>
     </div>
 
     <form method="post" class="bg-white border-3 border-black shadow-brutal-lg p-6 space-y-6">
