@@ -10,10 +10,43 @@ from .utils_backup import list_backups, create_database_backup, create_media_bac
 def is_superuser(user):
     return user.is_active and user.is_superuser
 
+def get_grouped_backups():
+    files = list_backups()
+    timestamps = {}
+    for f in files:
+        name = f['name']
+        if '_backup_' in name:
+            ts = name.split('_backup_')[-1].split('.')[0]
+            if ts not in timestamps:
+                timestamps[ts] = {'data': None, 'media': None, 'ts': ts, 'size': 0, 'created': f['created']}
+            if f['type'] == 'data': 
+                timestamps[ts]['data'] = name
+                timestamps[ts]['size'] += f['size']
+            if f['type'] == 'media': 
+                timestamps[ts]['media'] = name
+                timestamps[ts]['size'] += f['size']
+            
+    full_backups = [v for v in timestamps.values() if v['data'] and v['media']]
+    full_backups.sort(key=lambda x: x['ts'], reverse=True)
+    
+    # Lọc ra các file đơn lẻ (không nằm trong full_backup)
+    full_backup_names = set()
+    for fb in full_backups:
+        full_backup_names.add(fb['data'])
+        full_backup_names.add(fb['media'])
+        
+    single_backups = [f for f in files if f['name'] not in full_backup_names]
+    
+    return files, full_backups, single_backups
+
 @user_passes_test(is_superuser)
 def backup_dashboard_view(request):
-    files = list_backups()
-    return render(request, 'core/backup_dashboard.html', {'backups': files})
+    files, full_backups, single_backups = get_grouped_backups()
+    return render(request, 'core/backup_dashboard.html', {
+        'backups': single_backups,
+        'full_backups': full_backups,
+        'all_files': files,
+    })
 
 @user_passes_test(is_superuser)
 @require_POST
@@ -137,21 +170,9 @@ def backup_restore_view(request):
         return redirect('core:backup_dashboard')
 
     # GET Request: Prepare data for select box
-    files = list_backups()
-    timestamps = {}
-    for f in files:
-        name = f['name']
-        if '_backup_' in name:
-            ts = name.split('_backup_')[-1].split('.')[0]
-            if ts not in timestamps:
-                timestamps[ts] = {'data': None, 'media': None, 'ts': ts}
-            if f['type'] == 'data': timestamps[ts]['data'] = name
-            if f['type'] == 'media': timestamps[ts]['media'] = name
-            
-    full_backups = [v for v in timestamps.values() if v['data'] and v['media']]
-    full_backups.sort(key=lambda x: x['ts'], reverse=True)
+    files, full_backups, single_backups = get_grouped_backups()
 
     return render(request, 'core/backup_restore.html', {
-        'backups': files,
+        'backups': files, # We pass all files to single options just in case, or single_backups if preferred. Let's pass all files as it was before.
         'full_backups': full_backups
     })

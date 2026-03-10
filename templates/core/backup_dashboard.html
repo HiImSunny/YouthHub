@@ -95,7 +95,7 @@
                 <span class="material-symbols-outlined">folder</span> DANH SÁCH BẢN SAO LƯU TRÊN MÁY CHỦ
             </h2>
         </div>
-        {% if backups %}
+        {% if full_backups or backups %}
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
@@ -108,6 +108,71 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% if full_backups %}
+                    <tr>
+                        <td colspan="5" class="bg-black text-white font-black uppercase p-2 border-b-3 border-black text-xs tracking-widest text-center">
+                            ⚡ BẢN SAO LƯU TỔNG HỢP (FULL BACKUP)
+                        </td>
+                    </tr>
+                    {% for fb in full_backups %}
+                    <!-- FULL BACKUP DATA -->
+                    <tr class="border-b border-dashed border-slate-400 bg-slate-100">
+                        <td class="p-4 border-r-2 border-black font-bold font-mono text-sm break-all pl-8 relative">
+                            <div class="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-primary"></div>
+                            {{ fb.data }}
+                        </td>
+                        <td class="p-4 border-r-2 border-black text-center">
+                            <span class="inline-block px-2 border-2 border-black bg-primary text-white text-xs font-black uppercase">DATA (JSON)</span>
+                        </td>
+                        <td class="p-4 border-r-2 border-black font-bold uppercase text-sm text-center" rowspan="2">
+                            {{ fb.size|filesizeformat }}
+                        </td>
+                        <td class="p-4 border-r-2 border-black text-sm" rowspan="2">
+                            <span class="font-bold">{{ fb.created|date:"d/m/Y" }}</span><br>
+                            <span class="text-xs text-slate-500 font-bold uppercase">{{ fb.created|time:"H:i:s" }}</span>
+                        </td>
+                        <td class="p-2 border-b border-dashed border-slate-400 flex justify-center items-center gap-2">
+                            <a href="{% url 'core:backup_download' fb.data %}" target="_blank" title="Tải File Này" class="w-1/2 text-center bg-black text-white hover:text-accent-yellow font-black uppercase text-xs px-2 py-1.5 border-2 border-black flex items-center justify-center transition-colors">
+                                <span class="material-symbols-outlined text-[16px]">download</span>
+                            </a>
+                            <form action="{% url 'core:backup_delete' fb.data %}" method="post" class="w-1/2">
+                                {% csrf_token %}
+                                <button type="submit" onclick="return confirm('Chắc chắn xóa bản sao lưu này? Không thể khôi phục lại.')" title="Xóa File Này" class="w-full bg-red-100 text-accent-red hover:bg-accent-red hover:text-white font-black uppercase text-xs px-2 py-1.5 border-2 border-black flex items-center justify-center transition-colors">
+                                    <span class="material-symbols-outlined text-[16px]">delete</span>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <!-- FULL BACKUP MEDIA -->
+                    <tr class="border-b-3 border-black bg-slate-100">
+                        <td class="p-4 border-r-2 border-black font-bold font-mono text-sm break-all pl-8 relative">
+                            <div class="absolute left-3 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-accent-yellow"></div>
+                            {{ fb.media }}
+                        </td>
+                        <td class="p-4 border-r-2 border-black text-center">
+                            <span class="inline-block px-2 border-2 border-black bg-accent-yellow text-black text-xs font-black uppercase">MEDIA (ZIP)</span>
+                        </td>
+                        <td class="p-2 flex justify-center items-center gap-2">
+                            <a href="{% url 'core:backup_download' fb.media %}" target="_blank" title="Tải File Này" class="w-1/2 text-center bg-black text-white hover:text-accent-yellow font-black uppercase text-xs px-2 py-1.5 border-2 border-black flex items-center justify-center transition-colors">
+                                <span class="material-symbols-outlined text-[16px]">download</span>
+                            </a>
+                            <form action="{% url 'core:backup_delete' fb.media %}" method="post" class="w-1/2">
+                                {% csrf_token %}
+                                <button type="submit" onclick="return confirm('Chắc chắn xóa phần Media của bản sao lưu này?')" title="Xóa File Này" class="w-full bg-red-100 text-accent-red hover:bg-accent-red hover:text-white font-black uppercase text-xs px-2 py-1.5 border-2 border-black flex items-center justify-center transition-colors">
+                                    <span class="material-symbols-outlined text-[16px]">delete</span>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endif %}
+
+                    {% if backups %}
+                    <tr>
+                        <td colspan="5" class="bg-primary text-white font-black uppercase p-2 border-b-3 border-black text-xs tracking-widest text-center mt-4">
+                            📄 BẢN SAO LƯU ĐƠN LẺ
+                        </td>
+                    </tr>
                     {% for backup in backups %}
                     <tr class="border-b-2 border-black hover:bg-slate-50 transition-colors">
                         <td class="p-4 border-r-2 border-black font-bold font-mono text-sm break-all">
@@ -142,6 +207,7 @@
                         </td>
                     </tr>
                     {% endfor %}
+                    {% endif %}
                 </tbody>
             </table>
         </div>
