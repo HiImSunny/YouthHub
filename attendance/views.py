@@ -137,7 +137,7 @@ def session_detail(request, pk):
         'checkin_url': checkin_url,
         'qr_data': qr_data,
         'approved_count': records.filter(status='VERIFIED').count(),
-        'pending_count': records.filter(status='PENDING').count(),
+        'pending_count': records.filter(status='ATTENDED').count(),
         'rejected_count': records.filter(status='REJECTED').count(),
         'now': timezone.now(),
     }
@@ -319,15 +319,6 @@ def checkin_submit(request, token):
                 messages.error(request, 'Vui lòng nhập đầy đủ MSSV và Tên.')
                 return redirect('attendance:checkin', token=token)
 
-            # Prevent duplicate for guests based on student_code AND student_name
-            if ActivityParticipation.objects.filter(
-                attendance_session=session,
-                entered_student_code__iexact=student_code,
-                entered_student_name__iexact=student_name
-            ).exists():
-                messages.info(request, 'Bạn đã điểm danh trong phiên này với tên và MSSV này rồi.')
-                return redirect('attendance:checkin', token=token)
-
             # Do not link student_instance right now to avoid UniqueConstraint errors
             # if multiple guests use the same student_code. Linking will happen on verify.
             student_instance = None
@@ -426,7 +417,7 @@ def checkin_reupload_photo(request, token):
                     attendance_session=session
                 ).first()
 
-        if existing_record and existing_record.status in ['ATTENDED', 'ABSENT']:
+        if existing_record and existing_record.status in ['ATTENDED', 'REJECTED']:
             photo = request.FILES['photo']
             from django.core.files.storage import default_storage
             
@@ -453,17 +444,28 @@ def records_list(request, session_pk):
         messages.error(request, 'Bạn không có quyền xem danh sách này.')
         return redirect('activities:list')
 
-    records = session.participations.select_related('student', 'verified_by').order_by('status', 'entered_student_code', '-checkin_time')
+    # We fetch all records and sort them manually to group duplicates correctly at the top
+    records = list(session.participations.select_related('student', 'verified_by').order_by('-checkin_time'))
     
     pending_count = sum(1 for r in records if r.status == 'ATTENDED')
     
-    # Identify duplicates 
+    # Identify duplicates across ALL records in the session (not just pending)
     from collections import Counter
-    pending_mssvs = [r.entered_student_code.upper() for r in records if r.status == 'ATTENDED' and r.entered_student_code]
-    duplicate_mssvs = {mssv for mssv, count in Counter(pending_mssvs).items() if count > 1}
+    all_mssvs = [r.entered_student_code.upper() for r in records if r.entered_student_code]
+    duplicate_mssvs = {mssv for mssv, count in Counter(all_mssvs).items() if count > 1}
     
     for r in records:
-        r.is_duplicate_conflict = (r.status == 'ATTENDED' and r.entered_student_code and r.entered_student_code.upper() in duplicate_mssvs)
+        r.is_duplicate_conflict = bool(r.entered_student_code and r.entered_student_code.upper() in duplicate_mssvs)
+
+    # Custom sort to put conflicts first, grouped by MSSV, then pending, then others
+    def sort_key(r):
+        conflict_order = 0 if r.is_duplicate_conflict else 1
+        mssv = r.entered_student_code.upper() if r.entered_student_code else ""
+        status_order = 0 if r.status == 'ATTENDED' else (1 if r.status == 'VERIFIED' else 2)
+        # Returns tuple: conflicts sink to top (0), grouped by MSSV alphabetically, then by ascending status_order
+        return (conflict_order, mssv, status_order)
+
+    records.sort(key=sort_key)
     
     return render(request, 'attendance/records_list.html', {
         'session': session,
@@ -496,7 +498,7 @@ def record_approve(request, pk):
         messages.error(request, 'Bạn không có quyền duyệt điểm danh.')
         return redirect('activities:list')
 
-    if request.method == 'POST' and record.status == 'ATTENDED':
+    if request.method == 'POST' and record.status in ['ATTENDED', 'REJECTED']:
         # Try to link student if null
         if not record.student and record.entered_student_code:
             from django.contrib.auth import get_user_model
@@ -518,7 +520,7 @@ def record_approve(request, pk):
                 attendance_session=record.attendance_session,
                 entered_student_code__iexact=record.entered_student_code,
                 status='ATTENDED'
-            ).exclude(pk=record.pk).update(status='ABSENT')
+            ).exclude(pk=record.pk).update(status='REJECTED')
 
         if record.student:
             awarded = _check_and_auto_award(record.student, record.activity, awarded_by=request.user)
@@ -540,8 +542,14 @@ def record_reject(request, pk):
         messages.error(request, 'Bạn không có quyền từ chối điểm danh.')
         return redirect('activities:list')
 
-    if request.method == 'POST' and record.status == 'ATTENDED':
-        record.status = 'ABSENT'
+    if request.method == 'POST' and record.status in ['ATTENDED', 'VERIFIED']:
+        if record.status == 'VERIFIED' and record.awarded_points > 0:
+            # Thu hồi điểm nếu hủy duyệt
+            record.awarded_points = 0
+            record.point_category = None
+            record.awarded_by = None
+            record.awarded_at = None
+        record.status = 'REJECTED'
         record.save()
         messages.success(request, 'Đã từ chối bản ghi điểm danh.')
 

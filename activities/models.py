@@ -152,7 +152,7 @@ class ActivityParticipation(models.Model):
         REGISTERED = 'REGISTERED', 'Đã đăng ký'
         ATTENDED = 'ATTENDED', 'Đã tham gia (Chờ duyệt)'
         VERIFIED = 'VERIFIED', 'Đã duyệt tham gia'
-        ABSENT = 'ABSENT', 'Vắng mặt'
+        REJECTED = 'REJECTED', 'Từ chối'
         CANCELED = 'CANCELED', 'Đã hủy'
         BANNED = 'BANNED', 'Bị cấm'
 

@@ -37,7 +37,7 @@
             </div>
             <select name="status"
                 class="border-3 border-black bg-white py-4 pl-4 pr-10 font-bold uppercase text-sm focus:ring-0">
-                <option value="">TẤT CẢ STATUS</option>
+                <option value="">TẤT CẢ TRẠNG THÁI</option>
                 <option value="DRAFT" {% if request.GET.status == 'DRAFT' %}selected{% endif %}>DRAFT</option>
                 <option value="PENDING" {% if request.GET.status == 'PENDING' %}selected{% endif %}>PENDING</option>
                 <option value="APPROVED" {% if request.GET.status == 'APPROVED' %}selected{% endif %}>APPROVED</option>

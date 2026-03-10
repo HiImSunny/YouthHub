@@ -108,13 +108,13 @@
                         <th class="p-4 font-black uppercase text-sm border-r-2 border-black">MSSV</th>
                         <th class="p-4 font-black uppercase text-sm border-r-2 border-black">THỜI GIAN</th>
                         <th class="p-4 font-black uppercase text-sm border-r-2 border-black">ẢNH</th>
-                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">STATUS</th>
+                        <th class="p-4 font-black uppercase text-sm border-r-2 border-black">TRẠNG THÁI</th>
                         <th class="p-4 font-black uppercase text-sm">HÀNH ĐỘNG</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for rec in records %}
-                    <tr class="border-b-2 border-black hover:bg-primary/5">
+                    <tr class="border-b-2 border-black hover:bg-primary/5 {% if rec.is_duplicate_conflict %}bg-accent-yellow/20{% endif %}">
                         <td class="p-4 border-r-2 border-black text-slate-400 font-mono">{{ forloop.counter }}</td>
                         <td class="p-4 border-r-2 border-black font-black uppercase">{{ rec.student.full_name|default:rec.entered_student_name|default:"KHÁCH" }}</td>
                         <td class="p-4 border-r-2 border-black font-mono text-sm relative group">
@@ -156,7 +156,18 @@
                                 </form>
                             </div>
                             {% elif rec.status == 'VERIFIED' %}
-                            <span class="text-xs text-slate-400 font-bold uppercase">BỞI {{ rec.verified_by.full_name|default:"—" }}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-slate-400 font-bold uppercase">BỞI {{ rec.verified_by.full_name|default:"—" }}</span>
+                                <form method="post" action="{% url 'attendance:record_reject' pk=rec.pk %}">
+                                    {% csrf_token %}
+                                    <button class="bg-accent-red text-white border-2 border-black px-2 py-1 text-[10px] font-black uppercase shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:-translate-y-[2px] hover:-translate-x-[2px] hover:shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-all">HỦY DUYỆT</button>
+                                </form>
+                            </div>
+                            {% elif rec.status == 'REJECTED' %}
+                            <form method="post" action="{% url 'attendance:record_approve' pk=rec.pk %}">
+                                {% csrf_token %}
+                                <button class="bg-accent-teal text-black border-2 border-black px-2 py-1 text-[10px] font-black uppercase shadow-[2px_2px_0_0_rgba(0,0,0,1)] hover:-translate-y-[2px] hover:-translate-x-[2px] hover:shadow-[4px_4px_0_0_rgba(0,0,0,1)] transition-all flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">replay</span> DUYỆT LẠI</button>
+                            </form>
                             {% else %}<span class="text-xs text-slate-400">—</span>{% endif %}
                         </td>
                     </tr>

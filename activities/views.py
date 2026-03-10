@@ -93,7 +93,9 @@ def activity_detail(request, pk):
         Activity.objects.select_related('organization', 'created_by', 'approved_by', 'semester'),
         pk=pk,
     )
-    participations = activity.participations.select_related('student').order_by('-registered_at')
+    # Bảng danh sách đăng ký ở trang chi tiết chỉ nên chứa những ai ĐANG ở trạng thái REGISTERED
+    # (Nhấp đăng ký nhưng chưa điểm danh). Nếu điểm danh rồi, họ sẽ nằm trong bảng QR Checkin.
+    registrations = activity.participations.select_related('student').filter(status='REGISTERED').order_by('-registered_at')
 
     # Check if current user is registered (only REGISTERED status, not CANCELED)
     user_registration = None
@@ -107,9 +109,9 @@ def activity_detail(request, pk):
 
     context = {
         'activity': activity,
-        'registrations': participations,
+        'registrations': registrations,
         'user_registration': user_registration,
-        'registration_count': participations.filter(status='REGISTERED').count(),
+        'registration_count': registrations.count(),
         # B1/B2 permission flags - used in template to show/hide buttons
         'can_edit': can_edit_activity(request.user, activity),
         'can_approve': can_approve_activity(request.user, activity),
@@ -383,7 +385,7 @@ def activity_register(request, pk):
     if request.method == 'POST':
         # Check slot limit before registering
         if activity.max_participants is not None:
-            current_count = activity.participations.filter(status='REGISTERED').count()
+            current_count = activity.participations.exclude(status__in=['CANCELED', 'BANNED', 'REJECTED']).count()
             if current_count >= activity.max_participants:
                 messages.error(
                     request,
@@ -606,7 +608,7 @@ def student_dashboard(request):
     total_checkins = records.count()
     verified_count = records.filter(status='VERIFIED').count()
     pending_count = records.filter(status='ATTENDED').count()
-    rejected_count = records.filter(status__in=['ABSENT', 'CANCELED', 'BANNED']).count()
+    rejected_count = records.filter(status__in=['REJECTED', 'CANCELED', 'BANNED']).count()
 
     # Group by point category for summary
     from django.db.models import Count
