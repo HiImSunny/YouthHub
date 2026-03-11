@@ -58,7 +58,7 @@ def send_activity_registration_email(self, participation_id: int):
             html_message = None
 
         plain_message = (
-            f'Xin chao {student.get_full_name() or student.username},\n\n'
+            f'Xin chao {getattr(student, "full_name", student.username)},\n\n'
             f'Ban da dang ky tham gia hoat dong: {activity.title}\n'
             f'Thoi gian: {activity.start_date}\n'
             f'Don vi to chuc: {activity.organization}\n\n'
@@ -135,7 +135,7 @@ def send_attendance_verified_email(self, participation_id: int):
             html_message = None
 
         plain_message = (
-            f'Xin chao {student.get_full_name() or student.username},\n\n'
+            f'Xin chao {getattr(student, "full_name", student.username)},\n\n'
             f'Diem danh cua ban tai hoat dong "{activity.title}" da duoc xac nhan.\n'
             f'Trang thai: {participation.get_status_display() if hasattr(participation, "get_status_display") else participation.status}\n\n'
             f'Cam on ban da tham gia!\n'
