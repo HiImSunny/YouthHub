@@ -15,6 +15,7 @@ urlpatterns = [
     # Check-in (student side)
     path('checkin/<str:token>/', views.checkin_view, name='checkin'),
     path('checkin/<str:token>/submit/', views.checkin_submit, name='checkin_submit'),
+    path('checkin/<str:token>/reupload/', views.checkin_reupload_photo, name='checkin_reupload_photo'),
 
     # Records management (staff side)
     path('records/pending/', views.pending_sessions_view, name='pending_sessions'),
