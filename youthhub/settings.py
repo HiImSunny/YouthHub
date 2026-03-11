@@ -139,6 +139,21 @@ BACKUP_DIR = BASE_DIR / 'backups'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # =============================================================================
+# CACHE (Redis) — used for session caching to reduce DB hits during check-in
+# =============================================================================
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': env('CELERY_BROKER_URL', default='redis://localhost:6379/1'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'TIMEOUT': 300,  # 5 minutes default TTL
+        'KEY_PREFIX': 'youthhub',
+    }
+}
+
+# =============================================================================
 # CELERY + REDIS
 # =============================================================================
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
@@ -156,10 +171,20 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TIMEZONE = TIME_ZONE
 CELERY_ENABLE_UTC = False
 
-# Task settings
+# Task settings — optimized for high-concurrency check-in
 CELERY_TASK_TRACK_STARTED = True
-CELERY_TASK_TIME_LIMIT = 300       # 5 minutes hard limit
-CELERY_TASK_SOFT_TIME_LIMIT = 240  # 4 minutes soft limit (raises SoftTimeLimitExceeded)
+CELERY_TASK_TIME_LIMIT = 300          # 5 minutes hard limit
+CELERY_TASK_SOFT_TIME_LIMIT = 240     # 4 minutes soft limit
+CELERY_WORKER_PREFETCH_MULTIPLIER = 4  # Allow each worker to fetch 4 tasks at once
+CELERY_TASK_ACKS_LATE = True           # Ack only after task completes (prevent data loss on crash)
+CELERY_WORKER_MAX_TASKS_PER_CHILD = 500  # Recycle worker after 500 tasks to prevent memory leak
+
+# Routing: check-in tasks go to high-priority queue
+CELERY_TASK_ROUTES = {
+    'attendance.tasks.process_checkin': {'queue': 'checkin'},
+    'core.send_activity_registration_email': {'queue': 'email'},
+    'core.send_attendance_verified_email': {'queue': 'email'},
+}
 
 # =============================================================================
 # EMAIL
