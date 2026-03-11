@@ -90,10 +90,10 @@ def release_checkin_lock(token: str, identifier: str):
 def process_checkin(
     self,
     session_pk: int,
-    student_pk,          # int or None (guests)
+    student_pk,
     student_code: str,
     student_name: str,
-    photo_bytes_b64,     # base64-encoded string or None
+    photo_bytes_b64,
     photo_name: str,
     checkin_time_iso: str,
     qr_token: str,
@@ -101,51 +101,41 @@ def process_checkin(
     """
     Async Celery task that writes the check-in record to the database.
 
-    Offloads all DB writes and file I/O from the request/response cycle so
-    HTTP workers can return < 100ms to the browser even under 1000+ concurrent
-    check-ins.
-
-    Args:
-        session_pk: AttendanceSession PK
-        student_pk: authenticated User PK (None for guests)
-        student_code: MSSV entered by user
-        student_name: Full name entered by user
-        photo_bytes_b64: base64-encoded photo bytes (None if no photo)
-        photo_name: original filename for storage path
-        checkin_time_iso: ISO datetime string of when user submitted
-        qr_token: session QR token (used to release Redis lock on error)
+    Design pattern (fixes Windows eventlet file I/O crash):
+    1. Save DB record inside transaction (fast, no file I/O).
+    2. Save photo file AFTER transaction commits — file failure won't
+       roll back the record, ensuring email signals can always find it.
+    3. All Redis cache operations wrapped in try/except (best-effort).
     """
     from django.utils.dateparse import parse_datetime
     from django.utils import timezone
     from activities.models import ActivityParticipation
     from attendance.models import AttendanceSession
 
+    identifier = str(student_pk) if student_pk else student_code
+    record = None
+
     try:
+        session = AttendanceSession.objects.select_related('activity').get(pk=session_pk)
+
+        if session.status != AttendanceSession.SessionStatus.OPEN:
+            logger.info(f"[Checkin] Session #{session_pk} no longer OPEN. Aborting.")
+            return {'status': 'aborted', 'reason': 'session_closed'}
+
+        checkin_time = parse_datetime(checkin_time_iso) or timezone.now()
+        needs_photo = session.requires_photo
+        record_status = 'ATTENDED' if needs_photo else 'VERIFIED'
+
+        student_instance = None
+        if student_pk:
+            from django.contrib.auth import get_user_model
+            try:
+                student_instance = get_user_model().objects.get(pk=student_pk)
+            except Exception:
+                pass
+
+        # ── Step A: Commit DB record (transaction, NO file I/O) ─────────────
         with transaction.atomic():
-            session = AttendanceSession.objects.select_related('activity').get(pk=session_pk)
-
-            # Re-check session status (might have closed between submit and task execution)
-            if session.status != AttendanceSession.SessionStatus.OPEN:
-                logger.info(f"[Checkin] Session #{session_pk} is no longer OPEN. Aborting task.")
-                return {'status': 'aborted', 'reason': 'session_closed'}
-
-            checkin_time = parse_datetime(checkin_time_iso)
-            if checkin_time is None:
-                checkin_time = timezone.now()
-
-            needs_photo = session.requires_photo
-            record_status = 'ATTENDED' if needs_photo else 'VERIFIED'
-
-            student_instance = None
-            if student_pk:
-                from django.contrib.auth import get_user_model
-                User = get_user_model()
-                try:
-                    student_instance = User.objects.get(pk=student_pk)
-                except User.DoesNotExist:
-                    pass
-
-            # Create or update participation record
             if student_instance:
                 record, created = ActivityParticipation.objects.get_or_create(
                     activity=session.activity,
@@ -155,17 +145,10 @@ def process_checkin(
                         'entered_student_name': student_name,
                     }
                 )
-                if not created:
-                    # Already registered — just update check-in fields
-                    if record.status in ('REGISTERED', 'CANCELED'):
-                        record.entered_student_code = student_code
-                        record.entered_student_name = student_name
-                    else:
-                        # Already checked in or verified — skip silently
-                        logger.info(f"[Checkin] Student #{student_pk} already checked in for session #{session_pk}.")
-                        return {'status': 'duplicate', 'record_pk': record.pk}
+                if not created and record.status not in ('REGISTERED', 'CANCELED'):
+                    logger.info(f"[Checkin] Duplicate — student #{student_pk}, session #{session_pk}.")
+                    return {'status': 'duplicate', 'record_pk': record.pk}
             else:
-                # Guest: always create new record
                 record = ActivityParticipation(
                     activity=session.activity,
                     student=None,
@@ -176,36 +159,44 @@ def process_checkin(
             record.attendance_session = session
             record.status = record_status
             record.checkin_time = checkin_time
+            # photo_path will be set below; save record first so signal fires with committed data
+            record.save()
 
-            # Handle photo upload (now done in background — no request blocking)
-            if needs_photo and photo_bytes_b64:
-                import base64
+        # ── Step B: Save photo OUTSIDE transaction (file I/O won't rollback record) ──
+        if needs_photo and photo_bytes_b64 and record:
+            try:
+                import base64 as _b64
                 from django.core.files.storage import default_storage
                 from django.core.files.base import ContentFile
 
-                photo_bytes = base64.b64decode(photo_bytes_b64)
+                raw = _b64.b64decode(photo_bytes_b64)
                 save_path = f"checkin/{session.pk}/{photo_name}"
-                path = default_storage.save(save_path, ContentFile(photo_bytes))
-                record.photo_path = path
+                path = default_storage.save(save_path, ContentFile(raw))
+                ActivityParticipation.objects.filter(pk=record.pk).update(photo_path=path)
                 logger.info(f"[Checkin] Photo saved: {path}")
+            except Exception as photo_err:
+                logger.warning(
+                    f"[Checkin] Photo save failed for record #{record.pk}: {photo_err}. "
+                    f"Record stays ATTENDED — student can re-upload."
+                )
 
-            record.save()
-
-            # Auto award points for no-photo (instant verified) check-ins
-            if not needs_photo and student_instance:
-                _award_if_eligible(student_instance, session.activity)
+        # ── Step C: Auto-award points if no photo required ───────────────────
+        if not needs_photo and student_instance and record:
+            _award_if_eligible(student_instance, session.activity)
 
         logger.info(
-            f"[Checkin] Task done: student={student_pk or student_code!r}, "
-            f"session={session_pk}, status={record_status}, record={record.pk}"
+            f"[Checkin] OK: student={student_pk or student_code!r}, "
+            f"session={session_pk}, status={record_status}, pk={record.pk}"
         )
         return {'status': 'ok', 'record_pk': record.pk, 'record_status': record_status}
 
     except Exception as exc:
-        logger.error(f"[Checkin] Task failed for session #{session_pk}: {exc}", exc_info=True)
-        # Release Redis lock so the student can retry
-        identifier = str(student_pk) if student_pk else student_code
-        release_checkin_lock(qr_token, identifier)
+        logger.error(f"[Checkin] Task failed (session #{session_pk}): {exc}", exc_info=True)
+        # Best-effort lock release — wrapped so Redis errors don't mask real error
+        try:
+            release_checkin_lock(qr_token, identifier)
+        except Exception as lock_err:
+            logger.warning(f"[Checkin] Lock release failed: {lock_err}")
         raise self.retry(exc=exc)
 
 

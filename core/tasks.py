@@ -79,8 +79,16 @@ def send_activity_registration_email(self, participation_id: int):
         return {'status': 'sent', 'email': student.email, 'activity_id': activity.pk}
 
     except Exception as exc:
+        from django.core.exceptions import ObjectDoesNotExist
+        if isinstance(exc, ObjectDoesNotExist):
+            # Record doesn't exist — no point retrying, just log and drop
+            logger.warning(
+                f"[Celery] Skipping email: participation #{participation_id} not found "
+                f"(may have been rolled back or deleted). Not retrying."
+            )
+            return {'status': 'skipped', 'reason': 'not_found'}
         logger.warning(f"[Celery] Email task failed for participation #{participation_id}: {exc}")
-        # Retry automatically (up to max_retries)
+        # Retry only for transient errors (SMTP, network, etc.)
         raise self.retry(exc=exc)
 
 

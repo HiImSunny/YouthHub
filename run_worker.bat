@@ -1,17 +1,20 @@
 @echo off
-title YouthHub Celery Worker (High-Concurrency)
+title YouthHub Celery Worker (Windows-Compatible)
 echo ACTIVATING VENV...
 call .\venv\Scripts\activate
 
 echo STARTING CELERY WORKERS...
-echo   - Queue [checkin]: High-concurrency check-in processing (eventlet, 100 coroutines)
-echo   - Queue [email]:   Email notification tasks
+echo   NOTE: Using 'solo' pool - Windows-compatible (no eventlet/gevent needed)
+echo   For production (Linux), switch to eventlet/gevent for higher concurrency.
 
-REM Worker 1: Check-in queue — high concurrency (eventlet for I/O bound tasks)
-start "YouthHub Worker [checkin]" cmd /k "call .\venv\Scripts\activate && celery -A youthhub worker -l info -Q checkin -P eventlet -c 100 -n worker-checkin@%%h"
+REM Worker 1: Check-in queue — solo pool, high priority
+REM 'solo' runs in the main thread, avoids Windows pipe/fcntl issues
+start "YouthHub Worker [checkin]" cmd /k "call .\venv\Scripts\activate && celery -A youthhub worker -l info -Q checkin -P solo -n worker-checkin@%%h"
 
-REM Worker 2: Email queue — standard concurrency
-start "YouthHub Worker [email]" cmd /k "call .\venv\Scripts\activate && celery -A youthhub worker -l info -Q email -P eventlet -c 20 -n worker-email@%%h"
+REM Worker 2: Email queue — solo pool
+start "YouthHub Worker [email]" cmd /k "call .\venv\Scripts\activate && celery -A youthhub worker -l info -Q email -P solo -n worker-email@%%h"
 
+echo.
 echo Workers started in separate windows.
+echo TIP: For higher concurrency on Windows, run multiple worker windows manually.
 pause

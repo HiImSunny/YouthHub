@@ -107,13 +107,19 @@ def log_attendance_save(sender, instance, created, **kwargs):
         instance=instance,
         changes={'student_code': instance.entered_student_code, 'status': instance.status},
     )
-    # Dispatch registration email async via Celery (non-blocking)
-    try:
-        from core.tasks import send_activity_registration_email
-        send_activity_registration_email.delay(instance.pk)
-    except Exception as e:
-        import logging as _logging
-        _logging.getLogger(__name__).warning(f"Could not dispatch registration email: {e}")
+    # Only dispatch registration email for student users with email,
+    # and only on first create (not every check-in update)
+    if created and instance.student and getattr(instance.student, 'email', None):
+        try:
+            from core.tasks import send_activity_registration_email
+            # countdown=2: give DB a moment to fully commit before Celery queries it
+            send_activity_registration_email.apply_async(
+                args=[instance.pk],
+                countdown=2,
+            )
+        except Exception as e:
+            import logging as _logging
+            _logging.getLogger(__name__).warning(f"Could not dispatch registration email: {e}")
 
 # ─── Auth Signals ─────────────────────────────────────────────────────────────
 
